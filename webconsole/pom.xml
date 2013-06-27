@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    
+    <modelVersion>4.0.0</modelVersion>
+    
+    <parent>
+        <artifactId>testmp</artifactId>
+        <groupId>org.testmp</groupId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>webconsole</artifactId>
+    <packaging>war</packaging>
+
+    <name>webconsole</name>
+
+    <properties>
+        <!-- Explictly specify a default encoding to avoid relying on the OS locale. -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <finalName>testmp</finalName>
+
+        <gwt.version>2.4.0</gwt.version>
+        <smartgwt.version>3.1</smartgwt.version>
+    </properties>
+
+    <dependencies>
+
+        <!-- GWT dependencies (from central repo) -->
+        <dependency>
+            <groupId>com.google.gwt</groupId>
+            <artifactId>gwt-servlet</artifactId>
+            <version>${gwt.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.gwt</groupId>
+            <artifactId>gwt-user</artifactId>
+            <version>${gwt.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- SmartGWT dependencies (from SmartGWT repo) -->
+        <dependency>
+            <groupId>com.smartgwt</groupId>
+            <artifactId>smartgwt</artifactId>
+            <version>${smartgwt.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.velocity</groupId>
+            <artifactId>velocity</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.mail</groupId>
+            <artifactId>mail</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.activation</groupId>
+            <artifactId>activation</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.jcraft</groupId>
+            <artifactId>jsch</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.ant</groupId>
+            <artifactId>ant</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>datastore-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>testsync</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-webapp</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <!-- This will produce a war file named webconsole.war, rather than
+             webconsole-${project.version}.war. -->
+        <finalName>${finalName}</finalName>
+
+        <!-- Make sure classes output dir matches hosted webapp WEB-INF/classes 
+             folder, so GWT Hosted browser can see the classes. -->
+        <outputDirectory>target/${finalName}/WEB-INF/classes</outputDirectory>
+
+        <plugins>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>gwt-maven-plugin</artifactId>
+                <version>2.4.0</version>
+
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compile</goal>
+                            <goal>i18n</goal>
+                            <!-- <goal>generateAsync</goal> -->
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
+
+                <configuration>
+                    <buildOutputDirectory>target/${finalName}/WEB-INF/classes</buildOutputDirectory>
+                    <!-- <buildOutputDirectory>src/main/webapp/WEB-INF/calsses</buildOutputDirectory> -->
+                    <hostedWebapp>target/${finalName}</hostedWebapp>
+                    <runTarget>webconsole/WebConsole.html</runTarget>
+                    <i18nMessagesBundle>org.testmp.webconsole.client.Messages</i18nMessagesBundle>
+                    <i18nConstantsBundle>org.testmp.webconsole.client.Constants</i18nConstantsBundle>
+
+                    <draftCompile>true</draftCompile>
+                    <debugSuspend>false</debugSuspend>
+
+                    <!--<runTarget>'http://localhost:7080/gwtApplication/org.example.Application/Application.html'</runTarget>-->
+                    <!--<noServer>true</noServer>-->
+                    <!--<inplace>false</inplace>-->
+                </configuration>
+
+            </plugin>
+            
+            <plugin>
+                <artifactId>maven-war-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>Main</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>prepare-package</phase>
+                        <configuration>
+                            <target>
+                                <move file="target/${finalName}/WEB-INF/classes/Main.class" todir="target/${finalName}"/>
+                                <copy todir="target/${finalName}">
+                                    <fileset dir="jetty"/>
+                                </copy>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <repositories>
+
+            <repository>
+               <id>smartgwt-releases</id>
+               <name>SmartGWT Repository</name>
+               <url>http://www.smartclient.com/maven2/</url>
+               <releases>
+                 <updatePolicy>never</updatePolicy>
+               </releases>
+               <snapshots>
+                 <enabled>false</enabled>
+               </snapshots>
+            </repository>
+
+    </repositories>
+
+</project>

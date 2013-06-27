@@ -1,0 +1,191 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+    <title>Test Metrics</title>
+    <script>
+        function signoff() {
+            var selects = document.getElementsByTagName("select");
+            for(var i = selects.length-1; i >= 0; i--){
+                var select = selects.item(i);
+                var option = select.options[select.selectedIndex];
+                select.parentNode.innerHTML = "<img src=\"${baseUrl}/images/" + 
+                        option.value + ".png\" alt=\"" + option.text + "\"></img>";
+            }
+            var button = document.getElementById("signoff");
+            button.parentNode.innerHTML = "<b><big>Signoff<br></big></b>";
+            xmlhttp=new XMLHttpRequest();
+            xmlhttp.open("POST","${baseUrl}/${serviceName}",true);
+            xmlhttp.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+            var postData = "action=update&filename=" + encodeURIComponent("${filename}")
+                    + "&replacement=" + encodeURIComponent(document.getElementById("reportBodyToUpdate").innerHTML);
+            xmlhttp.send(postData);
+        }
+    </script>
+  </head>
+  <body>
+  <br>
+  <div id="reportBodyToUpdate">
+    <table id="testMetricsTable" style="font-family: Calibri,sans-serif,serif; text-align:
+      center; border-collapse: collapse; margin: 20px" border="1" cellpadding="2"
+      cellspacing="2" width="850">
+      <tbody>
+        <tr>
+          <td valign="middle" width="250"><b><big>Project<br>
+              </big></b></td>
+          <td valign="middle"><b><big>Test Metrics<br>
+              </big></b></td>
+          <td valign="middle">
+            <button id="signoff" onclick="signoff()">Signoff</button>
+          </td>
+        </tr>
+        #foreach($project in $testMetricsTable.keySet())
+        #set($metrics = $testMetricsTable.get($project))
+        <tr>
+          <td style="font-size: 0.8em;" valign="middle" width="250"><b>$project</b><br>
+          </td>
+          <td valign="middle">
+            <table style="text-align: center; font-size: 0.8em;
+              font-family: Calibri,sans-serif,serif; border-collapse:
+              collapse;" align="center" border="0" cellpadding="2"
+              cellspacing="2" width="100%">
+              <tbody>
+                <tr>
+                  <td valign="middle">Total Tests<br>
+                  </td>
+                  <td valign="middle"><b>$metrics.testsTotal</b><b><br>
+                    </b></td>
+                </tr>
+                <tr>
+                  <td valign="middle">Groups (tags)<br>
+                  </td>
+                  <td valign="top"><b>$metrics.allRelatedTags</b><br>
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="middle">Robustness<br>
+                  </td>
+                  <td valign="middle">
+                    <table style="font-size: 0.8em; text-align: center;
+                      border-collapse: collapse; font-family:
+                      Calibri,sans-serif,serif;" bgcolor="#ffffcc"
+                      border="1" cellpadding="2" cellspacing="2"
+                      width="100%">
+                      <tbody>
+                        <tr>
+                          <td valign="top">Always bad<br>
+                          </td>
+                          <td valign="top">Degrading<br>
+                          </td>
+                          <td valign="top">Upgrading<br>
+                          </td>
+                          <td valign="top">Always good<br>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td valign="top"><b><font color="#cc0000">$metrics.alwaysBadNum</font></b><br>
+                          </td>
+                          <td valign="top"><b><font color="#ff0000">$metrics.degradingNum</font></b><br>
+                          </td>
+                          <td valign="top"><b><font color="#33cc00">$metrics.upgradingNum</font></b><br>
+                          </td>
+                          <td valign="top"><b><font color="#006600">$metrics.alwaysGoodNum</font></b><br>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td valign="top"><b><font color="#cc0000">$metrics.alwaysBadPercentage<br>
+                              </font></b></td>
+                          <td valign="top"><font color="#ff0000"><b>$metrics.degradingPercentage</b><b><br>
+                              </b></font></td>
+                          <td valign="top"><b><font color="#33cc00">$metrics.upgradingPercentage</font></b><br>
+                          </td>
+                          <td valign="top"><b><font color="#006600">$metrics.alwaysGoodPercentage</font></b><br>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="middle">Effectiveness<br>
+                  </td>
+                  <td valign="middle">
+                    <table style="text-align: center; font-size: 0.8em;
+                      border-collapse: collapse; font-family:
+                      Calibri,sans-serif,serif;" bgcolor="#ffffcc"
+                      border="1" cellpadding="2" cellspacing="2"
+                      width="100%">
+                      <tbody>
+                        <tr>
+                          <td valign="top">Total failures<br>
+                          </td>
+                          <td valign="top">False failures<br>
+                          </td>
+                          <td valign="top">Related bugs<br>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td valign="top"><b>$metrics.failuresTotal</b><br>
+                          </td>
+                          <td valign="top"><b>$metrics.falseFailuresNum</b><br>
+                          </td>
+                          <td valign="top"><b>$metrics.relatedBugsNum</b><br>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="middle">Efficiency<br>
+                  </td>
+                  <td valign="top">
+                    <table style="text-align: center; font-size: 0.8em;
+                      border-collapse: collapse; font-family:
+                      Calibri,sans-serif,serif;" bgcolor="#ffffcc"
+                      border="1" cellpadding="2" cellspacing="2"
+                      width="100%">
+                      <tbody>
+                        <tr>
+                          <td valign="top">Total time<br>
+                          </td>
+                          <td valign="top">Avg. time<br>
+                          </td>
+                          <td valign="top">Volatility<br>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td valign="top"><b>$metrics.totalTime ms</b><br>
+                          </td>
+                          <td valign="top"><b>$metrics.avgTime ms</b><br>
+                          </td>
+                          #if($metrics.minVolatility == $metrics.maxVolatility)
+                          <td valign="top"><b>$metrics.maxVolatility</b><br>
+                          </td>
+                          #else
+                          <td valign="top"><b>$metrics.minVolatility ~ $metrics.maxVolatility</b><br>
+                          </td>
+                          #end
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+          <td>
+            <select>
+              <option value="accept">Accept</option>
+              <option value="refuse">Refuse</option>
+            </select>
+          </td>
+        </tr>
+        #end
+      </tbody>
+    </table>
+  </div>
+  <br>
+  </body>
+</html>
+

@@ -1,0 +1,63 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+    <title>Test Environment Status</title>
+  </head>
+  <body>
+    <br>
+    <table style="border-collapse: collapse; text-align: center; font-family: Calibri,sans-serif,serif; margin: 50px" cellspacing="2" border="1" cellpadding="2" width="800">
+      <tbody>
+        <tr>
+          <td valign="top"><b>Environment</b></td>
+          <td valign="top" width="25%"><b>Task</b></td>
+          <td valign="top" width="25%"><b>Status</b></td>
+          <td valign="top" width="25%"><b>Last Run Time</b></td>
+        </tr>
+        #foreach($envName in $envStatusTable.keySet())
+        #set($refUrl = $envStatusTable.get($envName).get("refUrl"))
+        #set($tasks = $envStatusTable.get($envName).get("tasks"))
+        #if( $tasks.isEmpty() )
+        <tr>
+          #if($refUrl.isEmpty())
+          <td valign="middle">$envName</td>
+          #else
+          <td valign="middle"><a href="$refUrl">$envName</a></td>
+          #end
+          <td valign="middle" width="25%"></td>
+          <td valign="middle" width="25%"></td>
+          <td valign="middle" width="25%"></td>
+        </tr>
+        #else
+        <tr>
+          #if($refUrl.isEmpty())
+          <td rowspan="$tasks.size()" valign="middle">$envName<br></td>
+          #else
+          <td rowspan="$tasks.size()" valign="middle"><a href="$refUrl">$envName</a></td>
+          #end
+        #set($first = true)
+        #foreach($taskName in $tasks.keySet())
+        #if(!$first)
+        #set($first = false)
+        <tr>
+        #end
+          #set($task = $tasks.get($taskName))
+          #set($taskStatus = $task.get("taskStatus"))
+          #set($lastRunTime = $task.get("lastRunTime"))
+          <td valign="middle">$taskName</td>
+          #if(!$taskStatus.isEmpty())
+          <td valign="middle"><img alt="$taskStatus" src="${baseUrl}/images/${taskStatus}" height="16" width="16"></td>
+          #else
+          <td valign="middle"></td>
+          #end
+          <td valign="middle">$lastRunTime</td>
+        </tr>
+        #end
+        #end
+        #end
+      </tbody>
+    </table>
+    <br>
+  </body>
+</html>
+

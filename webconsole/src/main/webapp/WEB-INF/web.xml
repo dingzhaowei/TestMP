@@ -1,0 +1,95 @@
+<!DOCTYPE web-app PUBLIC
+ "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+ "http://java.sun.com/dtd/web-app_2_3.dtd" >
+
+<web-app>
+	<display-name>webconsole</display-name>
+
+	<context-param>
+		<param-name>org.eclipse.jetty.servlet.Default。useFileMappedBuffer</param-name>
+		<param-value>false</param-value>
+	</context-param>
+
+	<context-param>
+		<param-name>testCaseStoreUrl</param-name>
+		<param-value>http://localhost:10081/DataStore.do</param-value>
+	</context-param>
+
+	<context-param>
+		<param-name>testDataStoreUrl</param-name>
+		<param-value>http://localhost:10081/DataStore.do</param-value>
+	</context-param>
+
+	<context-param>
+		<param-name>testEnvStoreUrl</param-name>
+		<param-value>http://localhost:10081/DataStore.do</param-value>
+	</context-param>
+
+	<context-param>
+		<param-name>executionThreadNum</param-name>
+		<param-value>10</param-value>
+	</context-param>
+
+	<context-param>
+		<param-name>executionTimeout</param-name>
+		<param-value>0</param-value>
+	</context-param>
+
+	<listener>
+		<listener-class>org.testmp.webconsole.server.WebConsoleContextListener</listener-class>
+	</listener>
+
+	<servlet>
+		<servlet-name>TestCaseService</servlet-name>
+		<servlet-class>org.testmp.webconsole.server.TestCaseService</servlet-class>
+	</servlet>
+
+	<servlet>
+		<servlet-name>ReportService</servlet-name>
+		<servlet-class>org.testmp.webconsole.server.ReportService</servlet-class>
+	</servlet>
+
+	<servlet>
+		<servlet-name>TestDataService</servlet-name>
+		<servlet-class>org.testmp.webconsole.server.TestDataService</servlet-class>
+	</servlet>
+
+	<servlet>
+		<servlet-name>TestEnvService</servlet-name>
+		<servlet-class>org.testmp.webconsole.server.TestEnvService</servlet-class>
+	</servlet>
+
+	<servlet>
+		<servlet-name>EnvTaskService</servlet-name>
+		<servlet-class>org.testmp.webconsole.server.EnvTaskService</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>TestCaseService</servlet-name>
+		<url-pattern>/webconsole/TestCase.do</url-pattern>
+	</servlet-mapping>
+
+	<servlet-mapping>
+		<servlet-name>ReportService</servlet-name>
+		<url-pattern>/webconsole/Report.do</url-pattern>
+	</servlet-mapping>
+
+	<servlet-mapping>
+		<servlet-name>TestDataService</servlet-name>
+		<url-pattern>/webconsole/TestData.do</url-pattern>
+	</servlet-mapping>
+
+	<servlet-mapping>
+		<servlet-name>TestEnvService</servlet-name>
+		<url-pattern>/webconsole/TestEnv.do</url-pattern>
+	</servlet-mapping>
+
+	<servlet-mapping>
+		<servlet-name>EnvTaskService</servlet-name>
+		<url-pattern>/webconsole/EnvTask.do</url-pattern>
+	</servlet-mapping>
+
+	<welcome-file-list>
+		<welcome-file>index.html</welcome-file>
+	</welcome-file-list>
+</web-app>

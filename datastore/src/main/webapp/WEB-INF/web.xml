@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE web-app
+    PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+    "http://java.sun.com/dtd/web-app_2_3.dtd">
+
+<web-app>
+
+  <servlet>
+    <servlet-name>DataStoreServlet</servlet-name>
+    <servlet-class>org.testmp.datastore.server.DataStoreServlet</servlet-class>
+  </servlet>
+
+  <servlet-mapping>
+    <servlet-name>DataStoreServlet</servlet-name>
+    <url-pattern>/DataStore.do</url-pattern>
+  </servlet-mapping>
+
+</web-app>
