@@ -27,6 +27,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import org.apache.log4j.Logger;
 import org.apache.tools.ant.types.Commandline;
 
 import com.jcraft.jsch.Channel;
@@ -36,6 +37,8 @@ import com.jcraft.jsch.Session;
 import com.jcraft.jsch.UserInfo;
 
 public class ExecutionRunner extends Thread {
+
+    private static Logger log = Logger.getLogger(ExecutionRunner.class);
 
     private long timeout;
 
@@ -221,6 +224,35 @@ public class ExecutionRunner extends Thread {
         }
 
         private Integer executeRemotely() {
+            JSch.setLogger(new com.jcraft.jsch.Logger() {
+
+                @Override
+                public boolean isEnabled(int arg0) {
+                    return true;
+                }
+
+                @Override
+                public void log(int level, String message) {
+                    switch (level) {
+                    case DEBUG:
+                        log.debug(message);
+                        break;
+                    case INFO:
+                        log.info(message);
+                        break;
+                    case WARN:
+                        log.warn(message);
+                        break;
+                    case ERROR:
+                        log.error(message);
+                        break;
+                    case FATAL:
+                        log.fatal(message);
+                        break;
+                    }
+                }
+
+            });
             JSch jsch = new JSch();
             String filename = getTraceFileName(host, workingDir, command);
             FileOutputStream output = null;
@@ -260,15 +292,20 @@ public class ExecutionRunner extends Thread {
 
                 });
                 session.setConfig("StrictHostKeyChecking", "no");
-                session.setConfig("PreferredAuthentications","password");
+                session.setConfig("PreferredAuthentications", "password");
                 session.connect();
 
                 channel = session.openChannel("exec");
-                ((ChannelExec) channel).setCommand(command);
+                if (workingDir != null) {
+                    String cd = "cd \"" + workingDir + "\"";
+                    ((ChannelExec) channel).setCommand(cd + "&&" + command);
+                } else {
+                    ((ChannelExec) channel).setCommand(command);
+                }
                 channel.setOutputStream(output);
                 ((ChannelExec) channel).setErrStream(output);
-
                 channel.connect();
+
                 while (!channel.isClosed()) {
                     Thread.sleep(1000);
                 }
