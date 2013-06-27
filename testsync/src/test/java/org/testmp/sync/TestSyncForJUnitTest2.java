@@ -8,54 +8,59 @@ import org.testmp.sync.junit.TestSyncForJUnit;
 public class TestSyncForJUnitTest2 extends TestSyncForJUnit {
 
     @Test
-    @TestDoc(project = "Example Project 1", groups = { "P1", "devo" })
-    public void testFeatureException1() throws Exception {
-        System.out.println("[TestSyncForJUnitTest2#testFeatureException1]");
+    @TestDoc(
+            project = "Customer Review", 
+            name="Create review for instant video", 
+            description = "Create a review for instant video and check it's created successfully", 
+            groups = { "P0", "prod" })
+    public void testCreateReviewForInstantVideo() throws Exception {
+        System.out.println("[TestSyncForJUnitTest2#testCreateReviewForInstantVideo]");
         if (Math.random() > 0.5) {
             Assert.assertTrue("I'm failed", false);
         }
     }
 
     @Test
-    @TestDoc(project = "Example Project 1", groups = { "P0", "devo" })
-    public void testFeatureException2() throws Exception {
-        System.out.println("[TestSyncForJUnitTest2#testFeatureException2]");
+    @TestDoc(
+            project = "Customer Review", 
+            name = "Review on the checkout page",
+            groups = { "P1", "devo" })
+    public void testReviewOnCheckoutPage() throws Exception {
+        System.out.println("[TestSyncForJUnitTest2#testReviewOnCheckoutPage]");
         if (Math.random() > 0.5) {
             Assert.assertTrue("I'm failed", false);
         }
     }
 
     @Test
-    @TestDoc(project = "Example Project 2", groups = { "P2" })
-    public void exampleProject2_FeatureTest1() throws Exception {
-        System.out.println("[TestSyncForJUnitTest2#exampleProject2_FeatureTest1]");
+    @TestDoc(project = "Checkout", groups = { "P0", "devo", "broken" })
+    public void testChangeBookingAddress() throws Exception {
+        System.out.println("[TestSyncForJUnitTest2#testChangeBookingAddress]");
+        Assert.assertTrue("I'm failed", false);
+    }
+
+    @Test
+    @TestDoc(project = "Checkout", groups = { "P0", "devo" })
+    public void testCheckoutFlow() throws Exception {
+        System.out.println("[TestSyncForJUnitTest2#testCheckoutFlow]");
         if (Math.random() > 0.5) {
             Assert.assertTrue("I'm failed", false);
         }
     }
 
     @Test
-    @TestDoc(project = "Example Project 2", groups = { "P2" })
-    public void exampleProject2_FeatureTest2() throws Exception {
-        System.out.println("[TestSyncForJUnitTest2#exampleProject2_FeatureTest2]");
+    @TestDoc(project = "Checkout", groups = { "P1", "prod" })
+    public void testOutOfStockProduct() throws Exception {
+        System.out.println("[TestSyncForJUnitTest2#testOutOfStockProduct]");
         if (Math.random() > 0.5) {
             Assert.assertTrue("I'm failed", false);
         }
     }
 
     @Test
-    @TestDoc(project = "Example Project 2", groups = { "P2" })
-    public void exampleProject2_FeatureTest3() throws Exception {
-        System.out.println("[TestSyncForJUnitTest2#exampleProject2_FeatureTest3]");
-        if (Math.random() > 0.5) {
-            Assert.assertTrue("I'm failed", false);
-        }
-    }
-
-    @Test
-    @TestDoc(project = "Example Project 2", groups = { "P3" })
-    public void exampleProject2_FeatureTest4() throws Exception {
-        System.out.println("[TestSyncForJUnitTest2#exampleProject2_FeatureTest4]");
+    @TestDoc(project = "Checkout", groups = { "P2", "devo" })
+    public void testNotificationEmail() throws Exception {
+        System.out.println("[TestSyncForJUnitTest2#testNotificationEmail]");
         Assert.assertTrue("I'm failed", false);
     }
 }

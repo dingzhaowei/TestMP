@@ -2,42 +2,40 @@ package org.testmp.sync;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.testmp.sync.TestDoc;
 import org.testmp.sync.junit.TestSyncForJUnit;
 
 public class TestSyncForJUnitTest extends TestSyncForJUnit {
 
     @Test
     @TestDoc(
-        project = "Example Project 1", 
-        name = "Feature1", 
-        description = "测试点，测试步骤，以及预期结果等", 
-        groups = { "P0", "regression" })
-    public void testFeature1() throws Exception {
-        System.out.println("[TestSyncForJUnitTest#testFeature1]");
+        project = "Customer Review", 
+        name = "Top 100 reviewer", 
+        description = "Open the top reivewer page and check the badge of the 100 first", 
+        groups = { "P0", "prod" })
+    public void testTop100Reviewers() throws Exception {
+        System.out.println("[TestSyncForJUnitTest#testTop100Reviewers]");
     }
 
     @Test
     @TestDoc(
-        project = "Example Project 1", 
-        name = "Feature2", 
-        description = "文档标注也可以省略，将采用默认值：项目为类名，测试名称为方法名", 
-        groups = { "P1" })
-    public void testFeature2() throws Exception {
-        System.out.println("[TestSyncForJUnitTest#testFeature2]");
-        if (Math.random() > 0.7) {
-            Assert.assertTrue("I'm failed", false);
-        }
+        project = "Customer Review", 
+        name = "Create review for book", 
+        description = "Create a review for book and check it's created successfully", 
+        groups = { "P0", "prod", "broken" })
+    public void testCreateReviewForBook() throws Exception {
+        System.out.println("[TestSyncForJUnitTest#testCreateReviewForBook]");
+        Assert.assertTrue("I'm failed", false);
     }
 
     @Test
     @TestDoc(
-        project = "Example Project 1", 
-        name = "Feature3", 
-        groups = { "P0" })
-    public void testFeature3() throws Exception {
-        System.out.println("[TestSyncForJUnitTest#testFeature3]");
-        if (Math.random() > 0.3) {
+        project = "Customer Review", 
+        name = "Unallowed reivewer", 
+        description = "Create review as a customer without buying history, and check redirecting to the warning page",
+        groups = { "P1", "prod" })
+    public void testUnallowedReviewer() throws Exception {
+        System.out.println("[TestSyncForJUnitTest#testUnallowedReviewer]");
+        if (Math.random() > 0.5) {
             Assert.assertTrue("I'm failed", false);
         }
     }

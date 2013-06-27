@@ -7,7 +7,7 @@
   </parent>
   <artifactId>testsync</artifactId>
   <name>testsync</name>
-  <description>synchronize the document and status of automation</description>
+  <description>keeping test automation metrics and document update to date</description>
 
   <dependencies>
     <dependency>
