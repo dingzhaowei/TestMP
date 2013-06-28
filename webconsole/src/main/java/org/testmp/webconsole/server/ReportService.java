@@ -192,7 +192,8 @@ public class ReportService extends HttpServlet {
         ve.setProperty(VelocityEngine.FILE_RESOURCE_LOADER_PATH, reportTemplatesDir);
         ve.setProperty(VelocityEngine.INPUT_ENCODING, "UTF-8");
         ve.setProperty(VelocityEngine.OUTPUT_ENCODING, "UTF-8");
-        ve.setProperty(VelocityEngine.RUNTIME_LOG, "/tmp/velocity.log");
+        ve.setProperty(VelocityEngine.RUNTIME_LOG, System.getProperty("testmp.home") + File.separator + "log"
+                + File.separator + "velocity.log");
         ve.init();
 
         ObjectMapper mapper = new ObjectMapper();
