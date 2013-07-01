@@ -1,0 +1,186 @@
+body {
+	font-family: 'Open Sans', sans-serif;
+}
+
+p {
+		font-family: 'Open Sans', sans-serif;
+		font-size:14px;
+		line-height:18px;
+}
+
+/* Typography
+-------------------------------------------------- */
+
+h1{
+	font-size:28px; /* was 36 */
+	line-height:40px;
+}
+
+h2{
+	margin:40px 0 0 0;
+	border-top:5px solid #3D3D3C;
+	padding:20px 0;
+	font-weight:600;
+	font-size:24px;
+}
+
+h3{
+	font-weight:600;
+	font-size:18px;
+}
+
+h4{
+	border-bottom:1px solid #3D3D3C;
+	padding:10px 0;
+	font-weight:600;
+	font-size:18px;
+	margin:0 0 20px 0;
+}
+h4.spaced{
+	margin:30px 0 15px 0;
+}
+
+.small {
+	font-size:12px;
+}
+
+.medium {
+	font-size:14px;
+}
+
+.large {
+	font-size:18px;
+	margin:30px 0;
+	line-height:26px;
+}
+
+.heading h1 {
+	font-weight:600;
+	font-size:24px;
+}
+
+/* Header
+-------------------------------------------------- */
+
+header {
+	
+}
+
+header img {
+	margin: 10px 0;
+}
+
+.btn-download {
+	margin: 20px 0 0 0;	
+}
+
+.btn-buy {
+	margin: 20px 0 0 20px;	
+}
+
+/* Menu
+-------------------------------------------------- */
+.menu {
+	margin-bottom:20px;
+}
+
+/* Content
+-------------------------------------------------- */
+
+.blocks div{
+	margin-bottom: 5px;
+}
+
+.blocks img{
+	border:1px solid lightgray;
+	margin-bottom: 15px;
+}
+
+/* Navbar
+-------------------------------------------------- */
+.navbar-fixed-top .brand {
+  padding-right: 0;
+  padding-left: 0;
+  margin-left: 20px;
+  float: right;
+}
+.navbar-fixed-top .brand:hover {
+  text-decoration: none;
+}
+
+/* Downloads
+-------------------------------------------------- */
+
+.download-container {
+	text-align:center;
+	margin-top:60px;
+	margin-bottom:20px;
+}
+
+.download-message {
+	display:inline-block;
+	width:75%;
+	text-align:left;
+}
+
+.download-message img{
+	float:left;
+	margin-right:30px;
+}
+
+.download-blocks img{
+	margin-bottom: 20px;
+}
+
+.download-blocks img{
+	border:1px solid lightgray;
+	margin-bottom: 15px;
+}
+
+.download-ie div{
+	display:none;
+}
+
+.download-chrome div{
+	display:none;
+}
+
+/* Support / Contact
+-------------------------------------------------- */
+
+.contact-form {
+	
+}
+
+.thank-you div {
+	display:none;
+	margin: 20px;
+}
+
+/* FAQ
+-------------------------------------------------- */
+
+.faq div .aligncenter{
+	text-align:center;
+	margin: 20px auto;
+}
+
+.faq ol li {
+	margin-bottom:6px;
+	margin-left:15px;
+}
+
+.faq h4 {
+	margin-top: 30px;
+}
+
+:target {
+	background: #FFFF99;
+}
+
+/* Blog
+-------------------------------------------------- */
+
+.blog li {
+	line-height: 19px !important;
+}

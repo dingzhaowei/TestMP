@@ -52,6 +52,7 @@ import com.smartgwt.client.types.FetchMode;
 import com.smartgwt.client.types.GroupStartOpen;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.types.TopOperatorAppearance;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.ImgButton;
@@ -149,7 +150,6 @@ public class TestCaseView extends VLayout {
         ListGridField runHistoryField = new ListGridField("runHistory", "Run History");
         ListGridField createTimeField = new ListGridField("createTime", "Create Time");
         ListGridField lastModifyTimeField = new ListGridField("lastModifyTime", "Last Modify Time");
-        ListGridField lastRunTimeField = new ListGridField("lastRunTime", "Last Run Time");
 
         HoverCustomizer hoverCustomizer = new HoverCustomizer() {
 
@@ -269,10 +269,6 @@ public class TestCaseView extends VLayout {
         timeVolatilityField.setShowGridSummary(false);
         timeVolatilityField.setShowGroupSummary(false);
 
-        lastRunTimeField.setHidden(true);
-        lastRunTimeField.setWidth(150);
-        lastRunTimeField.setType(ListGridFieldType.DATE);
-
         createTimeField.setWidth(150);
         createTimeField.setType(ListGridFieldType.DATE);
 
@@ -280,8 +276,8 @@ public class TestCaseView extends VLayout {
         lastModifyTimeField.setType(ListGridFieldType.DATE);
 
         testCaseGrid.setFields(nameField, projectField, tagsField, descriptionField, automationField, robustnessField,
-                robustnessTrendField, avgTestTimeField, timeVolatilityField, runHistoryField, lastRunTimeField,
-                createTimeField, lastModifyTimeField);
+                robustnessTrendField, avgTestTimeField, timeVolatilityField, runHistoryField, createTimeField,
+                lastModifyTimeField);
 
         addMember(testCaseGrid);
 
@@ -496,6 +492,7 @@ public class TestCaseView extends VLayout {
             filterBuilder.setDataSource(testCaseSource);
             filterBuilder.setAutoWidth();
             filterBuilder.setOverflow(Overflow.VISIBLE);
+            filterBuilder.setTopOperatorAppearance(TopOperatorAppearance.RADIO);
             filterLayout.addMember(filterBuilder);
             layout.addMember(filterLayout);
 
@@ -743,11 +740,10 @@ public class TestCaseView extends VLayout {
             DataSourceTextField runHistoryField = new DataSourceTextField("runHistory", "Run History");
             DataSourceTextField createTimeField = new DataSourceTextField("createTime", "Create Time");
             DataSourceTextField lastModifyTimeField = new DataSourceTextField("lastModifyTime", "Last Modify Time");
-            DataSourceTextField lastRunTimeField = new DataSourceTextField("lastRunTime", "Last Run Time");
 
             setFields(idField, projectField, nameField, tagsField, descriptionField, automationField, runHistoryField,
                     robustnessField, robustnessTrendField, avgTestTimeField, timeVolatilityField, createTimeField,
-                    lastModifyTimeField, lastRunTimeField);
+                    lastModifyTimeField);
         }
     }
 }
