@@ -488,6 +488,10 @@ public class TestEnvView extends VLayout {
                                 String lastStatus = record.getAttribute("status");
                                 String lastLastRunTime = record.getAttribute("lastRunTime");
 
+                                if (!statusMap.containsKey(taskId)) {
+                                    continue;
+                                }
+
                                 String[] valuePair = statusMap.get(taskId).split(";");
                                 String currStatus = valuePair[0].equals("null") ? null : valuePair[0];
                                 String currLastRunTime = valuePair[1].equals("null") ? null : valuePair[1];

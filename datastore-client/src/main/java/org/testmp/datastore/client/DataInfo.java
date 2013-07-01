@@ -31,11 +31,11 @@ public class DataInfo<T> {
         ObjectMapper mapper = new ObjectMapper();
         try {
             JsonNode dataInfoNode = mapper.readTree(s);
-            int id = dataInfoNode.get("id").asInt();
+            int id = dataInfoNode.get("id").getIntValue();
             JsonNode tagsNode = dataInfoNode.get("tags");
             ArrayList<String> tags = new ArrayList<String>();
             for (int i = 0; i < tagsNode.size(); i++) {
-                tags.add(tagsNode.get(i).asText());
+                tags.add(tagsNode.get(i).getTextValue());
             }
             T data = mapper.readValue(dataInfoNode.get("data").toString(), type);
             return new DataInfo<T>(id, tags, data);

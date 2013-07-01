@@ -28,7 +28,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.apache.log4j.Logger;
-import org.apache.tools.ant.types.Commandline;
+import org.testmp.webconsole.util.Commandline;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;

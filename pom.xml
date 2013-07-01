@@ -33,7 +33,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <servlet.version>2.5</servlet.version>
     <httpclient.version>4.2.3</httpclient.version>
-    <jackson.version>1.9.12</jackson.version>
+    <jackson.version>1.4.0</jackson.version>
     <sleepycat.je.version>3.2.76</sleepycat.je.version>
     <junit.version>4.11</junit.version>
     <testng.version>6.8</testng.version>
@@ -43,7 +43,6 @@
     <activation.version>1.1</activation.version>
     <jsch.version>0.1.50</jsch.version>
     <jetty.version>7.6.11.v20130520</jetty.version>
-    <ant.version>1.8.2</ant.version>
   </properties>
 
   <build>
@@ -146,11 +145,6 @@
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-webapp</artifactId>
         <version>${jetty.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.ant</groupId>
-        <artifactId>ant</artifactId>
-        <version>${ant.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
