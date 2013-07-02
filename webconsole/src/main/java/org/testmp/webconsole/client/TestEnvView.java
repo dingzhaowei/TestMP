@@ -254,7 +254,7 @@ public class TestEnvView extends VLayout {
         Timer taskRefreshing;
 
         TasksWindow(final ListGridRecord envRecord) {
-            setWidth(600);
+            setWidth(750);
             setHeight(260);
             setTitle(envRecord.getAttribute("envName"));
             setShowMinimizeButton(false);
@@ -360,6 +360,9 @@ public class TestEnvView extends VLayout {
             runField.setCanEdit(false);
             runField.setShowTitle(false);
 
+            ListGridField scheduleField = new ListGridField("schedule", "Schedule", 150);
+            scheduleField.setShowHover(true);
+
             ListGridField lastRunTimeField = new ListGridField("lastRunTime", "Last Run Time", 150);
             lastRunTimeField.setType(ListGridFieldType.DATETIME);
             lastRunTimeField.setCanEdit(false);
@@ -389,7 +392,8 @@ public class TestEnvView extends VLayout {
 
             });
 
-            taskGrid.setFields(taskIdField, taskNameField, executionField, statusField, runField, lastRunTimeField);
+            taskGrid.setFields(taskIdField, taskNameField, executionField, statusField, runField, scheduleField,
+                    lastRunTimeField);
 
             taskGrid.fetchRelatedData(envRecord, testEnvSource);
 
@@ -558,9 +562,11 @@ public class TestEnvView extends VLayout {
             DataSourceTextField taskNameField = new DataSourceTextField("taskName");
             DataSourceTextField executionField = new DataSourceTextField("execution");
             DataSourceImageField statusField = new DataSourceImageField("status");
+            DataSourceTextField scheduleField = new DataSourceTextField("schedule");
             DataSourceTextField lastRunTimeField = new DataSourceTextField("lastRunTime");
 
-            setFields(taskIdField, taskNameField, envNameField, executionField, statusField, lastRunTimeField);
+            setFields(taskIdField, taskNameField, envNameField, executionField, statusField, scheduleField,
+                    lastRunTimeField);
 
             setDataFormat(DSDataFormat.JSON);
             setClientOnly(false);

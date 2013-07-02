@@ -35,15 +35,18 @@ import org.testmp.datastore.client.DataInfo;
 import org.testmp.datastore.client.DataStoreClient;
 
 @SuppressWarnings("serial")
-public class EnvTaskService extends HttpServlet {
+public class TaskService extends HttpServlet {
 
-    private static Logger log = Logger.getLogger(EnvTaskService.class);
+    private static Logger log = Logger.getLogger(TaskService.class);
 
     private DataStoreClient client;
+
+    private TaskRunner taskRunner;
 
     @Override
     public void init() throws ServletException {
         client = new DataStoreClient((String) getServletContext().getAttribute("testEnvStoreUrl"));
+        taskRunner = (TaskRunner) getServletContext().getAttribute("taskRunner");
         super.init();
     }
 
@@ -77,59 +80,11 @@ public class EnvTaskService extends HttpServlet {
         try {
             if (action.equals("run")) {
                 final Integer taskId = Integer.valueOf(params.get("taskId"));
-
-                Map task = client.getDataById(Map.class, taskId).getData();
-                Object status = task.get("status");
-                if (status != null && status.toString().startsWith("running")) {
-                    return;
-                }
-                client.addPropertyToData(taskId, "status", "running.gif");
-                client.addPropertyToData(taskId, "lastRunTime", System.currentTimeMillis());
-
-                Map<String, Object> execCriteria = new HashMap<String, Object>();
-                Object envName = task.get("envName");
-                Object taskName = task.get("taskName");
-                execCriteria.put("envName", envName);
-                execCriteria.put("taskName", taskName);
-                execCriteria.put("selected", true);
-
-                ExecutionRunner runner = (ExecutionRunner) getServletContext().getAttribute("executionRunner");
-                List<DataInfo<Map>> execInfoList = client
-                        .getData(Map.class, new String[] { "Execution" }, execCriteria);
-                Map<Integer, Future<Integer>> executionWait = new HashMap<Integer, Future<Integer>>();
-                for (DataInfo<Map> dataInfo : execInfoList) {
-                    Map execution = dataInfo.getData();
-
-                    String hostname = (String) execution.get("host");
-                    if (!hostname.equals("localhost") && !hostname.equals("127.0.0.1")) {
-                        Map<String, Object> hostCriteria = new HashMap<String, Object>();
-                        hostCriteria.put("hostname", hostname);
-                        List<DataInfo<Map>> hostInfoList = client.getData(Map.class, new String[] { "Host" },
-                                hostCriteria);
-                        Map host = hostInfoList.get(0).getData();
-                        execution.put("username", host.get("username"));
-                        execution.put("password", host.get("password"));
-                    }
-
-                    Integer executionId = dataInfo.getId();
-                    executionWait.put(executionId, runner.addExecution(execution));
-                }
-
-                boolean successful = true;
-                for (Map.Entry<Integer, Future<Integer>> wait : executionWait.entrySet()) {
-                    Integer executionId = wait.getKey();
-                    Integer retCode = wait.getValue().get();
-                    client.addPropertyToData(executionId, "retCode", retCode);
-                    if (retCode != 0) {
-                        successful = false;
-                    }
-                }
-                client.addPropertyToData(taskId, "status", successful ? "success.png" : "failure.png");
+                runTask(taskId, client, taskRunner);
                 output.flush();
             } else if (action.equals("cancel")) {
                 Integer taskId = Integer.valueOf(params.get("taskId"));
                 client.addPropertyToData(taskId, "status", "failure.png");
-                ExecutionRunner runner = (ExecutionRunner) getServletContext().getAttribute("executionRunner");
                 Map task = client.getDataById(Map.class, taskId).getData();
                 Map<String, Object> execCriteria = new HashMap<String, Object>();
                 Object envName = task.get("envName");
@@ -140,7 +95,7 @@ public class EnvTaskService extends HttpServlet {
                         .getData(Map.class, new String[] { "Execution" }, execCriteria);
                 for (DataInfo<Map> dataInfo : execInfoList) {
                     Map execution = dataInfo.getData();
-                    runner.cancelExecution(execution);
+                    taskRunner.cancelExecution(execution);
                 }
             } else if (action.equals("queryTaskStatus")) {
                 StringBuilder respBuilder = new StringBuilder();
@@ -165,7 +120,7 @@ public class EnvTaskService extends HttpServlet {
                 String workingDir = (String) execution.get("workingDir");
                 String command = (String) execution.get("command");
                 String traceFileDir = (String) getServletContext().getAttribute("traceFileDir");
-                String filename = ExecutionRunner.getTraceFileName(host, workingDir, command);
+                String filename = TaskRunner.getTraceFileName(host, workingDir, command);
                 File traceFile = new File(traceFileDir + File.separator + filename);
 
                 if (!traceFile.exists()) {
@@ -190,5 +145,58 @@ public class EnvTaskService extends HttpServlet {
             log.error(e.getMessage(), e);
             throw new ServletException(e);
         }
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    static void runTask(Integer taskId, DataStoreClient client, TaskRunner runner) throws Exception {
+        Map task = null;
+
+        // Check and change the task status
+        synchronized (runner) {
+            task = client.getDataById(Map.class, taskId).getData();
+            Object status = task.get("status");
+            if (status != null && status.toString().startsWith("running")) {
+                return;
+            }
+            client.addPropertyToData(taskId, "status", "running.gif");
+            client.addPropertyToData(taskId, "lastRunTime", System.currentTimeMillis());
+        }
+
+        Map<String, Object> execCriteria = new HashMap<String, Object>();
+        Object envName = task.get("envName");
+        Object taskName = task.get("taskName");
+        execCriteria.put("envName", envName);
+        execCriteria.put("taskName", taskName);
+        execCriteria.put("selected", true);
+
+        List<DataInfo<Map>> execInfoList = client.getData(Map.class, new String[] { "Execution" }, execCriteria);
+        Map<Integer, Future<Integer>> executionWait = new HashMap<Integer, Future<Integer>>();
+        for (DataInfo<Map> dataInfo : execInfoList) {
+            Map execution = dataInfo.getData();
+
+            String hostname = (String) execution.get("host");
+            if (!hostname.equals("localhost") && !hostname.equals("127.0.0.1")) {
+                Map<String, Object> hostCriteria = new HashMap<String, Object>();
+                hostCriteria.put("hostname", hostname);
+                List<DataInfo<Map>> hostInfoList = client.getData(Map.class, new String[] { "Host" }, hostCriteria);
+                Map host = hostInfoList.get(0).getData();
+                execution.put("username", host.get("username"));
+                execution.put("password", host.get("password"));
+            }
+
+            Integer executionId = dataInfo.getId();
+            executionWait.put(executionId, runner.addExecution(execution));
+        }
+
+        boolean successful = true;
+        for (Map.Entry<Integer, Future<Integer>> wait : executionWait.entrySet()) {
+            Integer executionId = wait.getKey();
+            Integer retCode = wait.getValue().get();
+            client.addPropertyToData(executionId, "retCode", retCode);
+            if (retCode != 0) {
+                successful = false;
+            }
+        }
+        client.addPropertyToData(taskId, "status", successful ? "success.png" : "failure.png");
     }
 }

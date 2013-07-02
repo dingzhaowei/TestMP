@@ -35,6 +35,11 @@
 		<param-value>0</param-value>
 	</context-param>
 
+	<context-param>
+		<param-name>scheduleRefreshingTimeGap</param-name>
+		<param-value>600</param-value>
+	</context-param>
+
 	<listener>
 		<listener-class>org.testmp.webconsole.server.WebConsoleContextListener</listener-class>
 	</listener>
@@ -61,7 +66,7 @@
 
 	<servlet>
 		<servlet-name>EnvTaskService</servlet-name>
-		<servlet-class>org.testmp.webconsole.server.EnvTaskService</servlet-class>
+		<servlet-class>org.testmp.webconsole.server.TaskService</servlet-class>
 	</servlet>
 
 	<servlet-mapping>

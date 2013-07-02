@@ -465,7 +465,7 @@ public class TestCaseView extends VLayout {
     private class FilterWindow extends Window {
 
         FilterWindow() {
-            setWidth(600);
+            setWidth(680);
             setHeight(300);
             setTitle("Test Case Filter");
             setShowMinimizeButton(false);
@@ -488,8 +488,10 @@ public class TestCaseView extends VLayout {
             VLayout filterLayout = new VLayout();
             filterLayout.setWidth("99%");
             filterLayout.setMargin(5);
+
             final FilterBuilder filterBuilder = new FilterBuilder();
             filterBuilder.setDataSource(testCaseSource);
+            filterBuilder.setLayoutAlign(Alignment.CENTER);
             filterBuilder.setAutoWidth();
             filterBuilder.setOverflow(Overflow.VISIBLE);
             filterBuilder.setTopOperatorAppearance(TopOperatorAppearance.RADIO);

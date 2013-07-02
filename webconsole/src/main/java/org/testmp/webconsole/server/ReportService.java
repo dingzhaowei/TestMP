@@ -190,10 +190,13 @@ public class ReportService extends HttpServlet {
         VelocityEngine ve = new VelocityEngine();
         String reportTemplatesDir = getRealPath(baseDir + "/templates");
         ve.setProperty(VelocityEngine.FILE_RESOURCE_LOADER_PATH, reportTemplatesDir);
+
+        String sep = File.separator;
+        String velocityLog = System.getProperty("testmp.home", "") + sep + "log" + sep + "velocity.log";
+        ve.setProperty(VelocityEngine.RUNTIME_LOG, velocityLog);
+
         ve.setProperty(VelocityEngine.INPUT_ENCODING, "UTF-8");
         ve.setProperty(VelocityEngine.OUTPUT_ENCODING, "UTF-8");
-        ve.setProperty(VelocityEngine.RUNTIME_LOG, System.getProperty("testmp.home") + File.separator + "log"
-                + File.separator + "velocity.log");
         ve.init();
 
         ObjectMapper mapper = new ObjectMapper();
@@ -244,10 +247,13 @@ public class ReportService extends HttpServlet {
         VelocityEngine ve = new VelocityEngine();
         String reportTemplatesDir = getRealPath(baseDir + "/templates");
         ve.setProperty(VelocityEngine.FILE_RESOURCE_LOADER_PATH, reportTemplatesDir);
+
+        String sep = File.separator;
+        String velocityLog = System.getProperty("testmp.home", "") + sep + "log" + sep + "velocity.log";
+        ve.setProperty(VelocityEngine.RUNTIME_LOG, velocityLog);
+
         ve.setProperty(VelocityEngine.INPUT_ENCODING, "UTF-8");
         ve.setProperty(VelocityEngine.OUTPUT_ENCODING, "UTF-8");
-        ve.setProperty(VelocityEngine.RUNTIME_LOG, System.getProperty("testmp.home") + File.separator + "log"
-                + File.separator + "velocity.log");
         ve.init();
 
         ObjectMapper mapper = new ObjectMapper();

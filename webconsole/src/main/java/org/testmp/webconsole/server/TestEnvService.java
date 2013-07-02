@@ -35,6 +35,7 @@ import org.codehaus.jackson.node.ObjectNode;
 import org.codehaus.jackson.type.TypeReference;
 import org.testmp.datastore.client.DataInfo;
 import org.testmp.datastore.client.DataStoreClient;
+import org.testmp.webconsole.util.CronExpression;
 
 @SuppressWarnings("serial")
 public class TestEnvService extends HttpServlet {
@@ -45,7 +46,7 @@ public class TestEnvService extends HttpServlet {
 
     @Override
     public void init() throws ServletException {
-        client = new DataStoreClient((String)getServletContext().getAttribute("testEnvStoreUrl"));
+        client = new DataStoreClient((String) getServletContext().getAttribute("testEnvStoreUrl"));
         super.init();
     }
 
@@ -163,14 +164,12 @@ public class TestEnvService extends HttpServlet {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private Map<String, Object> addData(Map<String, Object> data, String dsId) throws Exception {
         if (dsId.equals("testEnvDS")) {
+            checkEnvNameValidity(data);
+
             Map<String, Object> m = new HashMap<String, Object>();
             m.put("envName", data.get("envName"));
-
-            if (!client.findData(new String[] { "TestEnv" }, m).isEmpty()) {
-                throw new RuntimeException("There has been an environment with the same name");
-            }
-
             m.put("refUrl", data.get("refUrl"));
+
             DataInfo<Map> dataInfo = new DataInfo<Map>(null, Arrays.asList(new String[] { "TestEnv" }), m);
             int id = client.addData(dataInfo).get(0);
             dataInfo = client.getDataById(Map.class, id);
@@ -178,11 +177,15 @@ public class TestEnvService extends HttpServlet {
             addedData.put("envId", dataInfo.getId());
             return addedData;
         } else if (dsId.equals("taskDS")) {
+            checkTaskScheduleValidity(data);
+
             Map<String, Object> m = new HashMap<String, Object>();
             m.put("taskName", data.get("taskName"));
             m.put("envName", data.get("envName"));
             m.put("status", data.get("status"));
+            m.put("schedule", data.get("schedule"));
             m.put("lastRunTime", data.get("lastRunTime"));
+
             DataInfo<Map> dataInfo = new DataInfo<Map>(null, Arrays.asList(new String[] { "Task" }), m);
             int id = client.addData(dataInfo).get(0);
             dataInfo = client.getDataById(Map.class, id);
@@ -205,15 +208,13 @@ public class TestEnvService extends HttpServlet {
             addedData.put("executionId", dataInfo.getId());
             return addedData;
         } else if (dsId.equals("hostDS")) {
+            checkHostNameValidity(data);
+
             Map<String, Object> m = new HashMap<String, Object>();
             m.put("hostname", data.get("hostname"));
-
-            if (!client.findData(new String[] { "Host" }, m).isEmpty()) {
-                throw new RuntimeException("There has been a host with the same name");
-            }
-
             m.put("username", data.get("username"));
             m.put("password", data.get("password"));
+
             DataInfo<Map> dataInfo = new DataInfo<Map>(null, Arrays.asList(new String[] { "Host" }), m);
             int id = client.addData(dataInfo).get(0);
             dataInfo = client.getDataById(Map.class, id);
@@ -305,6 +306,7 @@ public class TestEnvService extends HttpServlet {
                 }
                 Object value = data.get(key);
                 if (key.equals("envName")) {
+                    checkEnvNameValidity(data);
                     Map<String, Object> criteria = new HashMap<String, Object>();
                     criteria.put("envName", (String) oldValues.get("envName"));
                     for (int id : client.findData(new String[] { "Execution" }, criteria)) {
@@ -334,6 +336,8 @@ public class TestEnvService extends HttpServlet {
                     for (int id : client.findData(new String[] { "Execution" }, criteria)) {
                         client.addPropertyToData(id, "taskName", value);
                     }
+                } else if (key.equals("schedule")) {
+                    checkTaskScheduleValidity(data);
                 }
                 client.addPropertyToData(taskId, key, value);
             }
@@ -361,6 +365,9 @@ public class TestEnvService extends HttpServlet {
                     continue;
                 }
                 Object value = data.get(key);
+                if (key.equals("hostname")) {
+                    checkHostNameValidity(data);
+                }
                 client.addPropertyToData(hostId, key, value);
             }
             DataInfo<Map> dataInfo = client.getDataById(Map.class, hostId);
@@ -369,5 +376,40 @@ public class TestEnvService extends HttpServlet {
             return updatedData;
         }
         throw new RuntimeException("Unsupported datasource");
+    }
+
+    private void checkEnvNameValidity(Map<String, Object> data) throws Exception {
+        if (data.get("envName") == null) {
+            throw new RuntimeException("The environment name cannot be empty");
+        }
+
+        Map<String, Object> m = new HashMap<String, Object>();
+        m.put("envName", data.get("envName"));
+        if (!client.findData(new String[] { "TestEnv" }, m).isEmpty()) {
+            throw new RuntimeException("There has been an environment with the same name");
+        }
+    }
+
+    private void checkTaskScheduleValidity(Map<String, Object> data) throws Exception {
+        if (data.get("schedule") == null) {
+            return;
+        }
+
+        String cronExpression = data.get("schedule").toString();
+        if (!CronExpression.isValidExpression(cronExpression)) {
+            throw new RuntimeException("Invalid cron expression");
+        }
+    }
+
+    private void checkHostNameValidity(Map<String, Object> data) throws Exception {
+        if (data.get("hostname") == null) {
+            throw new RuntimeException("The host name cannot be empty");
+        }
+
+        Map<String, Object> m = new HashMap<String, Object>();
+        m.put("hostname", data.get("hostname"));
+        if (!client.findData(new String[] { "Host" }, m).isEmpty()) {
+            throw new RuntimeException("There has been a host with the same name");
+        }
     }
 }

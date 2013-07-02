@@ -36,9 +36,9 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.UserInfo;
 
-public class ExecutionRunner extends Thread {
+public class TaskRunner extends Thread {
 
-    private static Logger log = Logger.getLogger(ExecutionRunner.class);
+    private static Logger log = Logger.getLogger(TaskRunner.class);
 
     private long timeout;
 
@@ -48,7 +48,7 @@ public class ExecutionRunner extends Thread {
 
     private Vector<Execution> executions = new Vector<Execution>();
 
-    public ExecutionRunner(int nThreads, long timeout, String traceFileDir) {
+    public TaskRunner(int nThreads, long timeout, String traceFileDir) {
         executor = Executors.newFixedThreadPool(nThreads);
         this.timeout = timeout;
         this.traceFileDir = traceFileDir;
@@ -76,7 +76,7 @@ public class ExecutionRunner extends Thread {
             @Override
             public Integer call() throws Exception {
                 Execution e = new Execution(info);
-                synchronized (ExecutionRunner.this) {
+                synchronized (TaskRunner.this) {
                     executions.add(e);
                 }
                 return e.execute();

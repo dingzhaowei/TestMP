@@ -19,6 +19,7 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.util.Enumeration;
 import java.util.Properties;
+import java.util.Timer;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
@@ -77,8 +78,14 @@ public class WebConsoleContextListener implements ServletContextListener {
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
-        ExecutionRunner executor = new ExecutionRunner(size, timeout * 1000, traceFileDir);
-        context.setAttribute("executionRunner", executor);
-        executor.start();
+        TaskRunner taskRunner = new TaskRunner(size, timeout * 1000, traceFileDir);
+        context.setAttribute("taskRunner", taskRunner);
+        taskRunner.start();
+
+        Timer scheduleTimer = new Timer(true);
+        String testEnvStoreUrl = (String) context.getAttribute("testEnvStoreUrl");
+        long refreshingGap = Long.parseLong((String) context.getAttribute("scheduleRefreshingTimeGap"));
+        TaskScheduler taskScheduler = new TaskScheduler(testEnvStoreUrl, refreshingGap * 1000, taskRunner);
+        scheduleTimer.scheduleAtFixedRate(taskScheduler, 0, 1000);
     }
 }
