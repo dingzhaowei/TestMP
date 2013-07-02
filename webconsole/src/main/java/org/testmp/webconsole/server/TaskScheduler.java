@@ -38,7 +38,7 @@ public class TaskScheduler extends TimerTask {
     public void run() {
         try {
             long currentTime = System.currentTimeMillis();
-            if (lastRefreshingTime == 0 || lastRefreshingTime - currentTime > refreshTime) {
+            if (lastRefreshingTime == 0 || currentTime - lastRefreshingTime > refreshTime) {
                 refreshTaskSchedule();
                 lastRefreshingTime = currentTime;
             }
