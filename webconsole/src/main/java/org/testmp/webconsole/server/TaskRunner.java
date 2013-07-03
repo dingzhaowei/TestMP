@@ -234,15 +234,6 @@ public class TaskRunner extends Thread {
                 @Override
                 public void log(int level, String message) {
                     switch (level) {
-                    case DEBUG:
-                        log.debug(message);
-                        break;
-                    case INFO:
-                        log.info(message);
-                        break;
-                    case WARN:
-                        log.warn(message);
-                        break;
                     case ERROR:
                         log.error(message);
                         break;

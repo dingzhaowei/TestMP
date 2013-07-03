@@ -74,7 +74,6 @@ public class TestDataView extends VLayout {
         testDataGrid.setLayoutAlign(Alignment.CENTER);
         testDataGrid.setDataSource(testDataSource);
         testDataGrid.setAutoFetchData(true);
-        testDataGrid.setShowAllRecords(true);
         testDataGrid.setDataFetchMode(FetchMode.LOCAL);
         testDataGrid.setFixedRecordHeights(false);
         testDataGrid.setCanRemoveRecords(true);

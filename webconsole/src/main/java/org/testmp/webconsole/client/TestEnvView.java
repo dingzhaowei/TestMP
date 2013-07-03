@@ -975,7 +975,9 @@ public class TestEnvView extends VLayout {
                             tracePane.setWidth("99%");
                             tracePane.setHeight100();
                             tracePane.setContents("<pre>" + escapeHtml(response.getText()) + "</pre>");
-                            windowLayout.addMember(tracePane);
+                            HLayout wrapperLayout = new HLayout();
+                            wrapperLayout.addMember(tracePane);
+                            windowLayout.addMember(wrapperLayout);
                             HLayout controls = new HLayout();
                             controls.setSize("99%", "20");
                             controls.setMargin(5);

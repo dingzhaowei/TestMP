@@ -69,9 +69,10 @@ public class ReportWindow extends Window {
     }
 
     public ReportWindow() {
-        setWidth("950");
-        setHeight("95%");
-        setShowMinimizeButton(false);
+        setWidth(950);
+        setHeight("85%");
+        setShowMaximizeButton(true);
+        setCanDragResize(true);
         setIsModal(true);
         setShowModalMask(true);
         centerInPage();
@@ -125,7 +126,9 @@ public class ReportWindow extends Window {
                         reportPane.setEvalScriptBlocks(true);
                         final String filename = response.getText();
                         reportPane.setContentsURL(baseUrl + "reports/" + filename);
-                        windowLayout.addMember(reportPane);
+                        HLayout wrapperLayout = new HLayout();
+                        wrapperLayout.addMember(reportPane);
+                        windowLayout.addMember(wrapperLayout);
                         HLayout controls = new HLayout();
                         controls.setSize("99%", "20");
                         controls.setMargin(5);

@@ -40,6 +40,11 @@
 		<param-value>600</param-value>
 	</context-param>
 
+	<context-param>
+		<param-name>taskTriggerMaxLatency</param-name>
+		<param-value>600</param-value>
+	</context-param>
+
 	<listener>
 		<listener-class>org.testmp.webconsole.server.WebConsoleContextListener</listener-class>
 	</listener>

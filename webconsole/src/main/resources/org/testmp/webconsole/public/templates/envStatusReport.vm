@@ -6,7 +6,7 @@
   </head>
   <body>
     <br>
-    <table style="border-collapse: collapse; text-align: center; font-family: Calibri,sans-serif,serif; margin: 50px" cellspacing="2" border="1" cellpadding="2" width="800">
+    <table style="border-collapse: collapse; text-align: center; font-family: Calibri,sans-serif,serif; margin: 50px; font-size: 0.9em" cellspacing="2" border="1" cellpadding="2" width="800">
       <tbody>
         <tr>
           <td valign="top"><b>Environment</b></td>
@@ -20,20 +20,20 @@
         #if( $tasks.isEmpty() )
         <tr>
           #if($refUrl.isEmpty())
-          <td valign="middle">$envName</td>
+          <td valign="middle" bgcolor="#ffffcc">$envName</td>
           #else
-          <td valign="middle"><a href="$refUrl">$envName</a></td>
+          <td valign="middle" bgcolor="#ffffcc"><a href="$refUrl">$envName</a></td>
           #end
-          <td valign="middle" width="25%"></td>
-          <td valign="middle" width="25%"></td>
-          <td valign="middle" width="25%"></td>
+          <td valign="middle" width="25%" bgcolor="#ffffcc"></td>
+          <td valign="middle" width="25%" bgcolor="#ffffcc"></td>
+          <td valign="middle" width="25%" bgcolor="#ffffcc"></td>
         </tr>
         #else
         <tr>
           #if($refUrl.isEmpty())
-          <td rowspan="$tasks.size()" valign="middle">$envName<br></td>
+          <td rowspan="$tasks.size()" valign="middle" bgcolor="#ffffcc">$envName<br></td>
           #else
-          <td rowspan="$tasks.size()" valign="middle"><a href="$refUrl">$envName</a></td>
+          <td rowspan="$tasks.size()" valign="middle" bgcolor="#ffffcc"><a href="$refUrl">$envName</a></td>
           #end
         #set($first = true)
         #foreach($taskName in $tasks.keySet())
@@ -44,13 +44,15 @@
           #set($task = $tasks.get($taskName))
           #set($taskStatus = $task.get("taskStatus"))
           #set($lastRunTime = $task.get("lastRunTime"))
-          <td valign="middle">$taskName</td>
+          <td valign="middle" bgcolor="#ffffcc">$taskName</td>
           #if(!$taskStatus.isEmpty())
-          <td valign="middle"><img alt="$taskStatus" src="${baseUrl}/images/${taskStatus}" height="16" width="16"></td>
+          <td valign="middle" bgcolor="#ffffcc">
+            <img alt="$taskStatus" src="${baseUrl}/images/${taskStatus}" height="20" width="20">
+          </td>
           #else
-          <td valign="middle"></td>
+          <td valign="middle" bgcolor="#ffffcc"></td>
           #end
-          <td valign="middle">$lastRunTime</td>
+          <td valign="middle" bgcolor="#ffffcc">$lastRunTime</td>
         </tr>
         #end
         #end
@@ -60,4 +62,3 @@
     <br>
   </body>
 </html>
-

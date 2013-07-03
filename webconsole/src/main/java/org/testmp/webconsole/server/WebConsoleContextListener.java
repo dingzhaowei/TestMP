@@ -84,8 +84,9 @@ public class WebConsoleContextListener implements ServletContextListener {
 
         Timer scheduleTimer = new Timer(true);
         String testEnvStoreUrl = (String) context.getAttribute("testEnvStoreUrl");
-        long refreshingGap = Long.parseLong((String) context.getAttribute("scheduleRefreshingTimeGap"));
-        TaskScheduler taskScheduler = new TaskScheduler(testEnvStoreUrl, refreshingGap * 1000, taskRunner);
+        long refreshingGap = Long.parseLong((String) context.getAttribute("scheduleRefreshingTimeGap")) * 1000;
+        long triggerLatency = Long.parseLong((String) context.getAttribute("taskTriggerMaxLatency")) * 1000;
+        TaskScheduler taskScheduler = new TaskScheduler(testEnvStoreUrl, refreshingGap, taskRunner, triggerLatency);
         scheduleTimer.scheduleAtFixedRate(taskScheduler, 0, 1000);
     }
 }

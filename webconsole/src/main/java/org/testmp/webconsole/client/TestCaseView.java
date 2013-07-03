@@ -129,7 +129,6 @@ public class TestCaseView extends VLayout {
 
         testCaseGrid.setDataSource(testCaseSource);
         testCaseGrid.setAutoFetchData(true);
-        testCaseGrid.setShowAllRecords(true);
         testCaseGrid.setDataFetchMode(FetchMode.LOCAL);
 
         testCaseGrid.setGroupByField("project");

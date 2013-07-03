@@ -23,14 +23,17 @@ public class TaskScheduler extends TimerTask {
 
     private long lastRefreshingTime;
 
-    private long refreshTime;
+    private long refreshGap;
+
+    private long triggerLatency;
 
     private Map<Integer, TaskScheduleInfo> schedule;
 
-    public TaskScheduler(String taskStoreUrl, long refreshingGap, TaskRunner taskRunner) {
+    public TaskScheduler(String taskStoreUrl, long refreshingGap, TaskRunner taskRunner, long triggerLatency) {
         client = new DataStoreClient(taskStoreUrl);
         schedule = new HashMap<Integer, TaskScheduleInfo>();
-        this.refreshTime = refreshingGap;
+        this.refreshGap = refreshingGap;
+        this.triggerLatency = triggerLatency;
         this.taskRunner = taskRunner;
     }
 
@@ -38,13 +41,13 @@ public class TaskScheduler extends TimerTask {
     public void run() {
         try {
             long currentTime = System.currentTimeMillis();
-            if (lastRefreshingTime == 0 || currentTime - lastRefreshingTime > refreshTime) {
+            if (lastRefreshingTime == 0 || currentTime - lastRefreshingTime > refreshGap) {
                 refreshTaskSchedule();
                 lastRefreshingTime = currentTime;
             }
             poll();
         } catch (Exception e) {
-            log.error(e);
+            log.error("TaskScheduler confronted exception.", e);
         }
     }
 
@@ -69,7 +72,7 @@ public class TaskScheduler extends TimerTask {
 
     private void poll() throws Exception {
         for (Map.Entry<Integer, TaskScheduleInfo> entry : schedule.entrySet()) {
-            Integer taskId = entry.getKey();
+            final Integer taskId = entry.getKey();
             TaskScheduleInfo info = entry.getValue();
             CronExpression cron = info.getCron();
             Date lastRunTime = info.getLastRunTime();
@@ -79,8 +82,20 @@ public class TaskScheduler extends TimerTask {
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeZone(cron.getTimeZone());
             Date currentTime = calendar.getTime();
+
             if (currentTime.after(nextValidTime)) {
-                TaskService.runTask(taskId, client, taskRunner);
+                long diff = currentTime.getTime() - nextValidTime.getTime();
+                if (diff <= triggerLatency) {
+                    new Thread() {
+                        public void run() {
+                            try {
+                                TaskService.runTask(taskId, client, taskRunner);
+                            } catch (Exception e) {
+                                log.error("Running task confronted exception.", e);
+                            }
+                        }
+                    }.start();
+                }
                 info.markTaskRun();
             }
         }
