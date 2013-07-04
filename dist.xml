@@ -44,6 +44,8 @@
 			</fileset>
 		</copy>
 
+		<copy file="README.md" todir="${testmp}" />
+
 		<chmod perm="ugo+x" type="file">
 			<fileset dir="${testmp}/bin">
 				<include name="*.sh" />
