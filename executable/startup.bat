@@ -41,6 +41,12 @@ goto setArgs
 :setArgsDone
 
 cd "%TESTMP_HOME%\bin
+
+if not "%JAVA_HOME%" == "" goto hasJavaHome
 java Launcher %CMD_LINE_ARGS%
+goto end
+:hasJavaHome
+echo "%JAVA_HOME%\bin\java Launcher %CMD_LINE_ARGS%"
+"%JAVA_HOME%\bin\java" Launcher %CMD_LINE_ARGS%
 
 :end

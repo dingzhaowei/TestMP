@@ -58,13 +58,18 @@
 			<entry key="testCaseStoreUrl" value="http://localhost:10081/DataStore.do" />
 			<entry key="testDataStoreUrl" value="http://localhost:10082/DataStore.do" />
 			<entry key="testEnvStoreUrl" value="http://localhost:10083/DataStore.do" />
+
 			<entry key="executionThreadNum" value="10" />
 			<entry key="executionTimeout" value="0" />
 			<entry key="scheduleRefreshingTimeGap" value="1800" />
+			<entry key="taskTriggerMaxLatency" value="600" />
+
 			<entry key="testMetricsReportRecipients" value="" />
 			<entry key="testMetricsReportSubject" value="" />
+
 			<entry key="envStatusReportRecipients" value="" />
 			<entry key="envStatusReportSubject" value="" />
+
 			<entry key="smtpSettingHost" value="" />
 			<entry key="smtpSettingPort" value="25" />
 			<entry key="smtpSettingUser" value="" />
