@@ -109,8 +109,8 @@ You can add test data into the data store, categorize it by tags, and use it by 
 
 The data is kept as object and can be complex. Different data can be merged together to be new.
 
-### Centralized Test Environment Management ###
-**Driven by Task Engine**
+### Task-driven Test Environment Management ###
+**Leverage distributed scripts**
 
 Environment tasks are defined, scheduled, and bounded to scripts on local/remote hosts.
 

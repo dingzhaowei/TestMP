@@ -108,8 +108,8 @@ public abstract class TestSync {
      * @param passed
      * @param failureTrace
      */
-    public void updateTestMetrics(long duration, boolean passed, String failureTrace) {
-        String update = TestConfig.getProperty("updateTestMetrics");
+    public void updateTestMeasures(long duration, boolean passed, String failureTrace) {
+        String update = TestConfig.getProperty("updateTestMeasures");
         if (update == null || !update.toLowerCase().equals("true")) {
             return;
         }

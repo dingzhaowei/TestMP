@@ -37,7 +37,7 @@ public final class TestSyncForTestNG extends TestSync implements ITestListener {
     @Override
     public void onTestSuccess(ITestResult result) {
         long duration = result.getEndMillis() - result.getStartMillis();
-        updateTestMetrics(duration, true, null);
+        updateTestMeasures(duration, true, null);
     }
 
     @Override
@@ -47,7 +47,7 @@ public final class TestSyncForTestNG extends TestSync implements ITestListener {
         StringWriter cache = new StringWriter();
         e.printStackTrace(new PrintWriter(cache, true));
         String failureTrace = cache.toString();
-        updateTestMetrics(duration, false, failureTrace);
+        updateTestMeasures(duration, false, failureTrace);
     }
 
     @Override

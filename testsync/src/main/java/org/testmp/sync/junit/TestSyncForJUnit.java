@@ -57,7 +57,7 @@ public class TestSyncForJUnit extends TestSync {
         @Override
         protected void finished(Description description) {
             long duration = System.currentTimeMillis() - startTime;
-            updateTestMetrics(duration, passed, failureTrace);
+            updateTestMeasures(duration, passed, failureTrace);
         }
     };
 
