@@ -49,6 +49,6 @@ if not "%JAVA_HOME%" == "" goto hasJavaHome
 java -cp "%TESTMP_LIB%" SaveLoad save %CMD_LINE_ARGS%
 goto end
 :hasJavaHome
-"%JAVA_HOME%\bin\java" -cp "%TESTMP_LIB%" SaveLoad save %CMD_LINE_ARGS%
+"%JAVA_HOME%\bin\java" -cp "%TESTMP_LIB%" SaveLoad load %CMD_LINE_ARGS%
 
 :end
