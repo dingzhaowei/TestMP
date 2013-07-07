@@ -49,7 +49,7 @@ public class TestCaseService extends HttpServlet {
 
     @Override
     public void init() throws ServletException {
-        client = new DataStoreClient((String)getServletContext().getAttribute("testCaseStoreUrl"));
+        client = new DataStoreClient((String) getServletContext().getAttribute("testCaseStoreUrl"));
         super.init();
     }
 
@@ -75,9 +75,9 @@ public class TestCaseService extends HttpServlet {
 
         ObjectNode dsResponse = mapper.createObjectNode();
         ObjectNode responseBody = dsResponse.putObject("response");
-        String oprationType = dsRequest.get("operationType").toString();
+        String operationType = dsRequest.get("operationType").toString();
         try {
-            if (oprationType.equals("fetch")) {
+            if (operationType.equals("fetch")) {
                 List<Map<String, Object>> dataList = fetchData();
                 responseBody.put("status", 0);
                 responseBody.put("startRow", 0);
@@ -85,12 +85,19 @@ public class TestCaseService extends HttpServlet {
                 responseBody.put("totalRows", dataList.size());
                 JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(dataList));
                 responseBody.put("data", dataNode);
-            } else if (oprationType.equals("update")) {
+            } else if (operationType.equals("update")) {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
                 Map<String, Object> updatedData = updateData(data);
                 responseBody.put("status", 0);
                 JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(updatedData));
+                responseBody.put("data", dataNode);
+            } else if (operationType.equals("remove")) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
+                Map<String, Object> removedData = removeData(data);
+                responseBody.put("status", 0);
+                JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(removedData));
                 responseBody.put("data", dataNode);
             }
         } catch (Exception e) {
@@ -148,6 +155,17 @@ public class TestCaseService extends HttpServlet {
         MetaInfo metaInfo = client.getMetaInfo(id).get(0);
         Map<String, Object> updatedData = combineInfoToMap(dataInfo, metaInfo);
         return updatedData;
+    }
+
+    private Map<String, Object> removeData(Map<String, Object> data) throws Exception {
+        Integer id = (Integer) data.get("id");
+        if (client.deleteData(id)) {
+            Map<String, Object> m = new HashMap<String, Object>();
+            m.put("id", id);
+            return m;
+        } else {
+            throw new RuntimeException("Cannot remove the data");
+        }
     }
 
     private Map<String, Object> combineInfoToMap(DataInfo<TestCase> dataInfo, MetaInfo metaInfo) throws Exception {

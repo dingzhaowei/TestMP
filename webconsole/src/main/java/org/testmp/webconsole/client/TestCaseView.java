@@ -131,6 +131,9 @@ public class TestCaseView extends VLayout {
         testCaseGrid.setAutoFetchData(true);
         testCaseGrid.setDataFetchMode(FetchMode.LOCAL);
 
+        testCaseGrid.setCanRemoveRecords(true);
+        testCaseGrid.setWarnOnRemoval(true);
+
         testCaseGrid.setGroupByField("project");
         testCaseGrid.setGroupStartOpen(GroupStartOpen.ALL);
 

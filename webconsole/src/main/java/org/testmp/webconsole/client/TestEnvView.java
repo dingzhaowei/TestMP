@@ -119,6 +119,7 @@ public class TestEnvView extends VLayout {
         testEnvGrid.setShowRecordComponentsByCell(true);
         testEnvGrid.setShowFilterEditor(true);
         testEnvGrid.setCanRemoveRecords(true);
+        testEnvGrid.setWarnOnRemoval(true);
         testEnvGrid.setCanEdit(true);
         testEnvGrid.setAutoFetchData(true);
         testEnvGrid.setDataSource(testEnvSource);
@@ -331,6 +332,7 @@ public class TestEnvView extends VLayout {
             taskGrid.setShowRecordComponents(true);
             taskGrid.setShowRecordComponentsByCell(true);
             taskGrid.setCanRemoveRecords(true);
+            taskGrid.setWarnOnRemoval(true);
             taskGrid.setCanEdit(true);
             taskGrid.setDataSource(taskSource);
 
@@ -663,6 +665,7 @@ public class TestEnvView extends VLayout {
             executionGrid.setShowRecordComponents(true);
             executionGrid.setShowRecordComponentsByCell(true);
             executionGrid.setCanRemoveRecords(true);
+            executionGrid.setWarnOnRemoval(true);
             executionGrid.setCanEdit(true);
             executionGrid.setDataSource(executionSource);
 
@@ -829,6 +832,7 @@ public class TestEnvView extends VLayout {
             hostGrid.setLayoutAlign(Alignment.CENTER);
             hostGrid.setShowRollOver(false);
             hostGrid.setCanRemoveRecords(true);
+            hostGrid.setWarnOnRemoval(true);
             hostGrid.setCanEdit(true);
             hostGrid.setAutoFetchData(true);
             hostGrid.setDataSource(hostSource);

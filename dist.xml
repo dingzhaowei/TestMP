@@ -25,16 +25,23 @@
 
 		<copy todir="${testmp}/lib">
 			<fileset dir="datastore-client/target">
-				<include name="datastore-client*.jar" />
+				<include name="uber-datastore-client*.jar" />
 			</fileset>
-			<globmapper from="*-SNAPSHOT.jar" to="*.jar" />
+			<globmapper from="uber-*-SNAPSHOT.jar" to="*.jar" />
 		</copy>
+
 		<copy todir="${testmp}/lib">
 			<fileset dir="testsync/target">
 				<include name="testsync*.jar" />
 			</fileset>
 			<globmapper from="*-SNAPSHOT.jar" to="*.jar" />
 		</copy>
+
+		<path id="testmp-clients">
+			<fileset dir="${testmp}/lib">
+				<include name="*.jar" />
+			</fileset>
+		</path>
 
 		<copy todir="${testmp}/bin">
 			<fileset dir="${script}">
@@ -53,7 +60,8 @@
 		</chmod>
 
 		<javac srcdir="${script}" destdir="${testmp}/bin" includeantruntime="false">
-			<include name="Launcher.java" />
+			<classpath refid="testmp-clients" />
+			<include name="*.java" />
 		</javac>
 
 		<propertyfile file="${testmp}/conf/testmp.properties" comment="TestMP setting">

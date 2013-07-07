@@ -44,10 +44,10 @@ public class Launcher {
             throw new RuntimeException("Port is not free: " + port);
         }
 
-        String executable = testmpHome + File.separator + "webapp" + File.separator + "datastore.war";
+        String war = testmpHome + File.separator + "webapp" + File.separator + "datastore.war";
         String dbHome = testmpHome + File.separator + "data" + File.separator + storeName;
-        String[] command = new String[] { "java", "-DhttpPort=" + port, "-Dtestmp.home=" + testmpHome,
-                "-DdbHome=" + dbHome, "-jar", executable };
+        String[] command = new String[] { getJavaExecutable(), "-DhttpPort=" + port, "-Dtestmp.home=" + testmpHome,
+                "-DdbHome=" + dbHome, "-jar", war };
         ProcessBuilder pb = new ProcessBuilder(command);
         pb.directory(new File(testmpHome)).redirectErrorStream(true);
         return pb.start();
@@ -59,9 +59,9 @@ public class Launcher {
             throw new RuntimeException("Port is not free: " + port);
         }
 
-        String executable = testmpHome + File.separator + "webapp" + File.separator + "testmp.war";
-        String[] command = new String[] { "java", "-DhttpPort=" + port, "-Dtestmp.home=" + testmpHome, "-jar",
-                executable };
+        String war = testmpHome + File.separator + "webapp" + File.separator + "testmp.war";
+        String[] command = new String[] { getJavaExecutable(), "-DhttpPort=" + port, "-Dtestmp.home=" + testmpHome,
+                "-jar", war };
         ProcessBuilder pb = new ProcessBuilder(command);
         pb.directory(new File(testmpHome)).redirectErrorStream(true);
         return pb.start();
@@ -75,6 +75,14 @@ public class Launcher {
         } catch (IOException ex) {
             return true;
         }
+    }
+
+    private static String getJavaExecutable() {
+        String javaHome = System.getenv("JAVA_HOME");
+        if (javaHome != null) {
+            return javaHome + File.separator + "bin" + File.separator + "java";
+        }
+        return "java";
     }
 
     public static void main(String[] args) throws Exception {
@@ -95,7 +103,7 @@ public class Launcher {
                 for (Process p : dsProcs) {
                     p.destroy();
                 }
-                
+
                 if (webProc != null) {
                     webProc.destroy();
                 }
