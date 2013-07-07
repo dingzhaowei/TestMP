@@ -29,19 +29,19 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
+        <artifactId>maven-dependency-plugin</artifactId>
         <executions>
           <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
+            <phase>install</phase>
+              <goals>
+                <goal>copy-dependencies</goal>
+             </goals>
+             <configuration>
+               <outputDirectory>${project.build.directory}/lib</outputDirectory>
+               <includeScope>runtime</includeScope>
+             </configuration>
           </execution>
         </executions>
-        <configuration>
-          <finalName>uber-${artifactId}-${version}</finalName>
-        </configuration>
       </plugin>
     </plugins>
   </build>
