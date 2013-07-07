@@ -14,11 +14,15 @@
 import java.io.*;
 import java.util.*;
 
+import org.apache.log4j.Logger;
+import org.apache.log4j.varia.NullAppender;
+
 import org.testmp.datastore.client.DataStoreClient;
 
 public class SaveLoad {
 
     public static void main(String[] args) throws Exception {
+        Logger.getRootLogger().addAppender(new NullAppender());
         String testmpHome = System.getenv("TESTMP_HOME");
         if (testmpHome == null) {
             throw new RuntimeException("TESTMP_HOME is not set");
