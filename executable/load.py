@@ -25,11 +25,13 @@ executable = 'java'
 if 'JAVA_HOME' in os.environ:
     executable = os.path.join(os.environ['JAVA_HOME'], 'bin', 'java')
 
-dependencies = os.listdir(os.path.join(os.environ['TESTMP_HOME'], 'lib'))
+testmp_lib = os.path.join(os.environ['TESTMP_HOME'], 'lib')
+dependencies = os.listdir(testmp_lib)
+dependencies = [os.path.join(testmp_lib, d) for d in dependencies]
 dependencies.insert(0, '.')
 
 os.chdir(bin)
-command = [executable, '-cp', ';'.join(dependencies), 'SaveLoad', 'load']
+command = [executable, '-cp', ':'.join(dependencies), 'SaveLoad', 'load']
 
 if len(sys.argv) > 1:
     command.extend(sys.argv[1:])

@@ -81,8 +81,8 @@
 
 			<entry key="executionThreadNum" value="10" />
 			<entry key="executionTimeout" value="0" />
-			<entry key="scheduleRefreshingTimeGap" value="1800" />
-			<entry key="taskTriggerMaxLatency" value="600" />
+			<entry key="scheduleRefreshingTimeGap" value="600" />
+			<entry key="taskTriggerMaxLatency" value="60" />
 
 			<entry key="testMetricsReportRecipients" value="" />
 			<entry key="testMetricsReportSubject" value="" />

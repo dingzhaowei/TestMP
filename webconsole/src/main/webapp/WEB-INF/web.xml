@@ -42,7 +42,7 @@
 
 	<context-param>
 		<param-name>taskTriggerMaxLatency</param-name>
-		<param-value>600</param-value>
+		<param-value>60</param-value>
 	</context-param>
 
 	<listener>
