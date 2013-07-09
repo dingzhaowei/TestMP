@@ -791,7 +791,7 @@ public class DataStoreClient {
                 dataInfoList.add(DataInfo.valueOf(dataInfoNode.toString(), type));
             }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failed to convert JSON: " + s, e);
         }
         return dataInfoList;
     }
@@ -806,7 +806,7 @@ public class DataStoreClient {
                 objList.add(mapper.readValue(objNode.toString(), type));
             }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failed to convert JSON: " + s, e);
         }
         return objList;
     }
