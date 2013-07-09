@@ -201,7 +201,7 @@ public class TaskRunner extends Thread {
                     writer.flush();
                 }
 
-                return process.exitValue();
+                return process.waitFor();
             } catch (Exception e) {
                 try {
                     writer.println(e.getMessage());

@@ -98,23 +98,23 @@ The web console will instantly update test document and measures upon test run.
 ### Auto-generation of Metrics Report to Signoff ###
 **Evaluate the automation test**
 
-Test robustness, effectiveness, and efficiency will be evaluated into a clean but meaningful test report.
+Test robustness, effectiveness, and efficiency are evaluated into a clean but meaningful report.
 
 You can signoff the report by marking "Accept" or "Refuse" and send it to the stakeholders!
 
-### Object-based Test Data Storage & Service ###
-**Get test data object via service**
+### Object-oriented Test Data Storage & Service ###
+**Avoid the data assembling**
 
 You can add test data into the data store, categorize it by tags, and use it by API in automation.
 
-The data is kept as object and can be complex. Different data can be merged together to be new.
+Test data is fetched as its original type, or by merging different snippets together.
 
 ### Task-driven Test Environment Management ###
 **Leverage distributed scripts**
 
 Environment tasks are defined, scheduled, and bounded to scripts on local/remote hosts.
 
-Task executes concurrently, which can be monitored and traced from the Web Console.
+Task executes concurrently, of which the result can be traced on the Web Console.
 
 ------
 

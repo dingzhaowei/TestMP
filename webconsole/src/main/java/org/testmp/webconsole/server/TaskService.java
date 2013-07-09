@@ -85,7 +85,14 @@ public class TaskService extends HttpServlet {
             } else if (action.equals("cancel")) {
                 Integer taskId = Integer.valueOf(params.get("taskId"));
                 client.addPropertyToData(taskId, "status", "failure.png");
-                Map task = client.getDataById(Map.class, taskId).getData();
+
+                DataInfo<Map> dataInfo = client.getDataById(Map.class, taskId);
+                if (dataInfo == null) {
+                    log.warn("Failed to cancel task " + taskId + ". Not found.");
+                    return;
+                }
+
+                Map task = dataInfo.getData();
                 Map<String, Object> execCriteria = new HashMap<String, Object>();
                 Object envName = task.get("envName");
                 Object taskName = task.get("taskName");
@@ -93,15 +100,20 @@ public class TaskService extends HttpServlet {
                 execCriteria.put("taskName", taskName);
                 List<DataInfo<Map>> execInfoList = client
                         .getData(Map.class, new String[] { "Execution" }, execCriteria);
-                for (DataInfo<Map> dataInfo : execInfoList) {
-                    Map execution = dataInfo.getData();
+                for (DataInfo<Map> execInfo : execInfoList) {
+                    Map execution = execInfo.getData();
                     taskRunner.cancelExecution(execution);
                 }
             } else if (action.equals("queryTaskStatus")) {
                 StringBuilder respBuilder = new StringBuilder();
                 for (String t : params.get("taskIds").split(",")) {
                     Integer taskId = Integer.parseInt(t.trim());
+
                     DataInfo<Map> dataInfo = client.getDataById(Map.class, taskId);
+                    if (dataInfo == null) {
+                        continue;
+                    }
+
                     Object status = dataInfo.getData().get("status");
                     Object lastRunTime = dataInfo.getData().get("lastRunTime");
                     if (status != null) {
@@ -115,7 +127,15 @@ public class TaskService extends HttpServlet {
                 output.flush();
             } else if (action.equals("queryExecutionTrace")) {
                 Integer executionId = Integer.valueOf(params.get("executionId"));
-                Map execution = client.getDataById(Map.class, executionId).getData();
+
+                DataInfo<Map> dataInfo = client.getDataById(Map.class, executionId);
+                if (dataInfo == null) {
+                    output.println("Execution is not found.");
+                    output.flush();
+                    return;
+                }
+
+                Map execution = dataInfo.getData();
                 String host = (String) execution.get("host");
                 String workingDir = (String) execution.get("workingDir");
                 String command = (String) execution.get("command");
@@ -153,7 +173,12 @@ public class TaskService extends HttpServlet {
 
         // Check and change the task status
         synchronized (runner) {
-            task = client.getDataById(Map.class, taskId).getData();
+            DataInfo<Map> dataInfo = client.getDataById(Map.class, taskId);
+            if (dataInfo == null) {
+                log.warn("Failed to run task " + taskId + ". Not found.");
+                return;
+            }
+            task = dataInfo.getData();
             Object status = task.get("status");
             if (status != null && status.toString().startsWith("running")) {
                 return;

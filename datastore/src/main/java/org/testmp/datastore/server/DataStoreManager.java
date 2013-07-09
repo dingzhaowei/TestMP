@@ -68,7 +68,7 @@ public final class DataStoreManager {
      * @throws DatabaseException
      */
     public void open(String homeDir) throws DatabaseException {
-        log.info("Open data store on " + homeDir);
+        log.debug("Open data store on " + homeDir);
         if (openned) {
             throw new RuntimeException("The manager has been open on " + dataStore.getEnv().getHome());
         }
@@ -84,7 +84,7 @@ public final class DataStoreManager {
      * @throws DatabaseException
      */
     public void close() throws DatabaseException {
-        log.info("Close data store");
+        log.debug("Close data store");
         if (openned && dataStore != null) {
             dataStore.close();
         }
@@ -129,7 +129,7 @@ public final class DataStoreManager {
      * @return
      */
     public List<DataInfo> getData(final List<String> tags, final List<Integer> propertyIds) {
-        log.info("Get data with tags " + tags + " and property IDs " + propertyIds);
+        log.debug("Get data with tags " + tags + " and property IDs " + propertyIds);
         try {
             final List<DataInfo> result = new ArrayList<DataInfo>();
             runner.run(new TransactionWorker() {
@@ -202,7 +202,7 @@ public final class DataStoreManager {
      * @return
      */
     public List<DataInfo> getDataById(final int id) {
-        log.info("Get data with id " + id);
+        log.debug("Get data with id " + id);
         try {
             final List<DataInfo> result = new ArrayList<DataInfo>();
             runner.run(new TransactionWorker() {
@@ -238,7 +238,7 @@ public final class DataStoreManager {
      * @return
      */
     public List<DataInfo> getDataByRange(final int startId, final int endId) {
-        log.info("Get data between range [" + startId + ", " + endId + "]");
+        log.debug("Get data between range [" + startId + ", " + endId + "]");
         try {
             final List<DataInfo> result = new ArrayList<DataInfo>();
             runner.run(new TransactionWorker() {
@@ -282,7 +282,7 @@ public final class DataStoreManager {
      * @return
      */
     public List<Integer> addData(final List<DataInfo> dataInfoList) {
-        log.info("Add " + dataInfoList.size() + " data");
+        log.debug("Add " + dataInfoList.size() + " data");
         try {
             final HashSet<Integer> result = new HashSet<Integer>();
             runner.run(new TransactionWorker() {
@@ -333,7 +333,7 @@ public final class DataStoreManager {
      * @param idList
      */
     public void deleteData(final List<Integer> idList) {
-        log.info("Delete data of id: " + idList);
+        log.debug("Delete data of id: " + idList);
         try {
             runner.run(new TransactionWorker() {
 
@@ -383,7 +383,7 @@ public final class DataStoreManager {
      * @return
      */
     public List<Tag> getTags() {
-        log.info("Get all tags");
+        log.debug("Get all tags");
         try {
             final List<Tag> result = new ArrayList<Tag>();
             runner.run(new TransactionWorker() {
@@ -408,7 +408,7 @@ public final class DataStoreManager {
      * @param tag
      */
     public void addTagToData(final int dataId, final String tag) {
-        log.info("Add tag " + tag + " to data of id " + dataId);
+        log.debug("Add tag " + tag + " to data of id " + dataId);
         try {
             runner.run(new TransactionWorker() {
 
@@ -441,7 +441,7 @@ public final class DataStoreManager {
      * @param tag
      */
     public void deleteTagFromData(final int dataId, final String tag) {
-        log.info("Delete tag " + tag + " from data of id " + dataId);
+        log.debug("Delete tag " + tag + " from data of id " + dataId);
         try {
             runner.run(new TransactionWorker() {
 
@@ -482,7 +482,7 @@ public final class DataStoreManager {
      * @return
      */
     List<Object> getPropertyValues(final String key, final List<String> tags) {
-        log.info("Get property values mapping to key (" + key + ") filtered by tags " + tags);
+        log.debug("Get property values mapping to key (" + key + ") filtered by tags " + tags);
         try {
             final HashSet<Object> result = new HashSet<Object>();
             runner.run(new TransactionWorker() {
@@ -525,7 +525,7 @@ public final class DataStoreManager {
      * @param value
      */
     public void addPropertyToData(final int dataId, final String key, final Object value) {
-        log.info("Add property (" + key + ", " + value + ") to data of id " + dataId);
+        log.debug("Add property (" + key + ", " + value + ") to data of id " + dataId);
         try {
             runner.run(new TransactionWorker() {
 
@@ -576,7 +576,7 @@ public final class DataStoreManager {
      * @param key
      */
     public void deletePropertyFromData(final int dataId, final String key) {
-        log.info("Delete property " + key + " from data of id " + dataId);
+        log.debug("Delete property " + key + " from data of id " + dataId);
         try {
             runner.run(new TransactionWorker() {
 
@@ -618,7 +618,7 @@ public final class DataStoreManager {
      * @return
      */
     public List<MetaInfo> getMetaInfo(final List<Integer> dataIdList) {
-        log.info("Get the meta info of data: " + dataIdList);
+        log.debug("Get the meta info of data: " + dataIdList);
         try {
             final List<MetaInfo> result = new ArrayList<MetaInfo>();
             runner.run(new TransactionWorker() {
@@ -649,7 +649,7 @@ public final class DataStoreManager {
      * @param value
      */
     private void addMetaInfoToData(final int dataId, final String key, final Object value) {
-        log.info("Add meta info to data of specified id");
+        log.debug("Add meta info to data of specified id");
         StoredMap metaInfoMap = dataStoreView.getMetaInfoMap();
         if (metaInfoMap.containsKey(dataId)) {
             MetaInfo metaInfo = (MetaInfo) metaInfoMap.get(dataId);
@@ -674,7 +674,7 @@ public final class DataStoreManager {
      */
     @SuppressWarnings("unused")
     private void deleteMetaInfoFromData(final int dataId, final String key) {
-        log.info("Delete meta info from data of specified id");
+        log.debug("Delete meta info from data of specified id");
         StoredMap metaInfoMap = dataStoreView.getMetaInfoMap();
         if (metaInfoMap.containsKey(dataId)) {
             MetaInfo metaInfo = (MetaInfo) metaInfoMap.get(dataId);

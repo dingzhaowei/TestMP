@@ -101,7 +101,7 @@ public class TestEnvView extends VLayout {
                         public void onClick(ClickEvent event) {
                             TasksWindow window = new TasksWindow(record);
                             window.show();
-                            window.scheduleTaskRefreshing(500);
+                            window.scheduleTaskRefreshing();
                         }
                     });
                     recordCanvas.addMember(taskImg);
@@ -341,6 +341,7 @@ public class TestEnvView extends VLayout {
 
             ListGridField taskNameField = new ListGridField("taskName", "Task");
             taskNameField.setRequired(true);
+            taskNameField.setShowHover(true);
 
             ListGridField executionField = new ListGridField("execution", "Execution", 80);
             executionField.setCanEdit(false);
@@ -460,6 +461,7 @@ public class TestEnvView extends VLayout {
 
             ListGridRecord[] records = taskGrid.getRecords();
             if (records.length == 0) {
+                scheduleTaskRefreshing();
                 return;
             }
 
@@ -483,8 +485,14 @@ public class TestEnvView extends VLayout {
                         Map<Integer, String> statusMap = new HashMap<Integer, String>();
 
                         if (response.getStatusCode() == Response.SC_OK) {
+                            String resp = response.getText();
 
-                            for (String status : response.getText().split(",")) {
+                            if (resp.isEmpty()) {
+                                scheduleTaskRefreshing();
+                                return;
+                            }
+
+                            for (String status : resp.split(",")) {
                                 String[] keyValue = status.split("=");
                                 statusMap.put(Integer.parseInt(keyValue[0]), keyValue[1]);
                             }
@@ -515,7 +523,7 @@ public class TestEnvView extends VLayout {
                                 }
                             }
 
-                            scheduleTaskRefreshing(500);
+                            scheduleTaskRefreshing();
                         }
                     }
 
@@ -536,14 +544,14 @@ public class TestEnvView extends VLayout {
             return status != null && status.startsWith("running");
         }
 
-        private void scheduleTaskRefreshing(int t) {
+        private void scheduleTaskRefreshing() {
             taskRefreshing = new Timer() {
                 @Override
                 public void run() {
                     refreshTasks();
                 }
             };
-            taskRefreshing.schedule(t);
+            taskRefreshing.schedule(500);
         }
 
     }
