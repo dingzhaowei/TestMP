@@ -24,7 +24,6 @@ import java.util.Map;
 import org.testmp.datastore.client.DataInfo;
 import org.testmp.datastore.client.DataStoreClient;
 import org.testmp.sync.TestCase.RunRecord;
-import org.testng.annotations.Test;
 
 public abstract class TestSync {
 
@@ -58,17 +57,17 @@ public abstract class TestSync {
             String testMethodName = getTestMethodName();
             Method testMethod = testClass.getMethod(testMethodName);
             TestDoc testDoc = testMethod.getAnnotation(TestDoc.class);
-            Test testNgTest = testMethod.getAnnotation(Test.class);
-            DataInfo<TestCase> dataInfo = convertTestDocToData(testDoc, testNgTest);
+            DataInfo<TestCase> caseDocInfo = convertTestDocToDataInfo(testDoc);
+            postProcessTestDocument(caseDocInfo, testMethod);
 
-            TestCase testCase = dataInfo.getData();
+            TestCase testCase = caseDocInfo.getData();
             HashMap<String, Object> queryParams = new HashMap<String, Object>();
             queryParams.put("automation", testCase.getAutomation());
             List<DataInfo<TestCase>> result = client.getData(TestCase.class, new String[] { TAG_TEST_CASE },
                     queryParams);
 
             if (result.isEmpty()) {
-                client.addData(dataInfo);
+                client.addData(caseDocInfo);
             } else {
                 DataInfo<TestCase> existentDataInfo = result.get(0);
                 TestCase existentTestCase = existentDataInfo.getData();
@@ -84,13 +83,13 @@ public abstract class TestSync {
                 if (!existentTestCase.getDescription().equals(testCase.getDescription())) {
                     client.addPropertyToData(dataId, "description", testCase.getDescription());
                 }
-                for (String tag : dataInfo.getTags()) {
+                for (String tag : caseDocInfo.getTags()) {
                     if (!existentDataInfo.getTags().contains(tag)) {
                         client.addTagToData(dataId, tag);
                     }
                 }
                 for (String tag : existentDataInfo.getTags()) {
-                    if (!dataInfo.getTags().contains(tag)) {
+                    if (!caseDocInfo.getTags().contains(tag)) {
                         client.deleteTagFromData(dataId, tag);
                     }
                 }
@@ -173,11 +172,21 @@ public abstract class TestSync {
      */
     protected abstract Class<?> getTestClass();
 
+    /**
+     * Post process the test case document
+     * 
+     * @param caseDocInfo
+     * @param testMethod
+     */
+    protected void postProcessTestDocument(DataInfo<TestCase> caseDocInfo, Method testMethod) {
+        // do nothing
+    }
+
     private String getTestAutomationName() {
         return getTestClass().getName() + "#" + getTestMethodName();
     }
 
-    private DataInfo<TestCase> convertTestDocToData(TestDoc testDoc, Test testNgTest) {
+    private DataInfo<TestCase> convertTestDocToDataInfo(TestDoc testDoc) {
         DataInfo<TestCase> dataInfo = new DataInfo<TestCase>();
         TestCase tc = new TestCase();
         String className = getTestClass().getSimpleName();
@@ -200,16 +209,6 @@ public abstract class TestSync {
             String testName = testDoc.name();
             tc.setName(testName.isEmpty() ? methodName : testName);
             tc.setDescription(testDoc.description());
-        }
-
-        if (testNgTest != null) {
-            List<String> tags = dataInfo.getTags();
-            for (String group : testNgTest.groups()) {
-                if (!tags.contains(group)) {
-                    tags.add(group);
-                }
-            }
-            dataInfo.setTags(tags);
         }
 
         tc.setAutomation(getTestClass().getName() + "#" + methodName);

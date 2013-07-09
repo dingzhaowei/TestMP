@@ -15,11 +15,16 @@ package org.testmp.sync.testng;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Method;
+import java.util.List;
 
+import org.testmp.datastore.client.DataInfo;
+import org.testmp.sync.TestCase;
 import org.testmp.sync.TestSync;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
+import org.testng.annotations.Test;
 
 public final class TestSyncForTestNG extends TestSync implements ITestListener {
 
@@ -74,6 +79,20 @@ public final class TestSyncForTestNG extends TestSync implements ITestListener {
 
     @Override
     public void onTestSkipped(ITestResult result) {
+    }
+
+    @Override
+    protected void postProcessTestDocument(DataInfo<TestCase> caseDocInfo, Method testMethod) {
+        Test testNgTest = testMethod.getAnnotation(Test.class);
+        if (testNgTest != null) {
+            List<String> tags = caseDocInfo.getTags();
+            for (String group : testNgTest.groups()) {
+                if (!tags.contains(group)) {
+                    tags.add(group);
+                }
+            }
+            caseDocInfo.setTags(tags);
+        }
     }
 
 }
