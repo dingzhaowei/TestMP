@@ -75,6 +75,8 @@
 
 		<propertyfile file="${testmp}/conf/testmp.properties"
 			comment="TestMP setting">
+			<entry key="locale" value="en_US"/>
+
 			<entry key="testCaseStoreUrl" value="http://localhost:10081/DataStore.do" />
 			<entry key="testDataStoreUrl" value="http://localhost:10082/DataStore.do" />
 			<entry key="testEnvStoreUrl" value="http://localhost:10083/DataStore.do" />

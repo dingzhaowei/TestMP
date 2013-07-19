@@ -11,6 +11,11 @@
 	</context-param>
 
 	<context-param>
+		<param-name>locale</param-name>
+		<param-value>en_US</param-value>
+	</context-param>
+
+	<context-param>
 		<param-name>testCaseStoreUrl</param-name>
 		<param-value>http://localhost:10081/DataStore.do</param-value>
 	</context-param>

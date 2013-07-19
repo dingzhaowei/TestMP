@@ -13,9 +13,13 @@
 
 package org.testmp.webconsole.server;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.util.Enumeration;
 import java.util.Properties;
@@ -69,6 +73,32 @@ public class WebConsoleContextListener implements ServletContextListener {
             }
         }
 
+        // Customize the host page by locale
+        String locale = context.getAttribute("locale").toString();
+        log.info("Change host page locale to " + locale);
+        try {
+            String hostPage = context.getResource("/webconsole/WebConsole.html").getPath();
+            log.info("Host page location: " + hostPage);
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(hostPage), "UTF-8"));
+            StringBuilder sb = new StringBuilder();
+            while (true) {
+                String line = reader.readLine();
+                if (line == null) {
+                    break;
+                }
+                sb.append(line).append("\n");
+            }
+            reader.close();
+            String content = sb.toString().replace("${locale}", locale).replace("${title}", getTitle(locale));
+            PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(hostPage), "UTF-8"));
+            writer.print(content);
+            writer.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        // Start the task runner
         int size = Integer.parseInt(context.getAttribute("executionThreadNum").toString());
         long timeout = Long.parseLong(context.getAttribute("executionTimeout").toString());
         String traceFileDir = null;
@@ -82,11 +112,19 @@ public class WebConsoleContextListener implements ServletContextListener {
         context.setAttribute("taskRunner", taskRunner);
         taskRunner.start();
 
+        // Start the task scheduler
         Timer scheduleTimer = new Timer(true);
         String testEnvStoreUrl = (String) context.getAttribute("testEnvStoreUrl");
         long refreshingGap = Long.parseLong((String) context.getAttribute("scheduleRefreshingTimeGap")) * 1000;
         long triggerLatency = Long.parseLong((String) context.getAttribute("taskTriggerMaxLatency")) * 1000;
         TaskScheduler taskScheduler = new TaskScheduler(testEnvStoreUrl, refreshingGap, taskRunner, triggerLatency);
         scheduleTimer.scheduleAtFixedRate(taskScheduler, 0, 1000);
+    }
+
+    private String getTitle(String locale) {
+        if (locale.startsWith("zh")) {
+            return "TestMP 控制台";
+        }
+        return "TestMP Web Console";
     }
 }
