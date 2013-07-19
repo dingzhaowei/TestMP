@@ -16,7 +16,7 @@ package org.testmp.webconsole.client;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.testmp.webconsole.shared.WebConsoleClientConfig;
+import org.testmp.webconsole.shared.ClientConfig;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.Request;
@@ -92,10 +92,19 @@ public class ReportWindow extends Window {
     }
 
     public void showReport(final ReportType type, Map<String, Object> params) {
-        setTitle(type.getTypeName() + " Report");
+        switch (type) {
+        case TEST_METRICS:
+            setTitle(ClientConfig.messages.testMetricsReport());
+            break;
+        case ENVIRONMENT_STATUS:
+            setTitle(ClientConfig.messages.environmentStatusReport());
+            break;
+        default:
+            setTitle(type.getTypeName() + " Report");
+        }
 
         windowLayout.removeMembers(windowLayout.getMembers());
-        final Label loading = new Label("Loading report...");
+        final Label loading = new Label(ClientConfig.messages.loading());
         loading.setAlign(Alignment.CENTER);
         loading.setIcon("loading.gif");
         loading.setIconSize(16);
@@ -110,7 +119,7 @@ public class ReportWindow extends Window {
         }
 
         final String baseUrl = GWT.getModuleBaseURL();
-        String servicePath = WebConsoleClientConfig.constants.reportService();
+        String servicePath = ClientConfig.constants.reportService();
         requestUrl = baseUrl + servicePath.substring(servicePath.lastIndexOf('/') + 1);
 
         RequestBuilder builder = new RequestBuilder(RequestBuilder.POST, requestUrl);
@@ -134,7 +143,7 @@ public class ReportWindow extends Window {
                         controls.setMargin(5);
                         controls.setMembersMargin(5);
                         controls.setAlign(Alignment.CENTER);
-                        IButton sendButton = new IButton("Send");
+                        IButton sendButton = new IButton(ClientConfig.messages.send());
                         sendButton.addClickHandler(new ClickHandler() {
 
                             @Override
@@ -196,53 +205,53 @@ public class ReportWindow extends Window {
 
             final TextItem recipientsItem = new TextItem();
             recipientsItem.setName("recipients");
-            recipientsItem.setTitle("Recipients");
+            recipientsItem.setTitle(ClientConfig.messages.recipients());
             recipientsItem.setRequired(true);
             recipientsItem.setWidth(400);
 
             final TextItem subjectItem = new TextItem();
             subjectItem.setName("subject");
-            subjectItem.setTitle("Subject");
+            subjectItem.setTitle(ClientConfig.messages.subject());
             subjectItem.setRequired(true);
             subjectItem.setWidth(400);
 
             TextAreaItem commentItem = new TextAreaItem();
             commentItem.setName("comment");
-            commentItem.setTitle("Comment");
+            commentItem.setTitle(ClientConfig.messages.comment());
             commentItem.setWidth(400);
 
             SectionItem emailInfoItem = new SectionItem();
-            emailInfoItem.setDefaultValue("EMail");
+            emailInfoItem.setDefaultValue(ClientConfig.messages.email());
             emailInfoItem.setSectionExpanded(true);
             emailInfoItem.setItemIds("recipients", "subject", "comment");
 
             final TextItem smtphostItem = new TextItem();
             smtphostItem.setName("smtphost");
-            smtphostItem.setTitle("SMTP host");
+            smtphostItem.setTitle(ClientConfig.messages.smtpHost());
             smtphostItem.setRequired(true);
 
             final IntegerItem smtpportItem = new IntegerItem();
             smtpportItem.setName("smtpport");
-            smtpportItem.setTitle("SMTP port");
+            smtpportItem.setTitle(ClientConfig.messages.smtpPort());
             smtpportItem.setRequired(true);
 
             final CheckboxItem starttlsItem = new CheckboxItem();
             starttlsItem.setName("starttls");
-            starttlsItem.setTitle("Use STARTTLS");
+            starttlsItem.setTitle(ClientConfig.messages.useStarttls());
             starttlsItem.setRequired(true);
 
             final TextItem usernameItem = new TextItem();
             usernameItem.setName("username");
-            usernameItem.setTitle("User");
+            usernameItem.setTitle(ClientConfig.messages.user());
             usernameItem.setRequired(true);
 
             final PasswordItem passwordItem = new PasswordItem();
             passwordItem.setName("password");
-            passwordItem.setTitle("Password");
+            passwordItem.setTitle(ClientConfig.messages.password());
             passwordItem.setRequired(true);
 
             SectionItem smtpInfoItem = new SectionItem();
-            smtpInfoItem.setDefaultValue("Setting");
+            smtpInfoItem.setDefaultValue(ClientConfig.messages.setting());
             smtpInfoItem.setSectionExpanded(true);
             smtpInfoItem.setItemIds("smtphost", "smtpport", "starttls", "username", "password");
 
@@ -298,14 +307,14 @@ public class ReportWindow extends Window {
             controls.setAlign(Alignment.CENTER);
             layout.addMember(controls);
 
-            IButton okButton = new IButton("OK");
+            IButton okButton = new IButton(ClientConfig.messages.ok());
             okButton.addClickHandler(new ClickHandler() {
 
                 @Override
                 public void onClick(ClickEvent event) {
                     if (form.validate()) {
                         SendWindow.this.removeItem(layout);
-                        final Label loading = new Label("Sending report...");
+                        final Label loading = new Label(ClientConfig.messages.sending() + "...");
                         loading.setAlign(Alignment.CENTER);
                         loading.setIcon("loading.gif");
                         loading.setIconSize(16);
@@ -380,7 +389,7 @@ public class ReportWindow extends Window {
             });
             controls.addMember(okButton);
 
-            IButton cancelButton = new IButton("Cancel");
+            IButton cancelButton = new IButton(ClientConfig.messages.cancel());
             cancelButton.addClickHandler(new ClickHandler() {
 
                 @Override

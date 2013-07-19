@@ -8,7 +8,7 @@ public class TestSyncForJUnitTest extends TestSyncForJUnit {
 
     @Test
     @TestDoc(
-        project = "Project 1", 
+        project = "项目 1", 
         name = "Top 100 reviewer", 
         description = "Open the top reivewer page and check the badge of the 100 first", 
         groups = { "P0", "prod" })
@@ -18,7 +18,7 @@ public class TestSyncForJUnitTest extends TestSyncForJUnit {
 
     @Test
     @TestDoc(
-        project = "Project 1", 
+        project = "项目 1", 
         name = "Create review for book", 
         description = "Create a review for book and check it's created successfully", 
         groups = { "P0", "prod", "broken" })
@@ -29,7 +29,7 @@ public class TestSyncForJUnitTest extends TestSyncForJUnit {
 
     @Test
     @TestDoc(
-        project = "Project 1", 
+        project = "项目 1", 
         name = "Unallowed reivewer", 
         description = "Create review as a customer without buying history, and check redirecting to the warning page",
         groups = { "P1", "prod" })

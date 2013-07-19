@@ -9,7 +9,7 @@ public class TestSyncForJUnitTest2 extends TestSyncForJUnit {
 
     @Test
     @TestDoc(
-            project = "Project 1", 
+            project = "项目 1", 
             name="Create review for instant video", 
             description = "Create a review for instant video and check it's created successfully", 
             groups = { "P0", "prod" })
@@ -22,7 +22,7 @@ public class TestSyncForJUnitTest2 extends TestSyncForJUnit {
 
     @Test
     @TestDoc(
-            project = "Project 1", 
+            project = "项目 1", 
             name = "Review on the checkout page",
             groups = { "P1", "devo" })
     public void testReviewOnCheckoutPage() throws Exception {
@@ -33,14 +33,14 @@ public class TestSyncForJUnitTest2 extends TestSyncForJUnit {
     }
 
     @Test
-    @TestDoc(project = "Project 2", groups = { "P0", "devo", "broken" })
+    @TestDoc(project = "项目 2", groups = { "P0", "devo", "broken" })
     public void testChangeBookingAddress() throws Exception {
         System.out.println("[TestSyncForJUnitTest2#testChangeBookingAddress]");
         Assert.assertTrue("I'm failed", false);
     }
 
     @Test
-    @TestDoc(project = "Project 2", groups = { "P0", "devo" })
+    @TestDoc(project = "项目 2", groups = { "P0", "devo" })
     public void testCheckoutFlow() throws Exception {
         System.out.println("[TestSyncForJUnitTest2#testCheckoutFlow]");
         if (Math.random() > 0.5) {
@@ -49,7 +49,7 @@ public class TestSyncForJUnitTest2 extends TestSyncForJUnit {
     }
 
     @Test
-    @TestDoc(project = "Project 2", groups = { "P1", "prod" })
+    @TestDoc(project = "项目 2", groups = { "P1", "prod" })
     public void testOutOfStockProduct() throws Exception {
         System.out.println("[TestSyncForJUnitTest2#testOutOfStockProduct]");
         if (Math.random() > 0.5) {
@@ -58,7 +58,7 @@ public class TestSyncForJUnitTest2 extends TestSyncForJUnit {
     }
 
     @Test
-    @TestDoc(project = "Project 2", groups = { "P2", "devo" })
+    @TestDoc(project = "项目 2", groups = { "P2", "devo" })
     public void testNotificationEmail() throws Exception {
         System.out.println("[TestSyncForJUnitTest2#testNotificationEmail]");
         Assert.assertTrue("I'm failed", false);

@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.testmp.webconsole.client.ReportWindow.ReportType;
-import org.testmp.webconsole.shared.WebConsoleClientConfig;
+import org.testmp.webconsole.shared.ClientConfig;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.json.client.JSONArray;
@@ -100,7 +100,7 @@ public class TestCaseView extends VLayout {
                     runHistoryImg.setShowDown(false);
                     runHistoryImg.setShowRollOver(false);
                     runHistoryImg.setSrc("history.png");
-                    runHistoryImg.setPrompt("View Run History");
+                    runHistoryImg.setPrompt(ClientConfig.messages.viewRunHistory());
                     runHistoryImg.setHeight(16);
                     runHistoryImg.setWidth(16);
                     runHistoryImg.setLayoutAlign(Alignment.CENTER);
@@ -140,18 +140,18 @@ public class TestCaseView extends VLayout {
         testCaseGrid.setShowGridSummary(true);
         testCaseGrid.setShowGroupSummary(true);
 
-        ListGridField nameField = new ListGridField("name", "Name");
-        ListGridField projectField = new ListGridField("project", "Project");
-        ListGridField tagsField = new ListGridField("tags", "Groups");
-        ListGridField descriptionField = new ListGridField("description", "Description");
-        ListGridField automationField = new ListGridField("automation", "Automation");
-        ListGridField robustnessField = new ListGridField("robustness", "Robustness");
+        ListGridField nameField = new ListGridField("name", ClientConfig.messages.name());
+        ListGridField projectField = new ListGridField("project", ClientConfig.messages.project());
+        ListGridField tagsField = new ListGridField("tags", ClientConfig.messages.groups());
+        ListGridField descriptionField = new ListGridField("description", ClientConfig.messages.description());
+        ListGridField automationField = new ListGridField("automation", ClientConfig.messages.automation());
+        ListGridField robustnessField = new ListGridField("robustness", ClientConfig.messages.robustness());
         ListGridField robustnessTrendField = new ListGridField("robustnessTrend", "*");
-        ListGridField avgTestTimeField = new ListGridField("avgTestTime", "Avg. Test Time");
-        ListGridField timeVolatilityField = new ListGridField("timeVolatility", "Time Volatility");
-        ListGridField runHistoryField = new ListGridField("runHistory", "Run History");
-        ListGridField createTimeField = new ListGridField("createTime", "Create Time");
-        ListGridField lastModifyTimeField = new ListGridField("lastModifyTime", "Last Modify Time");
+        ListGridField avgTestTimeField = new ListGridField("avgTestTime", ClientConfig.messages.avgTestTime());
+        ListGridField timeVolatilityField = new ListGridField("timeVolatility", ClientConfig.messages.timeVolatility());
+        ListGridField runHistoryField = new ListGridField("runHistory", ClientConfig.messages.runHistory());
+        ListGridField createTimeField = new ListGridField("createTime", ClientConfig.messages.createTime());
+        ListGridField lastModifyTimeField = new ListGridField("lastModifyTime", ClientConfig.messages.lastModifyTime());
 
         HoverCustomizer hoverCustomizer = new HoverCustomizer() {
 
@@ -178,7 +178,7 @@ public class TestCaseView extends VLayout {
 
             @Override
             public Object getSummaryValue(Record[] records, ListGridField field) {
-                return records.length + " Cases";
+                return records.length + " " + ClientConfig.messages.cases();
             }
 
         });
@@ -290,7 +290,7 @@ public class TestCaseView extends VLayout {
         controls.setLayoutAlign(Alignment.CENTER);
         controls.setAlign(Alignment.RIGHT);
 
-        IButton filterButton = new IButton("Filter");
+        IButton filterButton = new IButton(ClientConfig.messages.filter());
         filterButton.setIcon("filter.png");
         filterButton.addClickHandler(new ClickHandler() {
 
@@ -303,9 +303,9 @@ public class TestCaseView extends VLayout {
         });
         controls.addMember(filterButton);
 
-        IButton foldAllButton = new IButton("(Un)Fold All");
-        foldAllButton.setIcon("fold.png");
-        foldAllButton.addClickHandler(new ClickHandler() {
+        IButton foldOrUnfoldButton = new IButton(ClientConfig.messages.foldOrUnfold());
+        foldOrUnfoldButton.setIcon("fold.png");
+        foldOrUnfoldButton.addClickHandler(new ClickHandler() {
 
             @Override
             public void onClick(ClickEvent event) {
@@ -327,9 +327,9 @@ public class TestCaseView extends VLayout {
             }
 
         });
-        controls.addMember(foldAllButton);
+        controls.addMember(foldOrUnfoldButton);
 
-        IButton reloadButton = new IButton("Reload");
+        IButton reloadButton = new IButton(ClientConfig.messages.reload());
         reloadButton.setIcon("reload.png");
         reloadButton.addClickHandler(new ClickHandler() {
 
@@ -341,7 +341,7 @@ public class TestCaseView extends VLayout {
         });
         controls.addMember(reloadButton);
 
-        IButton reportButton = new IButton("Report");
+        IButton reportButton = new IButton(ClientConfig.messages.report());
         reportButton.setIcon("report.png");
         reportButton.addClickHandler(new ClickHandler() {
 
@@ -469,7 +469,7 @@ public class TestCaseView extends VLayout {
         FilterWindow() {
             setWidth(680);
             setHeight(300);
-            setTitle("Test Case Filter");
+            setTitle(ClientConfig.messages.testCaseFilter());
             setShowMinimizeButton(false);
             setIsModal(true);
             setShowModalMask(true);
@@ -508,7 +508,7 @@ public class TestCaseView extends VLayout {
             controls.setAlign(Alignment.CENTER);
             layout.addMember(controls);
 
-            IButton okButton = new IButton("OK");
+            IButton okButton = new IButton(ClientConfig.messages.ok());
             okButton.addClickHandler(new ClickHandler() {
 
                 @Override
@@ -521,7 +521,7 @@ public class TestCaseView extends VLayout {
             });
             controls.addMember(okButton);
 
-            IButton cancelButton = new IButton("Cancel");
+            IButton cancelButton = new IButton(ClientConfig.messages.cancel());
             cancelButton.addClickHandler(new ClickHandler() {
 
                 @Override
@@ -558,8 +558,9 @@ public class TestCaseView extends VLayout {
             runHistoryGrid.setWidth("99%");
             runHistoryGrid.setLayoutAlign(Alignment.CENTER);
 
-            ListGridField recordTimeField = new ListGridField("recordTime", "Record Time", 150);
+            ListGridField recordTimeField = new ListGridField("recordTime", ClientConfig.messages.recordTime(), 150);
             recordTimeField.setType(ListGridFieldType.DATE);
+            recordTimeField.setAlign(Alignment.CENTER);
             recordTimeField.setCellFormatter(new CellFormatter() {
 
                 @SuppressWarnings("deprecation")
@@ -586,13 +587,15 @@ public class TestCaseView extends VLayout {
 
             });
 
-            ListGridField durationField = new ListGridField("duration", "Duration", 150);
+            ListGridField durationField = new ListGridField("duration", ClientConfig.messages.duration(), 150);
             durationField.setType(ListGridFieldType.FLOAT);
+            durationField.setAlign(Alignment.CENTER);
 
-            ListGridField passedField = new ListGridField("passed", "Passed", 100);
+            ListGridField passedField = new ListGridField("passed", ClientConfig.messages.passed(), 100);
             passedField.setType(ListGridFieldType.BOOLEAN);
 
-            ListGridField failureTraceField = new ListGridField("failureTrace", "Failure Trace", 200);
+            ListGridField failureTraceField = new ListGridField("failureTrace", ClientConfig.messages.failureTrace(),
+                    200);
             failureTraceField.setShowHover(true);
             failureTraceField.setCellFormatter(new CellFormatter() {
 
@@ -603,7 +606,8 @@ public class TestCaseView extends VLayout {
 
             });
 
-            ListGridField falseFailureField = new ListGridField("falseFailure", "False Failure", 100);
+            ListGridField falseFailureField = new ListGridField("falseFailure", ClientConfig.messages.falseFailure(),
+                    100);
             falseFailureField.setType(ListGridFieldType.BOOLEAN);
             falseFailureField.setCanEdit(true);
             falseFailureField.setValidateOnChange(true);
@@ -616,7 +620,7 @@ public class TestCaseView extends VLayout {
                 }
             });
 
-            ListGridField relatedBugField = new ListGridField("relatedBug", "Related Bug", 150);
+            ListGridField relatedBugField = new ListGridField("relatedBug", ClientConfig.messages.relatedBug(), 150);
             relatedBugField.setType(ListGridFieldType.LINK);
             relatedBugField.setCanEdit(true);
 
@@ -650,7 +654,7 @@ public class TestCaseView extends VLayout {
             controls.setLayoutAlign(Alignment.CENTER);
             controls.setAlign(Alignment.CENTER);
 
-            IButton saveButton = new IButton("Save");
+            IButton saveButton = new IButton(ClientConfig.messages.save());
             saveButton.addClickHandler(new ClickHandler() {
 
                 @Override
@@ -705,7 +709,7 @@ public class TestCaseView extends VLayout {
             setClientOnly(false);
 
             String baseUrl = GWT.getModuleBaseURL();
-            String servicePath = WebConsoleClientConfig.constants.testCaseService();
+            String servicePath = ClientConfig.constants.testCaseService();
             String requestUrl = baseUrl + servicePath.substring(servicePath.lastIndexOf('/') + 1);
             setDataURL(requestUrl);
 
@@ -728,22 +732,31 @@ public class TestCaseView extends VLayout {
             idField.setHidden(true);
             idField.setPrimaryKey(true);
 
-            DataSourceTextField projectField = new DataSourceTextField("project", "Project");
+            DataSourceTextField projectField = new DataSourceTextField("project", ClientConfig.messages.project());
             projectField.setRequired(true);
 
-            DataSourceTextField nameField = new DataSourceTextField("name", "Name");
+            DataSourceTextField nameField = new DataSourceTextField("name", ClientConfig.messages.name());
             nameField.setRequired(true);
 
-            DataSourceTextField tagsField = new DataSourceTextField("tags", "Groups");
-            DataSourceTextField descriptionField = new DataSourceTextField("description", "Description", 500);
-            DataSourceTextField automationField = new DataSourceTextField("automation", "Automation");
-            DataSourceFloatField robustnessField = new DataSourceFloatField("robustness", "Robustness");
-            DataSourceImageField robustnessTrendField = new DataSourceImageField("robustnessTrend", "Robustness Trend");
-            DataSourceFloatField avgTestTimeField = new DataSourceFloatField("avgTestTime", "Avg. Test Time");
-            DataSourceFloatField timeVolatilityField = new DataSourceFloatField("timeVolatility", "Time Volatility");
-            DataSourceTextField runHistoryField = new DataSourceTextField("runHistory", "Run History");
-            DataSourceTextField createTimeField = new DataSourceTextField("createTime", "Create Time");
-            DataSourceTextField lastModifyTimeField = new DataSourceTextField("lastModifyTime", "Last Modify Time");
+            DataSourceTextField tagsField = new DataSourceTextField("tags", ClientConfig.messages.groups());
+            DataSourceTextField descriptionField = new DataSourceTextField("description",
+                    ClientConfig.messages.description(), 500);
+            DataSourceTextField automationField = new DataSourceTextField("automation",
+                    ClientConfig.messages.automation());
+            DataSourceFloatField robustnessField = new DataSourceFloatField("robustness",
+                    ClientConfig.messages.robustness());
+            DataSourceImageField robustnessTrendField = new DataSourceImageField("robustnessTrend",
+                    ClientConfig.messages.robustnessTrend());
+            DataSourceFloatField avgTestTimeField = new DataSourceFloatField("avgTestTime",
+                    ClientConfig.messages.avgTestTime());
+            DataSourceFloatField timeVolatilityField = new DataSourceFloatField("timeVolatility",
+                    ClientConfig.messages.timeVolatility());
+            DataSourceTextField runHistoryField = new DataSourceTextField("runHistory",
+                    ClientConfig.messages.runHistory());
+            DataSourceTextField createTimeField = new DataSourceTextField("createTime",
+                    ClientConfig.messages.createTime());
+            DataSourceTextField lastModifyTimeField = new DataSourceTextField("lastModifyTime",
+                    ClientConfig.messages.lastModifyTime());
 
             setFields(idField, projectField, nameField, tagsField, descriptionField, automationField, runHistoryField,
                     robustnessField, robustnessTrendField, avgTestTimeField, timeVolatilityField, createTimeField,

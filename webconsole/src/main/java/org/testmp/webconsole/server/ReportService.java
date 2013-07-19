@@ -15,11 +15,13 @@ package org.testmp.webconsole.server;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URLDecoder;
 import java.text.SimpleDateFormat;
@@ -147,7 +149,7 @@ public class ReportService extends HttpServlet {
     }
 
     private String getReportContent(File reportFile) throws Exception {
-        BufferedReader reader = new BufferedReader(new FileReader(reportFile));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(reportFile), "UTF-8"));
         StringBuilder sb = new StringBuilder();
         while (true) {
             String line = reader.readLine();
@@ -224,7 +226,7 @@ public class ReportService extends HttpServlet {
 
         File reportDir = new File(getRealPath(baseDir + "/reports"));
         File reportFile = File.createTempFile("testMetricsReport", ".html", reportDir);
-        FileWriter fw = new FileWriter(reportFile);
+        Writer writer = new OutputStreamWriter(new FileOutputStream(reportFile), "UTF-8");
 
         try {
             VelocityContext context = new VelocityContext();
@@ -232,12 +234,12 @@ public class ReportService extends HttpServlet {
             context.put("baseUrl", baseUrl);
             context.put("serviceName", serviceName);
             context.put("filename", reportFile.getName());
-            Template template = ve.getTemplate("testMetricsReport.vm");
-            template.merge(context, fw);
+            Template template = ve.getTemplate("testMetricsReport.vm", "UTF-8");
+            template.merge(context, writer);
             return reportFile.getName();
         } finally {
-            if (fw != null) {
-                fw.close();
+            if (writer != null) {
+                writer.close();
             }
         }
     }
@@ -293,7 +295,7 @@ public class ReportService extends HttpServlet {
 
         File reportDir = new File(getRealPath(baseDir + "/reports"));
         File reportFile = File.createTempFile("envStatusReport", ".html", reportDir);
-        FileWriter fw = new FileWriter(reportFile);
+        Writer writer = new OutputStreamWriter(new FileOutputStream(reportFile), "UTF-8");
 
         try {
             VelocityContext context = new VelocityContext();
@@ -301,12 +303,12 @@ public class ReportService extends HttpServlet {
             context.put("baseUrl", baseUrl);
             // context.put("serviceName", serviceName);
             // context.put("filename", reportFile.getName());
-            Template template = ve.getTemplate("envStatusReport.vm");
-            template.merge(context, fw);
+            Template template = ve.getTemplate("envStatusReport.vm", "UTF-8");
+            template.merge(context, writer);
             return reportFile.getName();
         } finally {
-            if (fw != null) {
-                fw.close();
+            if (writer != null) {
+                writer.close();
             }
         }
     }
@@ -334,8 +336,8 @@ public class ReportService extends HttpServlet {
         }
 
         File signedReportFile = getSignedReportFile(filename);
-        PrintWriter writer = new PrintWriter(new FileWriter(signedReportFile));
-        writer.print(content);
+        Writer writer = new OutputStreamWriter(new FileOutputStream(signedReportFile), "UTF-8");
+        writer.write(content);
         writer.close();
     }
 

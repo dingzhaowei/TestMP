@@ -18,7 +18,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.testmp.webconsole.shared.WebConsoleClientConfig;
+import org.testmp.webconsole.shared.ClientConfig;
 
 import com.google.gwt.core.client.GWT;
 import com.smartgwt.client.data.Criteria;
@@ -120,18 +120,18 @@ public class TestDataView extends VLayout {
         idField.setCanEdit(false);
         idField.setShowGridSummary(false);
 
-        ListGridField tagsField = new ListGridField("tags", "Tags", 200);
+        ListGridField tagsField = new ListGridField("tags", ClientConfig.messages.tags(), 200);
         tagsField.setShowHover(true);
         tagsField.setSummaryFunction(new SummaryFunction() {
 
             @Override
             public Object getSummaryValue(Record[] records, ListGridField field) {
-                return "Total Data: " + records.length;
+                return ClientConfig.messages.totalData() + ": " + records.length;
             }
 
         });
 
-        ListGridField propertiesField = new ListGridField("properties", "Properties");
+        ListGridField propertiesField = new ListGridField("properties", ClientConfig.messages.properties());
         propertiesField.setShowHover(true);
         propertiesField.setHoverCustomizer(new HoverCustomizer() {
 
@@ -154,12 +154,13 @@ public class TestDataView extends VLayout {
 
         });
 
-        ListGridField createTimeField = new ListGridField("createTime", "Create Time", 150);
+        ListGridField createTimeField = new ListGridField("createTime", ClientConfig.messages.createTime(), 150);
         createTimeField.setType(ListGridFieldType.DATE);
         createTimeField.setCanEdit(false);
         createTimeField.setCanFilter(false);
 
-        ListGridField lastModifyTimeField = new ListGridField("lastModifyTime", "Last Modify Time", 150);
+        ListGridField lastModifyTimeField = new ListGridField("lastModifyTime", ClientConfig.messages.lastModifyTime(),
+                150);
         lastModifyTimeField.setType(ListGridFieldType.DATE);
         lastModifyTimeField.setCanEdit(false);
         lastModifyTimeField.setCanFilter(false);
@@ -175,7 +176,7 @@ public class TestDataView extends VLayout {
         controls.setLayoutAlign(Alignment.CENTER);
         controls.setAlign(Alignment.RIGHT);
 
-        IButton newDataButton = new IButton("New");
+        IButton newDataButton = new IButton(ClientConfig.messages.new_());
         newDataButton.setIcon("newdata.png");
         newDataButton.addClickHandler(new ClickHandler() {
 
@@ -188,7 +189,7 @@ public class TestDataView extends VLayout {
         });
         controls.addMember(newDataButton);
 
-        IButton reloadButton = new IButton("Reload");
+        IButton reloadButton = new IButton(ClientConfig.messages.reload());
         reloadButton.setIcon("reload.png");
         reloadButton.addClickHandler(new ClickHandler() {
 
@@ -208,7 +209,7 @@ public class TestDataView extends VLayout {
         NewDataWindow() {
             setWidth(400);
             setHeight(250);
-            setTitle("New Test Data");
+            setTitle(ClientConfig.messages.newTestData());
             setShowMinimizeButton(false);
             setIsModal(true);
             setShowModalMask(true);
@@ -227,10 +228,10 @@ public class TestDataView extends VLayout {
             addItem(layout);
 
             final DynamicForm form = new DynamicForm();
-            final TextItem tagsItem = new TextItem("tags", "Tags");
+            final TextItem tagsItem = new TextItem("tags", ClientConfig.messages.tags());
             tagsItem.setWidth(300);
             tagsItem.setRequired(true);
-            final TextAreaItem propsItem = new TextAreaItem("properties", "Properties");
+            final TextAreaItem propsItem = new TextAreaItem("properties", ClientConfig.messages.properties());
             propsItem.setWidth(300);
             propsItem.setRequired(true);
             form.setItems(tagsItem, propsItem);
@@ -245,7 +246,7 @@ public class TestDataView extends VLayout {
             controls.setAlign(Alignment.CENTER);
             layout.addMember(controls);
 
-            IButton okButton = new IButton("OK");
+            IButton okButton = new IButton(ClientConfig.messages.ok());
             okButton.addClickHandler(new ClickHandler() {
 
                 @Override
@@ -270,7 +271,7 @@ public class TestDataView extends VLayout {
             });
             controls.addMember(okButton);
 
-            IButton cancelButton = new IButton("Cancel");
+            IButton cancelButton = new IButton(ClientConfig.messages.cancel());
             cancelButton.addClickHandler(new ClickHandler() {
 
                 @Override
@@ -292,7 +293,7 @@ public class TestDataView extends VLayout {
             setClientOnly(false);
 
             String baseUrl = GWT.getModuleBaseURL();
-            String servicePath = WebConsoleClientConfig.constants.testDataService();
+            String servicePath = ClientConfig.constants.testDataService();
             String requestUrl = baseUrl + servicePath.substring(servicePath.lastIndexOf('/') + 1);
             setDataURL(requestUrl);
 
@@ -315,10 +316,13 @@ public class TestDataView extends VLayout {
             idField.setPrimaryKey(true);
             idField.setRequired(true);
 
-            DataSourceTextField tagsField = new DataSourceTextField("tags", "Tags");
-            DataSourceTextField propertiesField = new DataSourceTextField("properties", "Properties", Integer.MAX_VALUE);
-            DataSourceTextField createTimeField = new DataSourceTextField("createTime", "Create Time");
-            DataSourceTextField lastModifyTimeField = new DataSourceTextField("lastModifyTime", "Last Modify Time");
+            DataSourceTextField tagsField = new DataSourceTextField("tags", ClientConfig.messages.tags());
+            DataSourceTextField propertiesField = new DataSourceTextField("properties",
+                    ClientConfig.messages.properties(), Integer.MAX_VALUE);
+            DataSourceTextField createTimeField = new DataSourceTextField("createTime",
+                    ClientConfig.messages.createTime());
+            DataSourceTextField lastModifyTimeField = new DataSourceTextField("lastModifyTime",
+                    ClientConfig.messages.lastModifyTime());
 
             setFields(idField, tagsField, propertiesField, createTimeField, lastModifyTimeField);
         }

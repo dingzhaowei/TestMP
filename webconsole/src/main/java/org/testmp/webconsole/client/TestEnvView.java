@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.testmp.webconsole.client.ReportWindow.ReportType;
-import org.testmp.webconsole.shared.WebConsoleClientConfig;
+import org.testmp.webconsole.shared.ClientConfig;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.Request;
@@ -93,7 +93,7 @@ public class TestEnvView extends VLayout {
                     taskImg.setShowDown(false);
                     taskImg.setShowRollOver(false);
                     taskImg.setSrc("task.png");
-                    taskImg.setPrompt("View Tasks");
+                    taskImg.setPrompt(ClientConfig.messages.viewTasks());
                     taskImg.setHeight(16);
                     taskImg.setWidth(16);
                     taskImg.setLayoutAlign(Alignment.CENTER);
@@ -127,14 +127,14 @@ public class TestEnvView extends VLayout {
         ListGridField envIdField = new ListGridField("envId");
         envIdField.setHidden(true);
 
-        ListGridField envNameField = new ListGridField("envName", "Environment");
+        ListGridField envNameField = new ListGridField("envName", ClientConfig.messages.environment());
         envNameField.setRequired(true);
 
-        ListGridField refUrlField = new ListGridField("refUrl", "Reference Page");
+        ListGridField refUrlField = new ListGridField("refUrl", ClientConfig.messages.referencePage());
         refUrlField.setType(ListGridFieldType.LINK);
         refUrlField.setCanFilter(false);
 
-        ListGridField taskField = new ListGridField("task", "Tasks");
+        ListGridField taskField = new ListGridField("task", ClientConfig.messages.tasks());
         taskField.setCanFilter(false);
         taskField.setCanEdit(false);
 
@@ -148,7 +148,7 @@ public class TestEnvView extends VLayout {
         controls.setLayoutAlign(Alignment.CENTER);
         controls.setAlign(Alignment.RIGHT);
 
-        IButton newEnvButton = new IButton("New");
+        IButton newEnvButton = new IButton(ClientConfig.messages.new_());
         newEnvButton.setIcon("newenv.png");
         newEnvButton.addClickHandler(new ClickHandler() {
 
@@ -160,7 +160,7 @@ public class TestEnvView extends VLayout {
         });
         controls.addMember(newEnvButton);
 
-        IButton hostsButton = new IButton("Hosts");
+        IButton hostsButton = new IButton(ClientConfig.messages.hosts());
         hostsButton.setIcon("hosts.png");
         hostsButton.addClickHandler(new ClickHandler() {
 
@@ -173,7 +173,7 @@ public class TestEnvView extends VLayout {
         });
         controls.addMember(hostsButton);
 
-        IButton reloadButton = new IButton("Reload");
+        IButton reloadButton = new IButton(ClientConfig.messages.reload());
         reloadButton.setIcon("reload.png");
         reloadButton.addClickHandler(new ClickHandler() {
 
@@ -185,7 +185,7 @@ public class TestEnvView extends VLayout {
         });
         controls.addMember(reloadButton);
 
-        IButton reportButton = new IButton("Report");
+        IButton reportButton = new IButton(ClientConfig.messages.report());
         reportButton.setIcon("report.png");
         reportButton.addClickHandler(new ClickHandler() {
 
@@ -226,7 +226,7 @@ public class TestEnvView extends VLayout {
             setClientOnly(false);
 
             String baseUrl = GWT.getModuleBaseURL();
-            String servicePath = WebConsoleClientConfig.constants.testEnvService();
+            String servicePath = ClientConfig.constants.testEnvService();
             String requestUrl = baseUrl + servicePath.substring(servicePath.lastIndexOf('/') + 1);
             setDataURL(requestUrl);
 
@@ -291,7 +291,7 @@ public class TestEnvView extends VLayout {
                         executionImg.setShowDown(false);
                         executionImg.setShowRollOver(false);
                         executionImg.setSrc("execution.png");
-                        executionImg.setPrompt("View Executions");
+                        executionImg.setPrompt(ClientConfig.messages.viewExecutions());
                         executionImg.setHeight(16);
                         executionImg.setWidth(16);
                         executionImg.setLayoutAlign(Alignment.CENTER);
@@ -309,7 +309,9 @@ public class TestEnvView extends VLayout {
                         recordCanvas.setHeight(22);
                         recordCanvas.setAlign(Alignment.CENTER);
 
-                        IButton taskControl = new IButton(isTaskRunning(record) ? "Cancel" : "Run");
+                        String cancel = ClientConfig.messages.cancel();
+                        String run = ClientConfig.messages.run();
+                        IButton taskControl = new IButton(isTaskRunning(record) ? cancel : run);
                         taskControl.setMargin(2);
                         taskControl.addClickHandler(new ClickHandler() {
                             public void onClick(ClickEvent event) {
@@ -339,11 +341,11 @@ public class TestEnvView extends VLayout {
             ListGridField taskIdField = new ListGridField("taskId");
             taskIdField.setHidden(true);
 
-            ListGridField taskNameField = new ListGridField("taskName", "Task");
+            ListGridField taskNameField = new ListGridField("taskName", ClientConfig.messages.task());
             taskNameField.setRequired(true);
             taskNameField.setShowHover(true);
 
-            ListGridField executionField = new ListGridField("execution", "Execution", 80);
+            ListGridField executionField = new ListGridField("execution", ClientConfig.messages.execution(), 80);
             executionField.setCanEdit(false);
             executionField.setCellFormatter(new CellFormatter() {
 
@@ -354,19 +356,19 @@ public class TestEnvView extends VLayout {
 
             });
 
-            ListGridField statusField = new ListGridField("status", "Status", 40);
+            ListGridField statusField = new ListGridField("status", ClientConfig.messages.status(), 40);
             statusField.setType(ListGridFieldType.IMAGE);
             statusField.setCellAlign(Alignment.CENTER);
             statusField.setCanEdit(false);
 
-            ListGridField runField = new ListGridField("run", "Run", 150);
+            ListGridField runField = new ListGridField("run", ClientConfig.messages.run(), 150);
             runField.setCanEdit(false);
             runField.setShowTitle(false);
 
-            ListGridField scheduleField = new ListGridField("schedule", "Schedule", 150);
+            ListGridField scheduleField = new ListGridField("schedule", ClientConfig.messages.schedule(), 150);
             scheduleField.setShowHover(true);
 
-            ListGridField lastRunTimeField = new ListGridField("lastRunTime", "Last Run Time", 150);
+            ListGridField lastRunTimeField = new ListGridField("lastRunTime", ClientConfig.messages.lastRunTime(), 150);
             lastRunTimeField.setType(ListGridFieldType.DATETIME);
             lastRunTimeField.setCanEdit(false);
             lastRunTimeField.setCellFormatter(new CellFormatter() {
@@ -408,7 +410,7 @@ public class TestEnvView extends VLayout {
             controls.setLayoutAlign(Alignment.CENTER);
             controls.setAlign(Alignment.CENTER);
 
-            IButton newTaskButton = new IButton("New");
+            IButton newTaskButton = new IButton(ClientConfig.messages.new_());
             newTaskButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
                     String currentEditingEnv = envRecord.getAttribute("envName");
@@ -429,7 +431,7 @@ public class TestEnvView extends VLayout {
             dataBuilder.append("&taskId=").append(URL.encode(record.getAttribute("taskId")));
 
             final String baseUrl = GWT.getModuleBaseURL();
-            String servicePath = WebConsoleClientConfig.constants.envTaskService();
+            String servicePath = ClientConfig.constants.envTaskService();
             String requestUrl = baseUrl + servicePath.substring(servicePath.lastIndexOf('/') + 1);
 
             RequestBuilder builder = new RequestBuilder(RequestBuilder.POST, requestUrl);
@@ -473,7 +475,7 @@ public class TestEnvView extends VLayout {
             }
 
             final String baseUrl = GWT.getModuleBaseURL();
-            String servicePath = WebConsoleClientConfig.constants.envTaskService();
+            String servicePath = ClientConfig.constants.envTaskService();
             String requestUrl = baseUrl + servicePath.substring(servicePath.lastIndexOf('/') + 1);
 
             RequestBuilder builder = new RequestBuilder(RequestBuilder.POST, requestUrl);
@@ -582,7 +584,7 @@ public class TestEnvView extends VLayout {
             setClientOnly(false);
 
             String baseUrl = GWT.getModuleBaseURL();
-            String servicePath = WebConsoleClientConfig.constants.testEnvService();
+            String servicePath = ClientConfig.constants.testEnvService();
             String requestUrl = baseUrl + servicePath.substring(servicePath.lastIndexOf('/') + 1);
             setDataURL(requestUrl);
 
@@ -648,7 +650,7 @@ public class TestEnvView extends VLayout {
                         traceImg.setShowDown(false);
                         traceImg.setShowRollOver(false);
                         traceImg.setSrc("trace.png");
-                        traceImg.setPrompt("View Trace");
+                        traceImg.setPrompt(ClientConfig.messages.viewTrace());
                         traceImg.setHeight(16);
                         traceImg.setWidth(16);
                         traceImg.setLayoutAlign(Alignment.CENTER);
@@ -677,11 +679,11 @@ public class TestEnvView extends VLayout {
             executionGrid.setCanEdit(true);
             executionGrid.setDataSource(executionSource);
 
-            ListGridField selectedField = new ListGridField("selected", "on/off", 40);
+            ListGridField selectedField = new ListGridField("selected", ClientConfig.messages.onOrOff(), 40);
             selectedField.setType(ListGridFieldType.BOOLEAN);
             selectedField.setDefaultValue(true);
 
-            ListGridField hostField = new ListGridField("host", "Host", 150);
+            ListGridField hostField = new ListGridField("host", ClientConfig.messages.host(), 150);
             hostField.setRequired(true);
             hostField.setOptionDataSource(hostSource);
             hostField.setDisplayField("hostname");
@@ -690,18 +692,18 @@ public class TestEnvView extends VLayout {
             hostField.setEditorType(new ComboBoxItem());
             hostField.setShowHover(true);
 
-            ListGridField workingDirField = new ListGridField("workingDir", "Working Directory", 100);
+            ListGridField workingDirField = new ListGridField("workingDir", ClientConfig.messages.workingDir(), 100);
             workingDirField.setShowHover(true);
 
-            ListGridField commandField = new ListGridField("command", "Command");
+            ListGridField commandField = new ListGridField("command", ClientConfig.messages.command());
             commandField.setRequired(true);
             commandField.setShowHover(true);
 
-            ListGridField retCodeField = new ListGridField("retCode", "RetCode", 80);
+            ListGridField retCodeField = new ListGridField("retCode", ClientConfig.messages.retCode(), 80);
             retCodeField.setType(ListGridFieldType.INTEGER);
             retCodeField.setCanEdit(false);
 
-            ListGridField traceField = new ListGridField("trace", "Trace", 80);
+            ListGridField traceField = new ListGridField("trace", ClientConfig.messages.trace(), 80);
             traceField.setCanEdit(false);
 
             executionGrid.setFields(selectedField, hostField, workingDirField, commandField, retCodeField, traceField);
@@ -718,7 +720,7 @@ public class TestEnvView extends VLayout {
             controls.setLayoutAlign(Alignment.CENTER);
             controls.setAlign(Alignment.CENTER);
 
-            IButton newExecutionButton = new IButton("New");
+            IButton newExecutionButton = new IButton(ClientConfig.messages.new_());
             newExecutionButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
                     String currentEditingEnv = taskRecord.getAttribute("envName");
@@ -775,7 +777,7 @@ public class TestEnvView extends VLayout {
             setClientOnly(false);
 
             String baseUrl = GWT.getModuleBaseURL();
-            String servicePath = WebConsoleClientConfig.constants.testEnvService();
+            String servicePath = ClientConfig.constants.testEnvService();
             String requestUrl = baseUrl + servicePath.substring(servicePath.lastIndexOf('/') + 1);
             setDataURL(requestUrl);
 
@@ -820,7 +822,7 @@ public class TestEnvView extends VLayout {
         HostsWindow() {
             setWidth(450);
             setHeight(350);
-            setTitle("Hosts");
+            setTitle(ClientConfig.messages.hosts());
             setShowMinimizeButton(false);
             setIsModal(true);
             setShowModalMask(true);
@@ -845,11 +847,11 @@ public class TestEnvView extends VLayout {
             hostGrid.setAutoFetchData(true);
             hostGrid.setDataSource(hostSource);
 
-            ListGridField hostNameField = new ListGridField("hostname", "Host", 200);
+            ListGridField hostNameField = new ListGridField("hostname", ClientConfig.messages.host(), 200);
             hostNameField.setRequired(true);
-            ListGridField userNameField = new ListGridField("username", "User", 100);
+            ListGridField userNameField = new ListGridField("username", ClientConfig.messages.user(), 100);
             userNameField.setRequired(true);
-            ListGridField passwordField = new ListGridField("password", "Password", 100);
+            ListGridField passwordField = new ListGridField("password", ClientConfig.messages.password(), 100);
             passwordField.setRequired(true);
             passwordField.setCellFormatter(new CellFormatter() {
 
@@ -878,7 +880,7 @@ public class TestEnvView extends VLayout {
             controls.setLayoutAlign(Alignment.CENTER);
             controls.setAlign(Alignment.CENTER);
 
-            IButton newHostButton = new IButton("New");
+            IButton newHostButton = new IButton(ClientConfig.messages.new_());
             newHostButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
                     hostGrid.startEditingNew();
@@ -910,7 +912,7 @@ public class TestEnvView extends VLayout {
             setClientOnly(false);
 
             String baseUrl = GWT.getModuleBaseURL();
-            String servicePath = WebConsoleClientConfig.constants.testEnvService();
+            String servicePath = ClientConfig.constants.testEnvService();
             String requestUrl = baseUrl + servicePath.substring(servicePath.lastIndexOf('/') + 1);
             setDataURL(requestUrl);
 
@@ -938,7 +940,7 @@ public class TestEnvView extends VLayout {
         TraceWindow() {
             setWidth(500);
             setHeight(200);
-            setTitle("Trace");
+            setTitle(ClientConfig.messages.trace());
             setShowMaximizeButton(true);
             setCanDragResize(true);
             setIsModal(true);
@@ -961,7 +963,7 @@ public class TestEnvView extends VLayout {
 
         void showTrace(final Integer executionId) {
             windowLayout.removeMembers(windowLayout.getMembers());
-            final Label loading = new Label("Loading...");
+            final Label loading = new Label(ClientConfig.messages.loading() + "...");
             loading.setAlign(Alignment.CENTER);
             loading.setIcon("loading.gif");
             loading.setIconSize(16);
@@ -972,7 +974,7 @@ public class TestEnvView extends VLayout {
             dataBuilder.append("&executionId=").append(executionId);
 
             final String baseUrl = GWT.getModuleBaseURL();
-            String servicePath = WebConsoleClientConfig.constants.envTaskService();
+            String servicePath = ClientConfig.constants.envTaskService();
             String requestUrl = baseUrl + servicePath.substring(servicePath.lastIndexOf('/') + 1);
 
             RequestBuilder builder = new RequestBuilder(RequestBuilder.POST, requestUrl);
@@ -995,7 +997,7 @@ public class TestEnvView extends VLayout {
                             controls.setMargin(5);
                             controls.setMembersMargin(5);
                             controls.setAlign(Alignment.CENTER);
-                            IButton refreshButton = new IButton("Refresh");
+                            IButton refreshButton = new IButton(ClientConfig.messages.refresh());
                             refreshButton.addClickHandler(new ClickHandler() {
                                 @Override
                                 public void onClick(ClickEvent event) {

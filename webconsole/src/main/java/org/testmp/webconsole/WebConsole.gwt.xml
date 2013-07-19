@@ -32,8 +32,8 @@
 
       <!-- <extend-property name="locale" values="en_US,zh_CN"/> -->
       <!-- <set-property-fallback name="locale" value="en" /> -->
+      <extend-property name="locale" values="zh"/>
 
       <source path='client' />
       <source path='shared' />
 </module>
-    

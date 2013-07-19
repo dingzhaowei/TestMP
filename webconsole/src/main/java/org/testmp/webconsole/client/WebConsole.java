@@ -13,7 +13,7 @@
 
 package org.testmp.webconsole.client;
 
-import org.testmp.webconsole.shared.WebConsoleClientConfig;
+import org.testmp.webconsole.shared.ClientConfig;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
@@ -78,7 +78,7 @@ public class WebConsole implements EntryPoint {
         footer.setMargin(5);
         vLayout.addMember(footer);
 
-        Tab welcomeTab = new Tab(WebConsoleClientConfig.messages.welcome());
+        Tab welcomeTab = new Tab(ClientConfig.messages.welcome());
         welcomeTab.setName("welcomeTab");
         welcomeTab.setIcon("welcome.png");
         welcomeTab.setWidth(120);
@@ -94,19 +94,19 @@ public class WebConsole implements EntryPoint {
         welcomeTab.setPane(introLayout);
         appTabSet.addTab(welcomeTab);
 
-        Tab testCaseTab = new Tab(WebConsoleClientConfig.messages.testCase());
+        Tab testCaseTab = new Tab(ClientConfig.messages.testCase());
         testCaseTab.setName("testCaseTab");
         testCaseTab.setWidth(120);
         testCaseTab.setPane(new TestCaseView());
         appTabSet.addTab(testCaseTab);
 
-        Tab testDataTab = new Tab(WebConsoleClientConfig.messages.testData());
+        Tab testDataTab = new Tab(ClientConfig.messages.testData());
         testDataTab.setName("testDataTab");
         testDataTab.setWidth(120);
         testDataTab.setPane(new TestDataView());
         appTabSet.addTab(testDataTab);
 
-        Tab testEnvTab = new Tab(WebConsoleClientConfig.messages.testEnvironment());
+        Tab testEnvTab = new Tab(ClientConfig.messages.testEnvironment());
         testEnvTab.setName("testEnvTab");
         testEnvTab.setWidth(120);
         testEnvTab.setPane(new TestEnvView());

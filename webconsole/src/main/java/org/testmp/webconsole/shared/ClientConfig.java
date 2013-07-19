@@ -18,7 +18,7 @@ import org.testmp.webconsole.client.Messages;
 
 import com.google.gwt.core.client.GWT;
 
-public final class WebConsoleClientConfig {
+public final class ClientConfig {
 
     public final static Messages messages = GWT.create(Messages.class);
 
