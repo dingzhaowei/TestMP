@@ -22,7 +22,9 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.util.Enumeration;
+import java.util.Locale;
 import java.util.Properties;
+import java.util.ResourceBundle;
 import java.util.Timer;
 
 import javax.servlet.ServletContext;
@@ -73,8 +75,23 @@ public class WebConsoleContextListener implements ServletContextListener {
             }
         }
 
-        // Customize the host page by locale
+        // Load messages resource bundle
         String locale = context.getAttribute("locale").toString();
+        log.info("Load resource bundle for locale " + locale);
+        String[] elements = locale.split("_");
+        Locale currentLocale = null;
+        if (elements.length == 1) {
+            currentLocale = new Locale(elements[0]);
+        } else if (elements.length == 2) {
+            currentLocale = new Locale(elements[0], elements[1]);
+        } else {
+            currentLocale = new Locale(elements[0], elements[1], elements[2]);
+        }
+        ResourceBundle messages = ResourceBundle
+                .getBundle("org.testmp.webconsole.server.MessagesBundle", currentLocale);
+        context.setAttribute("messages", messages);
+
+        // Customize the host page by locale
         log.info("Change host page locale to " + locale);
         try {
             String hostPage = context.getResource("/webconsole/WebConsole.html").getPath();
@@ -95,7 +112,8 @@ public class WebConsoleContextListener implements ServletContextListener {
             String fmt1 = "<meta name=\"gwt:property\" content=\"locale=%s\">";
             content = content.replaceAll(String.format(fmt1, ".+?"), String.format(fmt1, locale));
             String fmt2 = "<title>%s</title>";
-            content = content.replaceAll(String.format(fmt2, ".+?"), String.format(fmt2, getTitle(locale)));
+            content = content.replaceAll(String.format(fmt2, ".+?"),
+                    String.format(fmt2, messages.getString("testmpWebConsole")));
 
             PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(hostPage), "UTF-8"));
             writer.print(content);
@@ -125,12 +143,5 @@ public class WebConsoleContextListener implements ServletContextListener {
         long triggerLatency = Long.parseLong((String) context.getAttribute("taskTriggerMaxLatency")) * 1000;
         TaskScheduler taskScheduler = new TaskScheduler(testEnvStoreUrl, refreshingGap, taskRunner, triggerLatency);
         scheduleTimer.scheduleAtFixedRate(taskScheduler, 0, 1000);
-    }
-
-    private String getTitle(String locale) {
-        if (locale.startsWith("zh")) {
-            return "TestMP 控制台";
-        }
-        return "TestMP Web Console";
     }
 }
