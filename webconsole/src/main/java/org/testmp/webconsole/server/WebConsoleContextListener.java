@@ -90,7 +90,13 @@ public class WebConsoleContextListener implements ServletContextListener {
                 sb.append(line).append("\n");
             }
             reader.close();
-            String content = sb.toString().replace("${locale}", locale).replace("${title}", getTitle(locale));
+
+            String content = sb.toString();
+            String fmt1 = "<meta name=\"gwt:property\" content=\"locale=%s\">";
+            content = content.replaceAll(String.format(fmt1, ".+?"), String.format(fmt1, locale));
+            String fmt2 = "<title>%s</title>";
+            content = content.replaceAll(String.format(fmt2, ".+?"), String.format(fmt2, getTitle(locale)));
+
             PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(hostPage), "UTF-8"));
             writer.print(content);
             writer.close();
