@@ -32,6 +32,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.ResourceBundle;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -193,9 +194,12 @@ public class ReportService extends HttpServlet {
         String reportTemplatesDir = getRealPath(baseDir + "/templates");
         ve.setProperty(VelocityEngine.FILE_RESOURCE_LOADER_PATH, reportTemplatesDir);
 
-        String sep = File.separator;
-        String velocityLog = System.getProperty("testmp.home", "") + sep + "log" + sep + "velocity.log";
-        ve.setProperty(VelocityEngine.RUNTIME_LOG, velocityLog);
+        String home = System.getenv("TESTMP_HOME");
+        if (home != null) {
+            String sep = File.separator;
+            String velocityLog = home + sep + "log" + sep + "velocity.log";
+            ve.setProperty(VelocityEngine.RUNTIME_LOG, velocityLog);
+        }
 
         ve.setProperty(VelocityEngine.INPUT_ENCODING, "UTF-8");
         ve.setProperty(VelocityEngine.OUTPUT_ENCODING, "UTF-8");
@@ -234,6 +238,7 @@ public class ReportService extends HttpServlet {
             context.put("baseUrl", baseUrl);
             context.put("serviceName", serviceName);
             context.put("filename", reportFile.getName());
+            context.put("messages", getLocalizedMessages());
             Template template = ve.getTemplate("testMetricsReport.vm", "UTF-8");
             template.merge(context, writer);
             return reportFile.getName();
@@ -250,9 +255,12 @@ public class ReportService extends HttpServlet {
         String reportTemplatesDir = getRealPath(baseDir + "/templates");
         ve.setProperty(VelocityEngine.FILE_RESOURCE_LOADER_PATH, reportTemplatesDir);
 
-        String sep = File.separator;
-        String velocityLog = System.getProperty("testmp.home", "") + sep + "log" + sep + "velocity.log";
-        ve.setProperty(VelocityEngine.RUNTIME_LOG, velocityLog);
+        String home = System.getenv("TESTMP_HOME");
+        if (home != null) {
+            String sep = File.separator;
+            String velocityLog = home + sep + "log" + sep + "velocity.log";
+            ve.setProperty(VelocityEngine.RUNTIME_LOG, velocityLog);
+        }
 
         ve.setProperty(VelocityEngine.INPUT_ENCODING, "UTF-8");
         ve.setProperty(VelocityEngine.OUTPUT_ENCODING, "UTF-8");
@@ -303,6 +311,7 @@ public class ReportService extends HttpServlet {
             context.put("baseUrl", baseUrl);
             // context.put("serviceName", serviceName);
             // context.put("filename", reportFile.getName());
+            context.put("messages", getLocalizedMessages());
             Template template = ve.getTemplate("envStatusReport.vm", "UTF-8");
             template.merge(context, writer);
             return reportFile.getName();
@@ -393,5 +402,14 @@ public class ReportService extends HttpServlet {
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private Map<String, String> getLocalizedMessages() {
+        Map<String, String> messages = new HashMap<String, String>();
+        ResourceBundle bundle = (ResourceBundle) getServletContext().getAttribute("messages");
+        for (String key : bundle.keySet()) {
+            messages.put(key, bundle.getString(key));
+        }
+        return messages;
     }
 }

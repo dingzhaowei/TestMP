@@ -46,7 +46,8 @@ public class Launcher {
 
         String war = testmpHome + File.separator + "webapp" + File.separator + "datastore.war";
         String dbHome = testmpHome + File.separator + "data" + File.separator + storeName;
-        String[] command = new String[] { getJavaExecutable(), "-DhttpPort=" + port, "-Dtestmp.home=" + testmpHome,
+        String logFile = testmpHome + File.separator + "log" + File.separator + "testmp.log";
+        String[] command = new String[] { getJavaExecutable(), "-DhttpPort=" + port, "-Ddatastore.log=" + logFile,
                 "-DdbHome=" + dbHome, "-jar", war };
         ProcessBuilder pb = new ProcessBuilder(command);
         pb.directory(new File(testmpHome)).redirectErrorStream(true);
@@ -60,7 +61,8 @@ public class Launcher {
         }
 
         String war = testmpHome + File.separator + "webapp" + File.separator + "testmp.war";
-        String[] command = new String[] { getJavaExecutable(), "-DhttpPort=" + port, "-Dtestmp.home=" + testmpHome,
+        String logFile = testmpHome + File.separator + "log" + File.separator + "testmp.log";
+        String[] command = new String[] { getJavaExecutable(), "-DhttpPort=" + port, "-Dwebconsole.log=" + logFile,
                 "-jar", war };
         ProcessBuilder pb = new ProcessBuilder(command);
         pb.directory(new File(testmpHome)).redirectErrorStream(true);

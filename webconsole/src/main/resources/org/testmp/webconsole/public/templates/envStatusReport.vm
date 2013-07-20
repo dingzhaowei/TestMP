@@ -9,10 +9,10 @@
     <table style="border-collapse: collapse; text-align: center; font-family: Calibri,sans-serif,serif; margin: 50px; font-size: 0.9em" cellspacing="2" border="1" cellpadding="2" width="800">
       <tbody>
         <tr>
-          <td valign="top"><b>Environment</b></td>
-          <td valign="top" width="25%"><b>Task</b></td>
-          <td valign="top" width="25%"><b>Status</b></td>
-          <td valign="top" width="25%"><b>Last Run Time</b></td>
+          <td valign="top"><b>$messages.environment</b></td>
+          <td valign="top" width="25%"><b>$messages.task</b></td>
+          <td valign="top" width="25%"><b>$messages.status</b></td>
+          <td valign="top" width="25%"><b>$messages.lastRunTime</b></td>
         </tr>
         #foreach($envName in $envStatusTable.keySet())
         #set($refUrl = $envStatusTable.get($envName).get("refUrl"))

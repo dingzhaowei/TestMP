@@ -13,7 +13,7 @@
                         option.value + ".png\" alt=\"" + option.text + "\"></img>";
             }
             var button = document.getElementById("signoff");
-            button.parentNode.innerHTML = "<b><big>Signoff<br></big></b>";
+            button.parentNode.innerHTML = "<b><big>$messages.signoff<br></big></b>";
             xmlhttp=new XMLHttpRequest();
             xmlhttp.open("POST","${baseUrl}/${serviceName}",true);
             xmlhttp.setRequestHeader("Content-type","application/x-www-form-urlencoded");
@@ -31,12 +31,12 @@
       cellspacing="2" width="850">
       <tbody>
         <tr>
-          <td valign="middle" width="250"><b><big>Project<br>
+          <td valign="middle" width="250"><b><big>$messages.project<br>
               </big></b></td>
-          <td valign="middle"><b><big>Test Metrics<br>
+          <td valign="middle"><b><big>$messages.testMetrics<br>
               </big></b></td>
           <td valign="middle">
-            <button id="signoff" onclick="signoff()">Signoff</button>
+            <button id="signoff" onclick="signoff()">$messages.signoff</button>
           </td>
         </tr>
         #foreach($project in $testMetricsTable.keySet())
@@ -51,19 +51,19 @@
               cellspacing="2" width="100%">
               <tbody>
                 <tr>
-                  <td valign="middle">Total Tests<br>
+                  <td valign="middle">$messages.totalTests<br>
                   </td>
                   <td valign="middle"><b>$metrics.testsTotal</b><b><br>
                     </b></td>
                 </tr>
                 <tr>
-                  <td valign="middle">Groups (tags)<br>
+                  <td valign="middle">$messages.groups<br>
                   </td>
                   <td valign="top"><b>$metrics.allRelatedTags</b><br>
                   </td>
                 </tr>
                 <tr>
-                  <td valign="middle">Robustness<br>
+                  <td valign="middle">$messages.robustness<br>
                   </td>
                   <td valign="middle">
                     <table style="font-size: 0.8em; text-align: center;
@@ -73,13 +73,13 @@
                       width="100%">
                       <tbody>
                         <tr>
-                          <td valign="top">Always bad<br>
+                          <td valign="top">$messages.alwaysBad<br>
                           </td>
-                          <td valign="top">Degrading<br>
+                          <td valign="top">$messages.degrading<br>
                           </td>
-                          <td valign="top">Upgrading<br>
+                          <td valign="top">$messages.upgrading<br>
                           </td>
-                          <td valign="top">Always good<br>
+                          <td valign="top">$messages.alwaysGood<br>
                           </td>
                         </tr>
                         <tr>
@@ -107,7 +107,7 @@
                   </td>
                 </tr>
                 <tr>
-                  <td valign="middle">Effectiveness<br>
+                  <td valign="middle">$messages.effectiveness<br>
                   </td>
                   <td valign="middle">
                     <table style="text-align: center; font-size: 0.8em;
@@ -117,11 +117,11 @@
                       width="100%">
                       <tbody>
                         <tr>
-                          <td valign="top">Total failures<br>
+                          <td valign="top">$messages.totalFailures<br>
                           </td>
-                          <td valign="top">False failures<br>
+                          <td valign="top">$messages.falseFailures<br>
                           </td>
-                          <td valign="top">Related bugs<br>
+                          <td valign="top">$messages.relatedBugs<br>
                           </td>
                         </tr>
                         <tr>
@@ -137,7 +137,7 @@
                   </td>
                 </tr>
                 <tr>
-                  <td valign="middle">Efficiency<br>
+                  <td valign="middle">$messages.efficiency<br>
                   </td>
                   <td valign="top">
                     <table style="text-align: center; font-size: 0.8em;
@@ -147,11 +147,11 @@
                       width="100%">
                       <tbody>
                         <tr>
-                          <td valign="top">Total time<br>
+                          <td valign="top">$messages.totalTime<br>
                           </td>
-                          <td valign="top">Avg. time<br>
+                          <td valign="top">$messages.avgTime<br>
                           </td>
-                          <td valign="top">Volatility<br>
+                          <td valign="top">$messages.volatility<br>
                           </td>
                         </tr>
                         <tr>
@@ -176,8 +176,8 @@
           </td>
           <td>
             <select>
-              <option value="accept">Accept</option>
-              <option value="refuse">Refuse</option>
+              <option value="accept">$messages.accept</option>
+              <option value="refuse">$messages.refuse</option>
             </select>
           </td>
         </tr>

@@ -143,6 +143,8 @@
                     <draftCompile>true</draftCompile>
                     <debugSuspend>false</debugSuspend>
 
+                    <extraJvmArgs>-Xmx512M -Xss1024k -Dwebconsole.log=/tmp/testmp.log</extraJvmArgs>
+
                     <!--<runTarget>'http://localhost:7080/gwtApplication/org.example.Application/Application.html'</runTarget>-->
                     <!--<noServer>true</noServer>-->
                     <!--<inplace>false</inplace>-->

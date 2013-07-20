@@ -176,7 +176,7 @@ public class ReportWindow extends Window {
         public SendWindow(ReportType type, final String reportFileName) {
             setWidth(600);
             setHeight(450);
-            setTitle("Send Report");
+            setTitle(ClientConfig.messages.sendReport());
             setShowMinimizeButton(false);
             setIsModal(true);
             setShowModalMask(true);
