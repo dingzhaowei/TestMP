@@ -17,6 +17,7 @@ import org.testmp.webconsole.shared.ClientConfig;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.i18n.client.LocaleInfo;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ContentsType;
 import com.smartgwt.client.types.Side;
@@ -84,7 +85,12 @@ public class WebConsole implements EntryPoint {
         welcomeTab.setWidth(120);
         VLayout introLayout = new VLayout();
         HTMLPane introView = new HTMLPane();
-        introView.setContentsURL(GWT.getModuleBaseURL() + "intro.html");
+        String localeName = LocaleInfo.getCurrentLocale().getLocaleName();
+        if (localeName.startsWith("zh")) {
+            introView.setContentsURL(GWT.getModuleBaseURL() + "intro_zh.html");
+        } else {
+            introView.setContentsURL(GWT.getModuleBaseURL() + "intro.html");
+        }
         introView.setContentsType(ContentsType.PAGE);
         introView.setSize("100%", "100%");
         introView.setMargin(5);
