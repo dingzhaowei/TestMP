@@ -35,6 +35,10 @@ import org.codehaus.jackson.node.ObjectNode;
 import org.codehaus.jackson.type.TypeReference;
 import org.testmp.datastore.client.DataInfo;
 import org.testmp.datastore.client.DataStoreClient;
+import org.testmp.webconsole.model.Execution;
+import org.testmp.webconsole.model.Host;
+import org.testmp.webconsole.model.Task;
+import org.testmp.webconsole.model.TestEnvironment;
 import org.testmp.webconsole.util.CronExpression;
 
 @SuppressWarnings("serial")
@@ -122,105 +126,115 @@ public class TestEnvService extends HttpServlet {
         output.flush();
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     private List<Map<String, Object>> fetchData(Map<String, Object> criteria, String dsId) throws Exception {
         List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
         if (dsId.equals("testEnvDS")) {
-            List<DataInfo<Map>> dataInfoList = client.getDataByTag(Map.class, "TestEnv");
-            for (DataInfo<Map> dataInfo : dataInfoList) {
-                Map data = dataInfo.getData();
-                data.put("envId", dataInfo.getId());
-                result.add(data);
+            List<DataInfo<TestEnvironment>> dataInfoList = client.getDataByTag(TestEnvironment.class, "TestEnv");
+            for (DataInfo<TestEnvironment> dataInfo : dataInfoList) {
+                TestEnvironment data = dataInfo.getData();
+                Map<String, Object> m = data.toMap();
+                m.put("envId", dataInfo.getId());
+                result.add(m);
             }
             return result;
         } else if (dsId.equals("taskDS")) {
-            List<DataInfo<Map>> dataInfoList = client.getData(Map.class, new String[] { "Task" }, criteria);
-            for (DataInfo<Map> dataInfo : dataInfoList) {
-                Map data = dataInfo.getData();
-                data.put("taskId", dataInfo.getId());
-                result.add(data);
+            List<DataInfo<Task>> dataInfoList = client.getData(Task.class, new String[] { "Task" }, criteria);
+            for (DataInfo<Task> dataInfo : dataInfoList) {
+                Task data = dataInfo.getData();
+                Map<String, Object> m = data.toMap();
+                m.put("taskId", dataInfo.getId());
+                result.add(m);
             }
             return result;
         } else if (dsId.equals("executionDS")) {
-            List<DataInfo<Map>> dataInfoList = client.getData(Map.class, new String[] { "Execution" }, criteria);
-            for (DataInfo<Map> dataInfo : dataInfoList) {
-                Map data = dataInfo.getData();
-                data.put("executionId", dataInfo.getId());
-                result.add(data);
+            List<DataInfo<Execution>> dataInfoList = client.getData(Execution.class, new String[] { "Execution" },
+                    criteria);
+            for (DataInfo<Execution> dataInfo : dataInfoList) {
+                Execution data = dataInfo.getData();
+                Map<String, Object> m = data.toMap();
+                m.put("executionId", dataInfo.getId());
+                result.add(m);
             }
             return result;
         } else if (dsId.equals("hostDS")) {
-            List<DataInfo<Map>> dataInfoList = client.getData(Map.class, new String[] { "Host" }, criteria);
-            for (DataInfo<Map> dataInfo : dataInfoList) {
-                Map data = dataInfo.getData();
-                data.put("hostId", dataInfo.getId());
-                result.add(data);
+            List<DataInfo<Host>> dataInfoList = client.getData(Host.class, new String[] { "Host" }, criteria);
+            for (DataInfo<Host> dataInfo : dataInfoList) {
+                Host data = dataInfo.getData();
+                Map<String, Object> m = data.toMap();
+                m.put("hostId", dataInfo.getId());
+                result.add(m);
             }
             return result;
         }
         throw new RuntimeException("Unsupported datasource");
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
     private Map<String, Object> addData(Map<String, Object> data, String dsId) throws Exception {
         if (dsId.equals("testEnvDS")) {
             checkEnvNameValidity(data);
 
-            Map<String, Object> m = new HashMap<String, Object>();
-            m.put("envName", data.get("envName"));
-            m.put("refUrl", data.get("refUrl"));
+            TestEnvironment testEnv = new TestEnvironment();
+            testEnv.setEnvName((String) data.get("envName"));
+            testEnv.setRefUrl((String) data.get("refUrl"));
 
-            DataInfo<Map> dataInfo = new DataInfo<Map>(null, Arrays.asList(new String[] { "TestEnv" }), m);
+            DataInfo<TestEnvironment> dataInfo = new DataInfo<TestEnvironment>(null,
+                    Arrays.asList(new String[] { "TestEnv" }), testEnv);
             int id = client.addData(dataInfo).get(0);
-            dataInfo = client.getDataById(Map.class, id);
-            Map addedData = dataInfo.getData();
-            addedData.put("envId", dataInfo.getId());
-            return addedData;
+            dataInfo = client.getDataById(TestEnvironment.class, id);
+            TestEnvironment addedData = dataInfo.getData();
+            Map<String, Object> m = addedData.toMap();
+            m.put("envId", dataInfo.getId());
+            return m;
         } else if (dsId.equals("taskDS")) {
             checkTaskScheduleValidity(data);
 
-            Map<String, Object> m = new HashMap<String, Object>();
-            m.put("taskName", data.get("taskName"));
-            m.put("envName", data.get("envName"));
-            m.put("status", data.get("status"));
-            m.put("schedule", data.get("schedule"));
-            m.put("lastRunTime", data.get("lastRunTime"));
+            Task task = new Task();
+            task.setTaskName((String) data.get("taskName"));
+            task.setEnvName((String) data.get("envName"));
+            task.setStatus((String) data.get("status"));
+            task.setSchedule((String) data.get("schedule"));
+            task.setLastRunTime((String) data.get("lastRunTime"));
 
-            DataInfo<Map> dataInfo = new DataInfo<Map>(null, Arrays.asList(new String[] { "Task" }), m);
+            DataInfo<Task> dataInfo = new DataInfo<Task>(null, Arrays.asList(new String[] { "Task" }), task);
             int id = client.addData(dataInfo).get(0);
-            dataInfo = client.getDataById(Map.class, id);
-            Map addedData = dataInfo.getData();
-            addedData.put("taskId", dataInfo.getId());
-            return addedData;
+            dataInfo = client.getDataById(Task.class, id);
+            Task addedData = dataInfo.getData();
+            Map<String, Object> m = addedData.toMap();
+            m.put("taskId", dataInfo.getId());
+            return m;
         } else if (dsId.equals("executionDS")) {
-            Map<String, Object> m = new HashMap<String, Object>();
-            m.put("taskName", data.get("taskName"));
-            m.put("envName", data.get("envName"));
-            m.put("selected", data.get("selected"));
-            m.put("host", data.get("host"));
-            m.put("workingDir", data.get("workingDir"));
-            m.put("command", data.get("command"));
-            m.put("retCode", data.get("retCode"));
-            DataInfo<Map> dataInfo = new DataInfo<Map>(null, Arrays.asList(new String[] { "Execution" }), m);
+            Execution execution = new Execution();
+            execution.setTaskName((String) data.get("taskName"));
+            execution.setEnvName((String) data.get("envName"));
+            execution.setSelected((Boolean) data.get("selected"));
+            execution.setHost((String) data.get("host"));
+            execution.setWorkingDir((String) data.get("workingDir"));
+            execution.setCommand((String) data.get("command"));
+            execution.setRetCode((Integer) data.get("retCode"));
+
+            DataInfo<Execution> dataInfo = new DataInfo<Execution>(null, Arrays.asList(new String[] { "Execution" }),
+                    execution);
             int id = client.addData(dataInfo).get(0);
-            dataInfo = client.getDataById(Map.class, id);
-            Map addedData = dataInfo.getData();
-            addedData.put("executionId", dataInfo.getId());
-            return addedData;
+            dataInfo = client.getDataById(Execution.class, id);
+            Execution addedData = dataInfo.getData();
+            Map<String, Object> m = addedData.toMap();
+            m.put("executionId", dataInfo.getId());
+            return m;
         } else if (dsId.equals("hostDS")) {
             checkHostNameValidity(data);
 
-            Map<String, Object> m = new HashMap<String, Object>();
-            m.put("hostname", data.get("hostname"));
-            m.put("username", data.get("username"));
-            m.put("password", data.get("password"));
+            Host host = new Host();
+            host.setHostname((String) data.get("hostname"));
+            host.setUsername((String) data.get("username"));
+            host.setPassword((String) data.get("password"));
 
-            DataInfo<Map> dataInfo = new DataInfo<Map>(null, Arrays.asList(new String[] { "Host" }), m);
+            DataInfo<Host> dataInfo = new DataInfo<Host>(null, Arrays.asList(new String[] { "Host" }), host);
             int id = client.addData(dataInfo).get(0);
-            dataInfo = client.getDataById(Map.class, id);
-            Map addedData = dataInfo.getData();
-            addedData.put("hostId", dataInfo.getId());
-            return addedData;
+            dataInfo = client.getDataById(Host.class, id);
+            Host addedData = dataInfo.getData();
+            Map<String, Object> m = addedData.toMap();
+            m.put("hostId", dataInfo.getId());
+            return m;
         }
         throw new RuntimeException("Unsupported datasource");
     }
@@ -259,12 +273,11 @@ public class TestEnvService extends HttpServlet {
         }
     }
 
-    @SuppressWarnings("rawtypes")
     private void removeTasks(Integer... taskIds) throws Exception {
         for (Integer taskId : taskIds) {
-            Map task = client.getDataById(Map.class, taskId).getData();
-            String taskName = task.get("taskName").toString();
-            String envName = task.get("envName").toString();
+            Task task = client.getDataById(Task.class, taskId).getData();
+            String taskName = task.getTaskName();
+            String envName = task.getEnvName();
             Map<String, Object> criteria = new HashMap<String, Object>();
             criteria.put("taskName", taskName);
             criteria.put("envName", envName);
@@ -278,11 +291,10 @@ public class TestEnvService extends HttpServlet {
         }
     }
 
-    @SuppressWarnings("rawtypes")
     private void removeEnvironments(Integer... envIds) throws Exception {
         for (Integer envId : envIds) {
-            Map env = client.getDataById(Map.class, envId).getData();
-            String envName = env.get("envName").toString();
+            TestEnvironment env = client.getDataById(TestEnvironment.class, envId).getData();
+            String envName = env.getEnvName();
             Map<String, Object> criteria = new HashMap<String, Object>();
             criteria.put("envName", envName);
             List<Integer> taskIds = client.findData(new String[] { "Task" }, criteria);
@@ -295,7 +307,6 @@ public class TestEnvService extends HttpServlet {
         }
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     private Map<String, Object> updateData(Map<String, Object> data, Map<String, Object> oldValues, String dsId)
             throws Exception {
         if (dsId.equals("testEnvDS")) {
@@ -318,10 +329,11 @@ public class TestEnvService extends HttpServlet {
                 }
                 client.addPropertyToData(envId, key, value);
             }
-            DataInfo<Map> dataInfo = client.getDataById(Map.class, envId);
-            Map updatedData = dataInfo.getData();
-            updatedData.put("envId", dataInfo.getId());
-            return updatedData;
+            DataInfo<TestEnvironment> dataInfo = client.getDataById(TestEnvironment.class, envId);
+            TestEnvironment updatedData = dataInfo.getData();
+            Map<String, Object> m = updatedData.toMap();
+            m.put("envId", dataInfo.getId());
+            return m;
         } else if (dsId.equals("taskDS")) {
             Integer taskId = (Integer) data.get("taskId");
             for (String key : data.keySet()) {
@@ -341,10 +353,11 @@ public class TestEnvService extends HttpServlet {
                 }
                 client.addPropertyToData(taskId, key, value);
             }
-            DataInfo<Map> dataInfo = client.getDataById(Map.class, taskId);
-            Map updatedData = dataInfo.getData();
-            updatedData.put("taskId", dataInfo.getId());
-            return updatedData;
+            DataInfo<Task> dataInfo = client.getDataById(Task.class, taskId);
+            Task updatedData = dataInfo.getData();
+            Map<String, Object> m = updatedData.toMap();
+            m.put("taskId", dataInfo.getId());
+            return m;
         } else if (dsId.equals("executionDS")) {
             Integer executionId = (Integer) data.get("executionId");
             for (String key : data.keySet()) {
@@ -354,10 +367,11 @@ public class TestEnvService extends HttpServlet {
                 Object value = data.get(key);
                 client.addPropertyToData(executionId, key, value);
             }
-            DataInfo<Map> dataInfo = client.getDataById(Map.class, executionId);
-            Map updatedData = dataInfo.getData();
-            updatedData.put("executionId", dataInfo.getId());
-            return updatedData;
+            DataInfo<Execution> dataInfo = client.getDataById(Execution.class, executionId);
+            Execution updatedData = dataInfo.getData();
+            Map<String, Object> m = updatedData.toMap();
+            m.put("executionId", dataInfo.getId());
+            return m;
         } else if (dsId.equals("hostDS")) {
             Integer hostId = (Integer) data.get("hostId");
             for (String key : data.keySet()) {
@@ -370,10 +384,11 @@ public class TestEnvService extends HttpServlet {
                 }
                 client.addPropertyToData(hostId, key, value);
             }
-            DataInfo<Map> dataInfo = client.getDataById(Map.class, hostId);
-            Map updatedData = dataInfo.getData();
-            updatedData.put("hostId", dataInfo.getId());
-            return updatedData;
+            DataInfo<Host> dataInfo = client.getDataById(Host.class, hostId);
+            Host updatedData = dataInfo.getData();
+            Map<String, Object> m = updatedData.toMap();
+            m.put("hostId", dataInfo.getId());
+            return m;
         }
         throw new RuntimeException("Unsupported datasource");
     }

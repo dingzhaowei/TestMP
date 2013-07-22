@@ -11,6 +11,7 @@ import java.util.TimerTask;
 import org.apache.log4j.Logger;
 import org.testmp.datastore.client.DataInfo;
 import org.testmp.datastore.client.DataStoreClient;
+import org.testmp.webconsole.model.Task;
 import org.testmp.webconsole.util.CronExpression;
 
 public class TaskScheduler extends TimerTask {
@@ -51,12 +52,11 @@ public class TaskScheduler extends TimerTask {
         }
     }
 
-    @SuppressWarnings("rawtypes")
     private void refreshTaskSchedule() throws Exception {
-        List<DataInfo<Map>> dataInfoList = client.getDataByTag(Map.class, "Task");
-        for (DataInfo<Map> dataInfo : dataInfoList) {
-            Map task = dataInfo.getData();
-            String cronExp = (String) task.get("schedule");
+        List<DataInfo<Task>> dataInfoList = client.getDataByTag(Task.class, "Task");
+        for (DataInfo<Task> dataInfo : dataInfoList) {
+            Task task = dataInfo.getData();
+            String cronExp = task.getSchedule();
             Integer taskId = dataInfo.getId();
             if (!schedule.containsKey(taskId) && cronExp != null) {
                 schedule.put(taskId, new TaskScheduleInfo(cronExp));

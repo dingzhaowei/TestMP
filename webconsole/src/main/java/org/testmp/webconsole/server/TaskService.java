@@ -33,6 +33,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.testmp.datastore.client.DataInfo;
 import org.testmp.datastore.client.DataStoreClient;
+import org.testmp.webconsole.model.Execution;
+import org.testmp.webconsole.model.Host;
+import org.testmp.webconsole.model.Task;
 
 @SuppressWarnings("serial")
 public class TaskService extends HttpServlet {
@@ -50,7 +53,6 @@ public class TaskService extends HttpServlet {
         super.init();
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         BufferedReader input = new BufferedReader(new InputStreamReader(req.getInputStream(), "ISO-8859-1"));
@@ -86,36 +88,36 @@ public class TaskService extends HttpServlet {
                 Integer taskId = Integer.valueOf(params.get("taskId"));
                 client.addPropertyToData(taskId, "status", "failure.png");
 
-                DataInfo<Map> dataInfo = client.getDataById(Map.class, taskId);
+                DataInfo<Task> dataInfo = client.getDataById(Task.class, taskId);
                 if (dataInfo == null) {
                     log.warn("Failed to cancel task " + taskId + ". Not found.");
                     return;
                 }
 
-                Map task = dataInfo.getData();
+                Task task = dataInfo.getData();
                 Map<String, Object> execCriteria = new HashMap<String, Object>();
-                Object envName = task.get("envName");
-                Object taskName = task.get("taskName");
+                Object envName = task.getEnvName();
+                Object taskName = task.getTaskName();
                 execCriteria.put("envName", envName);
                 execCriteria.put("taskName", taskName);
-                List<DataInfo<Map>> execInfoList = client
-                        .getData(Map.class, new String[] { "Execution" }, execCriteria);
-                for (DataInfo<Map> execInfo : execInfoList) {
-                    Map execution = execInfo.getData();
-                    taskRunner.cancelExecution(execution);
+                List<DataInfo<Execution>> execInfoList = client.getData(Execution.class, new String[] { "Execution" },
+                        execCriteria);
+                for (DataInfo<Execution> execInfo : execInfoList) {
+                    Execution execution = execInfo.getData();
+                    taskRunner.cancelExecution(execution.toMap());
                 }
             } else if (action.equals("queryTaskStatus")) {
                 StringBuilder respBuilder = new StringBuilder();
                 for (String t : params.get("taskIds").split(",")) {
                     Integer taskId = Integer.parseInt(t.trim());
 
-                    DataInfo<Map> dataInfo = client.getDataById(Map.class, taskId);
+                    DataInfo<Task> dataInfo = client.getDataById(Task.class, taskId);
                     if (dataInfo == null) {
                         continue;
                     }
 
-                    Object status = dataInfo.getData().get("status");
-                    Object lastRunTime = dataInfo.getData().get("lastRunTime");
+                    Object status = dataInfo.getData().getStatus();
+                    Object lastRunTime = dataInfo.getData().getLastRunTime();
                     if (status != null) {
                         if (respBuilder.length() > 0) {
                             respBuilder.append(',');
@@ -128,17 +130,17 @@ public class TaskService extends HttpServlet {
             } else if (action.equals("queryExecutionTrace")) {
                 Integer executionId = Integer.valueOf(params.get("executionId"));
 
-                DataInfo<Map> dataInfo = client.getDataById(Map.class, executionId);
+                DataInfo<Execution> dataInfo = client.getDataById(Execution.class, executionId);
                 if (dataInfo == null) {
                     output.println("Execution is not found.");
                     output.flush();
                     return;
                 }
 
-                Map execution = dataInfo.getData();
-                String host = (String) execution.get("host");
-                String workingDir = (String) execution.get("workingDir");
-                String command = (String) execution.get("command");
+                Execution execution = dataInfo.getData();
+                String host = execution.getHost();
+                String workingDir = execution.getWorkingDir();
+                String command = execution.getCommand();
                 String traceFileDir = (String) getServletContext().getAttribute("traceFileDir");
                 String filename = TaskRunner.getTraceFileName(host, workingDir, command);
                 File traceFile = new File(traceFileDir + File.separator + filename);
@@ -167,19 +169,18 @@ public class TaskService extends HttpServlet {
         }
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     static void runTask(Integer taskId, DataStoreClient client, TaskRunner runner) throws Exception {
-        Map task = null;
+        Task task = null;
 
         // Check and change the task status
         synchronized (runner) {
-            DataInfo<Map> dataInfo = client.getDataById(Map.class, taskId);
+            DataInfo<Task> dataInfo = client.getDataById(Task.class, taskId);
             if (dataInfo == null) {
                 log.warn("Failed to run task " + taskId + ". Not found.");
                 return;
             }
             task = dataInfo.getData();
-            Object status = task.get("status");
+            Object status = task.getStatus();
             if (status != null && status.toString().startsWith("running")) {
                 return;
             }
@@ -188,29 +189,31 @@ public class TaskService extends HttpServlet {
         }
 
         Map<String, Object> execCriteria = new HashMap<String, Object>();
-        Object envName = task.get("envName");
-        Object taskName = task.get("taskName");
+        Object envName = task.getEnvName();
+        Object taskName = task.getTaskName();
         execCriteria.put("envName", envName);
         execCriteria.put("taskName", taskName);
         execCriteria.put("selected", true);
 
-        List<DataInfo<Map>> execInfoList = client.getData(Map.class, new String[] { "Execution" }, execCriteria);
+        List<DataInfo<Execution>> execInfoList = client.getData(Execution.class, new String[] { "Execution" },
+                execCriteria);
         Map<Integer, Future<Integer>> executionWait = new HashMap<Integer, Future<Integer>>();
-        for (DataInfo<Map> dataInfo : execInfoList) {
-            Map execution = dataInfo.getData();
+        for (DataInfo<Execution> dataInfo : execInfoList) {
+            Map<String, Object> execInfo = new HashMap<String, Object>();
+            execInfo.putAll(dataInfo.getData().toMap());
 
-            String hostname = (String) execution.get("host");
+            String hostname = dataInfo.getData().getHost();
             if (!hostname.equals("localhost") && !hostname.equals("127.0.0.1")) {
                 Map<String, Object> hostCriteria = new HashMap<String, Object>();
                 hostCriteria.put("hostname", hostname);
-                List<DataInfo<Map>> hostInfoList = client.getData(Map.class, new String[] { "Host" }, hostCriteria);
-                Map host = hostInfoList.get(0).getData();
-                execution.put("username", host.get("username"));
-                execution.put("password", host.get("password"));
+                List<DataInfo<Host>> hostInfoList = client.getData(Host.class, new String[] { "Host" }, hostCriteria);
+                Host host = hostInfoList.get(0).getData();
+                execInfo.put("username", host.getUsername());
+                execInfo.put("password", host.getPassword());
             }
 
             Integer executionId = dataInfo.getId();
-            executionWait.put(executionId, runner.addExecution(execution));
+            executionWait.put(executionId, runner.addExecution(execInfo));
         }
 
         boolean successful = true;

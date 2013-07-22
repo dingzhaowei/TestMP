@@ -572,13 +572,11 @@ public class TestEnvView extends VLayout {
             envNameField.setForeignKey("testEnvDS.envName");
 
             DataSourceTextField taskNameField = new DataSourceTextField("taskName");
-            DataSourceTextField executionField = new DataSourceTextField("execution");
             DataSourceImageField statusField = new DataSourceImageField("status");
             DataSourceTextField scheduleField = new DataSourceTextField("schedule");
             DataSourceTextField lastRunTimeField = new DataSourceTextField("lastRunTime");
 
-            setFields(taskIdField, taskNameField, envNameField, executionField, statusField, scheduleField,
-                    lastRunTimeField);
+            setFields(taskIdField, taskNameField, envNameField, statusField, scheduleField, lastRunTimeField);
 
             setDataFormat(DSDataFormat.JSON);
             setClientOnly(false);

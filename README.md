@@ -24,6 +24,9 @@ Before running TestMP, you also need to have Java Runtime Environment (Version 6
 # Configuration #
 You will find most TestMP configurations in the *conf/testmp.properties*:
 
+	# The locale setting of webconsole and reports
+	locale=en_US
+
 	# The launching url of the DataStore each for test case, data, and environment.
 	testCaseStoreUrl=http://localhost:10081/DataStore.do
 	testDataStoreUrl=http://localhost:10082/DataStore.do
@@ -54,7 +57,9 @@ You will find most TestMP configurations in the *conf/testmp.properties*:
 	smtpSettingPass=
 	smtpSettingSTARTTLS=true
 
-While most settings can be left to its default value, *testCaseStoreUrl*, *testDataUrl*, *testEnvUrl* may need to be modified if the default listening ports have been occupied or they are launched remotely.
+Currently TestMP supports UI languages of US English (the default) and Chinese. Change the *locale* to **zh_CN** if you want to change the language to Chinese.
+
+While most of the other settings can be left to their default values, *testCaseStoreUrl*, *testDataUrl*, *testEnvUrl* may need to be modified if the default listening ports have been occupied or they are launched remotely.
 
 It's also possible to make these urls the same to share only one datastore. But in practice it will not be efficient and may cause confusion.
 
@@ -88,7 +93,7 @@ Open your favorite browser, enter "http://yourhost:10080" in the address bar and
 
 # Features #
 
-### Instant Update of Test Case Doc & Status ###
+### Instant Update of Test Case Doc & Measures ###
 **Everything in automation code**
 
 Document test cases just in code, and no longer bother to maintain them in another place.
