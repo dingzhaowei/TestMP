@@ -9,7 +9,7 @@ Test Management Platform for Automation
 Once downloaded, unpack the compressed folder to see the structure of (the compiled) TestMP. You'll see a structure like this:
 
 	testmp/
-	|-- bin/      # contains the scripts for startup & maintenace.
+	|-- bin/      # contains the scripts for startup & maintenance.
 	|-- conf/     # contains the configuration file.
 	|-- data/     # contains the database files.
 	|-- lib/      # contains the TestMP client libraries. 
@@ -27,14 +27,14 @@ You will find most TestMP configurations in the *conf/testmp.properties*:
 	# The locale setting of webconsole and reports
 	locale=en_US
 
-	# The launching url of the DataStore each for test case, data, and environment.
+	# The launching url of the datastore each for test case, data, and environment.
 	testCaseStoreUrl=http://localhost:10081/DataStore.do
 	testDataStoreUrl=http://localhost:10082/DataStore.do
 	testEnvStoreUrl=http://localhost:10083/DataStore.do
 
-	# The number of threads for concurrently running task.
+	# The number of threads for running tasks.
 	executionThreadNum=10
-	# The timeout for task execution. 0 means no timeout.
+	# The timeout of task execution. 0 means no timeout.
 	executionTimeout=0
 
 	# The time gap (in seconds) between two refreshings of the task schedule.
@@ -59,7 +59,7 @@ You will find most TestMP configurations in the *conf/testmp.properties*:
 
 Currently TestMP supports UI languages of US English (the default) and Chinese. Change the *locale* to **zh_CN** if you want to change the language to Chinese.
 
-While most of the other settings can be left to their default values, *testCaseStoreUrl*, *testDataUrl*, *testEnvUrl* may need to be modified if the default listening ports have been occupied or they are launched remotely.
+While most of the other settings can be left to their default values, *testCaseStoreUrl*, *testDataStoreUrl*, *testEnvStoreUrl* may need to be modified if the default listening ports have been occupied or they are launched remotely.
 
 It's also possible to make these urls the same to share only one datastore. But in practice it will not be efficient and may cause confusion.
 
@@ -89,7 +89,7 @@ The argument *port* is optional. If it is not given, the Web Console will defaul
 
 which meanse the datastores for test case, data, and environment, and the web console are successfully and fully launched.
 
-Open your favorite browser, enter "http://yourhost:10080" in the address bar and click Go. You see the the welcome page on the TestMP Web Console? Congratulations!
+Open your favorite browser, enter "http://the_name_or_ip_of_your_host:10080" in the address bar and click Go. You see the the welcome page on the TestMP Web Console? Congratulations!
 
 # Features #
 
