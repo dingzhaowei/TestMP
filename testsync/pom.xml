@@ -3,9 +3,10 @@
   <parent>
     <groupId>org.testmp</groupId>
     <artifactId>testmp</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.1.0-SNAPSHOT</version>
   </parent>
   <artifactId>testsync</artifactId>
+  <version>${testsync.version}</version>
   <name>testsync</name>
   <description>keeping test automation metrics and document update to date</description>
 
@@ -13,7 +14,7 @@
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>datastore-client</artifactId>
-      <version>${project.version}</version>
+      <version>${datastore-client.version}</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
