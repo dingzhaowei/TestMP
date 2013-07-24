@@ -18,6 +18,8 @@
   </licenses>
 
   <scm>
+    <url>scm:git:https://github.com/dingzhaowei/TestMP.git</url>
+    <connection>scm:git:https://github.com/dingzhaowei/TestMP.git</connection>
     <developerConnection>scm:git:https://github.com/dingzhaowei/TestMP.git</developerConnection>
   </scm>
 
@@ -25,7 +27,7 @@
     <developer>
       <id>dingzw</id>
       <name>Zhaowei Ding</name>
-      <email>dingzhaowei@me.com</email>
+      <email>dingzhaowei@live.cn</email>
     </developer>
   </developers>
 
