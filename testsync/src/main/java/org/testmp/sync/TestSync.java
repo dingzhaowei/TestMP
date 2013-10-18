@@ -140,16 +140,19 @@ public abstract class TestSync {
             client.addPropertyToData(testCaseId, "runHistory", runHistory);
 
             double currentRobustness = testCase.evaluateRobustness();
-            if (currentRobustness > lastRobustness) {
-                client.addPropertyToData(testCaseId, "robustnessTrend", TestCase.QUALITY_STATUS_UPGRADING);
-            } else if (currentRobustness < lastRobustness) {
-                client.addPropertyToData(testCaseId, "robustnessTrend", TestCase.QUALITY_STATUS_DEGRADING);
-            } else {
-                double epsilon = 0.01 / runHistoryCapacity;
-                if (Math.abs(currentRobustness - 1.0) < epsilon) {
-                    client.addPropertyToData(testCaseId, "robustnessTrend", TestCase.QUALITY_STATUS_ALWAYSGOOD);
+            double epsilon = 0.01 / runHistoryCapacity;
+
+            if (Math.abs(currentRobustness - lastRobustness) > epsilon) {
+                if (currentRobustness > lastRobustness) {
+                    client.addPropertyToData(testCaseId, "robustnessTrend", TestCase.QUALITY_STATUS_UPGRADING);
                 } else {
+                    client.addPropertyToData(testCaseId, "robustnessTrend", TestCase.QUALITY_STATUS_DEGRADING);
+                }
+            } else {
+                if (Math.abs(currentRobustness - 1.0) > epsilon) {
                     client.addPropertyToData(testCaseId, "robustnessTrend", TestCase.QUALITY_STATUS_ALWAYSBAD);
+                } else {
+                    client.addPropertyToData(testCaseId, "robustnessTrend", TestCase.QUALITY_STATUS_ALWAYSGOOD);
                 }
             }
         } catch (Exception e) {
