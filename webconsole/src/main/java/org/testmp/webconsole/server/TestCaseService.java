@@ -32,13 +32,11 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.codehaus.jackson.type.TypeReference;
 import org.testmp.datastore.client.DataInfo;
 import org.testmp.datastore.client.DataStoreClient;
 import org.testmp.datastore.client.MetaInfo;
-import org.testmp.datastore.client.Tag;
 import org.testmp.sync.TestCase;
 import org.testmp.sync.TestCase.RunRecord;
 
@@ -77,72 +75,30 @@ public class TestCaseService extends HttpServlet {
 
         ObjectNode dsResponse = mapper.createObjectNode();
         ObjectNode responseBody = dsResponse.putObject("response");
-        String dataSource = dsRequest.get("dataSource").toString();
         String operationType = dsRequest.get("operationType").toString();
         try {
-            if (dataSource.equals("testProjectDS")) {
-                List<String> projects = client.getPropertyValues("project", "TestCase");
+            if (operationType.equals("fetch")) {
+                List<Map<String, Object>> dataList = fetchData();
                 responseBody.put("status", 0);
-                ArrayNode dataNode = mapper.createArrayNode();
-                for (String project : projects) {
-                    ObjectNode o = mapper.createObjectNode();
-                    o.put("project", project);
-                    dataNode.add(o);
-                }
+                responseBody.put("startRow", 0);
+                responseBody.put("endRow", dataList.size());
+                responseBody.put("totalRows", dataList.size());
+                JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(dataList));
                 responseBody.put("data", dataNode);
-            } else if (dataSource.equals("testGroupDS")) {
-                List<Tag> tags = client.getTags();
+            } else if (operationType.equals("update")) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
+                Map<String, Object> updatedData = updateData(data);
                 responseBody.put("status", 0);
-                ArrayNode dataNode = mapper.createArrayNode();
-                for (Tag tag : tags) {
-                    String tagName = tag.getName();
-                    if (tagName.equals("TestCase"))
-                        continue;
-                    ObjectNode o = mapper.createObjectNode();
-                    o.put("group", tagName);
-                    dataNode.add(o);
-                }
+                JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(updatedData));
                 responseBody.put("data", dataNode);
-            } else if (dataSource.equals("robustnessTrendDS")) {
+            } else if (operationType.equals("remove")) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
+                Map<String, Object> removedData = removeData(data);
                 responseBody.put("status", 0);
-                ArrayNode dataNode = mapper.createArrayNode();
-                ObjectNode alwaysBad = mapper.createObjectNode();
-                alwaysBad.put("rtrend", TestCase.QUALITY_STATUS_ALWAYSBAD);
-                dataNode.add(alwaysBad);
-
-                ObjectNode degrading = mapper.createObjectNode();
-                degrading.put("rtrend", TestCase.QUALITY_STATUS_DEGRADING);
-                dataNode.add(degrading);
-
-                ObjectNode upgrading = mapper.createObjectNode();
-                upgrading.put("rtrend", TestCase.QUALITY_STATUS_UPGRADING);
-                dataNode.add(upgrading);
-
-                ObjectNode alwaysGood = mapper.createObjectNode();
-                alwaysGood.put("rtrend", TestCase.QUALITY_STATUS_ALWAYSGOOD);
-                dataNode.add(alwaysGood);
+                JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(removedData));
                 responseBody.put("data", dataNode);
-            } else {
-                if (operationType.equals("fetch")) {
-                    List<Map<String, Object>> dataList = fetchData();
-                    responseBody.put("status", 0);
-                    JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(dataList));
-                    responseBody.put("data", dataNode);
-                } else if (operationType.equals("update")) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
-                    Map<String, Object> updatedData = updateData(data);
-                    responseBody.put("status", 0);
-                    JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(updatedData));
-                    responseBody.put("data", dataNode);
-                } else if (operationType.equals("remove")) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
-                    Map<String, Object> removedData = removeData(data);
-                    responseBody.put("status", 0);
-                    JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(removedData));
-                    responseBody.put("data", dataNode);
-                }
             }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
