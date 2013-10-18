@@ -51,8 +51,7 @@ import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.types.FetchMode;
 import com.smartgwt.client.types.GroupStartOpen;
 import com.smartgwt.client.types.ListGridFieldType;
-import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.types.TopOperatorAppearance;
+import com.smartgwt.client.types.MultiComboBoxLayoutStyle;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.ImgButton;
@@ -61,7 +60,9 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.form.FilterBuilder;
+import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.MultiComboBoxItem;
+import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
@@ -71,12 +72,16 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.SummaryFunction;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
-import com.smartgwt.client.widgets.tree.Tree;
-import com.smartgwt.client.widgets.tree.TreeNode;
 
 public class TestCaseView extends VLayout {
 
     private DataSource testCaseSource;
+
+    private DataSource testProjectSource;
+
+    private DataSource testGroupSource;
+
+    private DataSource robustnessTrendSource;
 
     private ListGrid testCaseGrid;
 
@@ -85,6 +90,12 @@ public class TestCaseView extends VLayout {
         super.onInit();
 
         testCaseSource = new TestCaseSource();
+
+        testProjectSource = createSingleFieldDataSource("testProjectDS", "project");
+
+        testGroupSource = createSingleFieldDataSource("testGroupDS", "group");
+
+        robustnessTrendSource = createSingleFieldDataSource("robustnessTrendDS", "rtrend");
 
         testCaseGrid = new ListGrid() {
             @Override
@@ -128,7 +139,7 @@ public class TestCaseView extends VLayout {
         testCaseGrid.setLayoutAlign(Alignment.CENTER);
 
         testCaseGrid.setDataSource(testCaseSource);
-        testCaseGrid.setAutoFetchData(true);
+        testCaseGrid.setAutoFetchData(false);
         testCaseGrid.setDataFetchMode(FetchMode.LOCAL);
 
         testCaseGrid.setCanRemoveRecords(true);
@@ -290,44 +301,18 @@ public class TestCaseView extends VLayout {
         controls.setLayoutAlign(Alignment.CENTER);
         controls.setAlign(Alignment.RIGHT);
 
-        IButton filterButton = new IButton(ClientConfig.messages.filter());
-        filterButton.setIcon("filter.png");
-        filterButton.addClickHandler(new ClickHandler() {
+        IButton searchButton = new IButton(ClientConfig.messages.search());
+        searchButton.setIcon("filter.png");
+        searchButton.addClickHandler(new ClickHandler() {
 
             @Override
             public void onClick(ClickEvent event) {
-                FilterWindow window = new FilterWindow();
+                SearchWindow window = new SearchWindow();
                 window.show();
             }
 
         });
-        controls.addMember(filterButton);
-
-        IButton foldOrUnfoldButton = new IButton(ClientConfig.messages.foldOrUnfold());
-        foldOrUnfoldButton.setIcon("fold.png");
-        foldOrUnfoldButton.addClickHandler(new ClickHandler() {
-
-            @Override
-            public void onClick(ClickEvent event) {
-                Tree groupTree = testCaseGrid.getGroupTree();
-                if (groupTree != null) {
-                    boolean hasOpenFolders = false;
-                    for (TreeNode folder : groupTree.getFolders(groupTree.getRoot())) {
-                        if (groupTree.isOpen(folder)) {
-                            hasOpenFolders = true;
-                            break;
-                        }
-                    }
-                    if (hasOpenFolders) {
-                        groupTree.closeAll();
-                    } else {
-                        groupTree.openAll();
-                    }
-                }
-            }
-
-        });
-        controls.addMember(foldOrUnfoldButton);
+        controls.addMember(searchButton);
 
         IButton reloadButton = new IButton(ClientConfig.messages.reload());
         reloadButton.setIcon("reload.png");
@@ -374,6 +359,31 @@ public class TestCaseView extends VLayout {
         controls.addMember(reportButton);
 
         addMember(controls);
+    }
+
+    private String getRequestUrl() {
+        String baseUrl = GWT.getModuleBaseURL();
+        String servicePath = ClientConfig.constants.testCaseService();
+        String requestUrl = baseUrl + servicePath.substring(servicePath.lastIndexOf('/') + 1);
+        return requestUrl;
+    }
+
+    private DataSource createSingleFieldDataSource(final String dataSourceId, final String fieldName) {
+        return new RestDataSource() {
+            {
+                setID(dataSourceId);
+                setDataFormat(DSDataFormat.JSON);
+                setDataURL(getRequestUrl());
+
+                OperationBinding fetch = new OperationBinding();
+                fetch.setOperationType(DSOperationType.FETCH);
+                fetch.setDataProtocol(DSProtocol.POSTMESSAGE);
+                fetch.setDataFormat(DSDataFormat.JSON);
+                setOperationBindings(fetch);
+
+                setFields(new DataSourceTextField(fieldName));
+            }
+        };
     }
 
     private class TestMetrics {
@@ -464,19 +474,20 @@ public class TestCaseView extends VLayout {
         }
     }
 
-    private class FilterWindow extends Window {
+    private class SearchWindow extends Window {
 
-        FilterWindow() {
-            setWidth(680);
+        SearchWindow() {
+            setWidth(700);
             setHeight(300);
-            setTitle(ClientConfig.messages.testCaseFilter());
-            setShowMinimizeButton(false);
+            setTitle(ClientConfig.messages.testCaseSearch());
+            setShowMaximizeButton(true);
+            setCanDragResize(true);
             setIsModal(true);
             setShowModalMask(true);
             centerInPage();
             addCloseClickHandler(new CloseClickHandler() {
                 public void onCloseClick(CloseClickEvent event) {
-                    FilterWindow.this.destroy();
+                    SearchWindow.this.destroy();
                 }
             });
 
@@ -487,18 +498,56 @@ public class TestCaseView extends VLayout {
             layout.setAlign(Alignment.CENTER);
             addItem(layout);
 
-            VLayout filterLayout = new VLayout();
-            filterLayout.setWidth("99%");
-            filterLayout.setMargin(5);
+            VLayout searches = new VLayout();
+            searches.setWidth("99%");
+            searches.setMargin(5);
+            layout.addMember(searches);
 
-            final FilterBuilder filterBuilder = new FilterBuilder();
-            filterBuilder.setDataSource(testCaseSource);
-            filterBuilder.setLayoutAlign(Alignment.CENTER);
-            filterBuilder.setAutoWidth();
-            filterBuilder.setOverflow(Overflow.VISIBLE);
-            filterBuilder.setTopOperatorAppearance(TopOperatorAppearance.RADIO);
-            filterLayout.addMember(filterBuilder);
-            layout.addMember(filterLayout);
+            final DynamicForm form = new DynamicForm();
+            form.setWidth100();
+            form.setHeight100();
+
+            final MultiComboBoxItem includingProjectsItem = new MultiComboBoxItem();
+            includingProjectsItem.setName("includingProjects");
+            includingProjectsItem.setTitle(ClientConfig.messages.includingProjects());
+            includingProjectsItem.setOptionDataSource(testProjectSource);
+            includingProjectsItem.setDisplayField("project");
+            includingProjectsItem.setValueField("project");
+            includingProjectsItem.setRequired(true);
+            includingProjectsItem.setLayoutStyle(MultiComboBoxLayoutStyle.HORIZONTAL);
+
+            final MultiComboBoxItem includingGroupItem = new MultiComboBoxItem();
+            includingGroupItem.setName("includingGroups");
+            includingGroupItem.setTitle(ClientConfig.messages.includingGroups());
+            includingGroupItem.setOptionDataSource(testGroupSource);
+            includingGroupItem.setDisplayField("group");
+            includingGroupItem.setValueField("group");
+            includingGroupItem.setLayoutStyle(MultiComboBoxLayoutStyle.HORIZONTAL);
+
+            final MultiComboBoxItem excludingGroupItem = new MultiComboBoxItem();
+            excludingGroupItem.setName("excludingGroups");
+            excludingGroupItem.setTitle(ClientConfig.messages.excludingGroups());
+            excludingGroupItem.setOptionDataSource(testGroupSource);
+            excludingGroupItem.setDisplayField("group");
+            excludingGroupItem.setValueField("group");
+            excludingGroupItem.setLayoutStyle(MultiComboBoxLayoutStyle.HORIZONTAL);
+
+            final MultiComboBoxItem includingTrendsItem = new MultiComboBoxItem();
+            includingTrendsItem.setName("includingTrends");
+            includingTrendsItem.setTitle(ClientConfig.messages.includingRobustnessTrends());
+            includingTrendsItem.setOptionDataSource(robustnessTrendSource);
+            includingTrendsItem.setDisplayField("rtrend");
+            includingTrendsItem.setValueField("rtrend");
+            includingTrendsItem.setLayoutStyle(MultiComboBoxLayoutStyle.HORIZONTAL);
+
+            SpacerItem[] spacerItems = new SpacerItem[3];
+            for (int i = 0; i < spacerItems.length; i++) {
+                spacerItems[i] = new SpacerItem("spacer" + i);
+            }
+
+            form.setFields(includingProjectsItem, spacerItems[0], includingGroupItem, spacerItems[1],
+                    excludingGroupItem, spacerItems[2], includingTrendsItem);
+            searches.addMember(form);
 
             HLayout controls = new HLayout();
             controls.setSize("99%", "20");
@@ -513,9 +562,12 @@ public class TestCaseView extends VLayout {
 
                 @Override
                 public void onClick(ClickEvent event) {
-                    Criteria criteria = filterBuilder.getCriteria();
-                    FilterWindow.this.destroy();
-                    testCaseGrid.filterData(criteria);
+                    if (form.validate()) {
+                        Criteria criteria = new Criteria();
+                        criteria.addCriteria("includingProjects", includingProjectsItem.getValue().toString());
+                        SearchWindow.this.destroy();
+                        testCaseGrid.fetchData(criteria);
+                    }
                 }
 
             });
@@ -526,13 +578,12 @@ public class TestCaseView extends VLayout {
 
                 @Override
                 public void onClick(ClickEvent event) {
-                    FilterWindow.this.destroy();
+                    SearchWindow.this.destroy();
                 }
 
             });
             controls.addMember(cancelButton);
         }
-
     }
 
     private class RunHistoryWindow extends Window {
@@ -707,11 +758,7 @@ public class TestCaseView extends VLayout {
             setID("testCaseDS");
             setDataFormat(DSDataFormat.JSON);
             setClientOnly(false);
-
-            String baseUrl = GWT.getModuleBaseURL();
-            String servicePath = ClientConfig.constants.testCaseService();
-            String requestUrl = baseUrl + servicePath.substring(servicePath.lastIndexOf('/') + 1);
-            setDataURL(requestUrl);
+            setDataURL(getRequestUrl());
 
             OperationBinding fetch = new OperationBinding();
             fetch.setOperationType(DSOperationType.FETCH);
