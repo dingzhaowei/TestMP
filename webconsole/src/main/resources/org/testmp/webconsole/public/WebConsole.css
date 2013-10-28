@@ -2,3 +2,11 @@
 .footing {
 	text-align: center;
 }
+
+/* default for all SmartGwt grid cells is to display ellipsis for overflow */
+.listTable td div, .listTable td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -o-text-overflow: ellipsis;
+  -ms-text-overflow: ellipsis;
+}

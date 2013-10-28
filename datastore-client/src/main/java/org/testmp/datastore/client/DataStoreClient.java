@@ -99,6 +99,57 @@ public class DataStoreClient {
     }
 
     /**
+     * Get a page of data by specified start row, end row, and criteria
+     * 
+     * @param type
+     * @param startRow
+     * @param endRow
+     * @param criteria
+     * @return
+     * @throws DataStoreClientException
+     */
+    public <T> Map<String, Object> getDataPage(Class<T> type, int startRow, int endRow, Map<String, Object> criteria)
+            throws DataStoreClientException {
+        HttpClient httpClient = new DefaultHttpClient();
+        HttpPost httpPost = new HttpPost(dataStoreURL);
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            List<NameValuePair> params = new ArrayList<NameValuePair>();
+            params.add(new BasicNameValuePair("action", "get"));
+            params.add(new BasicNameValuePair("type", "page"));
+            params.add(new BasicNameValuePair("startRow", String.valueOf(startRow)));
+            params.add(new BasicNameValuePair("endRow", String.valueOf(endRow)));
+            params.add(new BasicNameValuePair("criteria", mapper.writeValueAsString(criteria)));
+            UrlEncodedFormEntity entity = new UrlEncodedFormEntity(params, "UTF-8");
+            httpPost.setEntity(entity);
+            HttpResponse resp = httpClient.execute(httpPost);
+            Map<String, Object> result = new HashMap<String, Object>();
+            if (resp.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                String json = EntityUtils.toString(resp.getEntity(), "UTF-8");
+                JsonNode resultNode = mapper.readTree(json);
+                result.put("startRow", resultNode.get("startRow").getIntValue());
+                result.put("endRow", resultNode.get("endRow").getIntValue());
+                result.put("totalRow", resultNode.get("totalRow").getIntValue());
+                String dataJson = resultNode.get("data").toString();
+                result.put("data", convertJsonToDataInfoList(dataJson, type));
+                return result;
+            } else {
+                StatusLine status = resp.getStatusLine();
+                log.severe(status.getStatusCode() + ": " + status.getReasonPhrase());
+                result.put("startRow", 0);
+                result.put("endRow", 0);
+                result.put("totalRow", 0);
+                result.put("data", new LinkedList<DataInfo<T>>());
+                return result;
+            }
+        } catch (Exception e) {
+            throw new DataStoreClientException("Failed to get data", e);
+        } finally {
+            httpPost.releaseConnection();
+        }
+    }
+
+    /**
      * Get wrapped tagged data of specified type by specified tags and
      * properties
      * 
@@ -810,4 +861,5 @@ public class DataStoreClient {
         }
         return objList;
     }
+
 }

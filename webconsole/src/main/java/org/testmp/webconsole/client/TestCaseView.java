@@ -38,7 +38,6 @@ import com.google.gwt.json.client.JSONValue;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.OperationBinding;
-import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.RestDataSource;
 import com.smartgwt.client.data.fields.DataSourceFloatField;
 import com.smartgwt.client.data.fields.DataSourceImageField;
@@ -48,11 +47,8 @@ import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.types.DSProtocol;
-import com.smartgwt.client.types.FetchMode;
-import com.smartgwt.client.types.GroupStartOpen;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.types.TopOperatorAppearance;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.ImgButton;
@@ -68,11 +64,8 @@ import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.grid.SummaryFunction;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
-import com.smartgwt.client.widgets.tree.Tree;
-import com.smartgwt.client.widgets.tree.TreeNode;
 
 public class TestCaseView extends VLayout {
 
@@ -129,19 +122,12 @@ public class TestCaseView extends VLayout {
 
         testCaseGrid.setDataSource(testCaseSource);
         testCaseGrid.setAutoFetchData(true);
-        testCaseGrid.setDataFetchMode(FetchMode.LOCAL);
 
         testCaseGrid.setCanRemoveRecords(true);
         testCaseGrid.setWarnOnRemoval(true);
 
-        testCaseGrid.setGroupByField("project");
-        testCaseGrid.setGroupStartOpen(GroupStartOpen.ALL);
-
-        testCaseGrid.setShowGridSummary(true);
-        testCaseGrid.setShowGroupSummary(true);
-
-        ListGridField nameField = new ListGridField("name", ClientConfig.messages.name());
         ListGridField projectField = new ListGridField("project", ClientConfig.messages.project());
+        ListGridField nameField = new ListGridField("name", ClientConfig.messages.name());
         ListGridField tagsField = new ListGridField("tags", ClientConfig.messages.groups());
         ListGridField descriptionField = new ListGridField("description", ClientConfig.messages.description());
         ListGridField automationField = new ListGridField("automation", ClientConfig.messages.automation());
@@ -171,34 +157,26 @@ public class TestCaseView extends VLayout {
 
         };
 
-        nameField.setWidth(200);
-        nameField.setShowHover(true);
-        nameField.setHoverCustomizer(hoverCustomizer);
-        nameField.setSummaryFunction(new SummaryFunction() {
-
-            @Override
-            public Object getSummaryValue(Record[] records, ListGridField field) {
-                return records.length + " " + ClientConfig.messages.cases();
-            }
-
-        });
-
-        projectField.setHidden(true);
         projectField.setWidth(100);
         projectField.setShowHover(true);
         projectField.setHoverCustomizer(hoverCustomizer);
+
+        nameField.setWidth(200);
+        nameField.setShowHover(true);
+        nameField.setHoverCustomizer(hoverCustomizer);
 
         tagsField.setWidth(150);
         tagsField.setShowHover(true);
         tagsField.setHoverCustomizer(hoverCustomizer);
 
-        automationField.setWidth(225);
-        automationField.setShowHover(true);
-        automationField.setHoverCustomizer(hoverCustomizer);
-
-        descriptionField.setWidth(225);
+        descriptionField.setWidth(150);
         descriptionField.setShowHover(true);
         descriptionField.setHoverCustomizer(hoverCustomizer);
+        descriptionField.setWrap(true);
+
+        automationField.setWidth(200);
+        automationField.setShowHover(true);
+        automationField.setHoverCustomizer(hoverCustomizer);
 
         runHistoryField.setWidth(70);
         runHistoryField.setShowGridSummary(false);
@@ -277,7 +255,7 @@ public class TestCaseView extends VLayout {
         lastModifyTimeField.setWidth(150);
         lastModifyTimeField.setType(ListGridFieldType.DATE);
 
-        testCaseGrid.setFields(nameField, projectField, tagsField, descriptionField, automationField, robustnessField,
+        testCaseGrid.setFields(projectField, nameField, tagsField, descriptionField, automationField, robustnessField,
                 robustnessTrendField, avgTestTimeField, timeVolatilityField, runHistoryField, createTimeField,
                 lastModifyTimeField);
 
@@ -302,32 +280,6 @@ public class TestCaseView extends VLayout {
 
         });
         controls.addMember(filterButton);
-
-        IButton foldOrUnfoldButton = new IButton(ClientConfig.messages.foldOrUnfold());
-        foldOrUnfoldButton.setIcon("fold.png");
-        foldOrUnfoldButton.addClickHandler(new ClickHandler() {
-
-            @Override
-            public void onClick(ClickEvent event) {
-                Tree groupTree = testCaseGrid.getGroupTree();
-                if (groupTree != null) {
-                    boolean hasOpenFolders = false;
-                    for (TreeNode folder : groupTree.getFolders(groupTree.getRoot())) {
-                        if (groupTree.isOpen(folder)) {
-                            hasOpenFolders = true;
-                            break;
-                        }
-                    }
-                    if (hasOpenFolders) {
-                        groupTree.closeAll();
-                    } else {
-                        groupTree.openAll();
-                    }
-                }
-            }
-
-        });
-        controls.addMember(foldOrUnfoldButton);
 
         IButton reloadButton = new IButton(ClientConfig.messages.reload());
         reloadButton.setIcon("reload.png");
@@ -467,10 +419,11 @@ public class TestCaseView extends VLayout {
     private class FilterWindow extends Window {
 
         FilterWindow() {
-            setWidth(680);
+            setWidth(700);
             setHeight(300);
             setTitle(ClientConfig.messages.testCaseFilter());
-            setShowMinimizeButton(false);
+            setShowMaximizeButton(true);
+            setCanDragResize(true);
             setIsModal(true);
             setShowModalMask(true);
             centerInPage();
@@ -496,7 +449,6 @@ public class TestCaseView extends VLayout {
             filterBuilder.setLayoutAlign(Alignment.CENTER);
             filterBuilder.setAutoWidth();
             filterBuilder.setOverflow(Overflow.VISIBLE);
-            filterBuilder.setTopOperatorAppearance(TopOperatorAppearance.RADIO);
             filterLayout.addMember(filterBuilder);
             layout.addMember(filterLayout);
 

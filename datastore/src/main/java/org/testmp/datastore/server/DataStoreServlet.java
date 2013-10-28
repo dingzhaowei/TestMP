@@ -116,6 +116,22 @@ public class DataStoreServlet extends HttpServlet {
                     writer.print(Utils.converDataInfoListToJson(manager.getDataByRange(startId, endId)));
                 }
             }
+            // Get data page
+            else if (type.equals("page")) {
+                int startRow = Integer.parseInt(params.get("startRow").toString());
+                int endRow = Integer.parseInt(params.get("endRow").toString());
+                ObjectMapper mapper = new ObjectMapper();
+                Map<String, Object> criteria = mapper.readValue(params.get("data").toString(),
+                        new TypeReference<Map<String, Object>>() {
+                        });
+                List<DataInfo> dataInfoList = manager.getDataByCriteria(criteria);
+                endRow = endRow > dataInfoList.size()? dataInfoList.size() : endRow;
+                Map<String, Object> result = new HashMap<String, Object>();
+                result.put("startRow", startRow);
+                result.put("endRow", endRow);
+                result.put("totalRow", dataInfoList.size());
+                result.put("data", dataInfoList.subList(startRow, endRow));
+            }
             // Get tags
             else if (type.equals("tag")) {
                 writer.print(Utils.convertTagListToJson(manager.getTags()));

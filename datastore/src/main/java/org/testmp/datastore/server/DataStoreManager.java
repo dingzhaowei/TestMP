@@ -275,6 +275,11 @@ public final class DataStoreManager {
         }
     }
 
+    public List<DataInfo> getDataByCriteria(Map<String, Object> criteria) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
     /**
      * Add a list of tagged data
      * 
@@ -705,4 +710,5 @@ public final class DataStoreManager {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         return formatter.format(currentDate);
     }
+
 }

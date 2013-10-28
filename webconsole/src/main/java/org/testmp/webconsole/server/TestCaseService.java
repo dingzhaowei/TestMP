@@ -78,12 +78,17 @@ public class TestCaseService extends HttpServlet {
         String operationType = dsRequest.get("operationType").toString();
         try {
             if (operationType.equals("fetch")) {
-                List<Map<String, Object>> dataList = fetchData();
+                int startRow = Integer.parseInt(dsRequest.get("startRow").toString());
+                int endRow = Integer.parseInt(dsRequest.get("endRow").toString());
+                Map<String, Object> criteria = mapper.readValue(dsRequest.get("data").toString(),
+                        new TypeReference<Map<String, Object>>() {
+                        });
+                Map<String, Object> result = fetchData(startRow, endRow, criteria);
                 responseBody.put("status", 0);
-                responseBody.put("startRow", 0);
-                responseBody.put("endRow", dataList.size());
-                responseBody.put("totalRows", dataList.size());
-                JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(dataList));
+                responseBody.put("startRow", (Integer) result.get("startRow"));
+                responseBody.put("endRow", (Integer) result.get("endRow"));
+                responseBody.put("totalRows", (Integer) result.get("totalRow"));
+                JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(result.get("data")));
                 responseBody.put("data", dataNode);
             } else if (operationType.equals("update")) {
                 @SuppressWarnings("unchecked")
@@ -112,9 +117,10 @@ public class TestCaseService extends HttpServlet {
         output.flush();
     }
 
-    private List<Map<String, Object>> fetchData() throws Exception {
-
-        List<DataInfo<TestCase>> dataInfoList = client.getDataByTag(TestCase.class, "TestCase");
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> fetchData(int startRow, int endRow, Map<String, Object> criteria) throws Exception {
+        Map<String, Object> result = client.getDataPage(TestCase.class, startRow, endRow, criteria);
+        List<DataInfo<TestCase>> dataInfoList = (List<DataInfo<TestCase>>) result.get("data");
         Map<Integer, MetaInfo> metaInfoLookingup = new HashMap<Integer, MetaInfo>();
 
         if (!dataInfoList.isEmpty()) {
@@ -129,12 +135,14 @@ public class TestCaseService extends HttpServlet {
             }
         }
 
-        List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
+        List<Map<String, Object>> dataList = new ArrayList<Map<String, Object>>();
         for (DataInfo<TestCase> dataInfo : dataInfoList) {
             MetaInfo metaInfo = metaInfoLookingup.get(dataInfo.getId());
             Map<String, Object> m = combineInfoToMap(dataInfo, metaInfo);
-            result.add(m);
+            dataList.add(m);
         }
+
+        result.put("data", dataList);
         return result;
     }
 
