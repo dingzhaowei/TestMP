@@ -16,6 +16,7 @@ package org.testmp.datastore.server;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,26 @@ import com.sleepycat.collections.StoredMap;
 import com.sleepycat.collections.StoredSortedMap;
 
 public class Utils {
+
+    /**
+     * Convert the data of specified id to data info
+     * 
+     * @param id
+     * @return
+     */
+    public static DataInfo convertDataToDataInfo(int id) {
+        DataStoreView view = DataStoreManager.getInstance().getDataStoreView();
+        StoredMap dataMap = view.getDataMap();
+        StoredMap propertyMap = view.getPropertyMap();
+        Data data = (Data) dataMap.get(id);
+        List<String> relatedTags = new ArrayList<String>(data.getRelatedTags());
+        Map<String, Object> relatedProperties = new HashMap<String, Object>();
+        for (int propertyId : data.getRelatedPropertyIds()) {
+            Property property = (Property) propertyMap.get(propertyId);
+            relatedProperties.put(property.getKey(), property.getValue());
+        }
+        return new DataInfo(id, relatedTags, relatedProperties);
+    }
 
     /**
      * Convert JSON representation to a list of tagged data

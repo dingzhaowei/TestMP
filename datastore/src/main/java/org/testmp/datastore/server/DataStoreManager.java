@@ -19,7 +19,6 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -136,7 +135,6 @@ public final class DataStoreManager {
 
                 public void doWork() throws Exception {
                     StoredMap tagMap = dataStoreView.getTagMap();
-                    StoredMap dataMap = dataStoreView.getDataMap();
                     StoredMap propertyMap = dataStoreView.getPropertyMap();
                     HashSet<Integer> retainedIds = new HashSet<Integer>();
 
@@ -176,14 +174,7 @@ public final class DataStoreManager {
 
                     log.debug("Retained IDs: " + retainedIds);
                     for (int id : retainedIds) {
-                        Data data = (Data) dataMap.get(id);
-                        List<String> relatedTags = new ArrayList<String>(data.getRelatedTags());
-                        Map<String, Object> relatedProperties = new HashMap<String, Object>();
-                        for (int propertyId : data.getRelatedPropertyIds()) {
-                            Property property = (Property) propertyMap.get(propertyId);
-                            relatedProperties.put(property.getKey(), property.getValue());
-                        }
-                        result.add(new DataInfo(id, relatedTags, relatedProperties));
+                        result.add(Utils.convertDataToDataInfo(id));
                     }
                 }
 
@@ -209,16 +200,8 @@ public final class DataStoreManager {
 
                 public void doWork() throws Exception {
                     StoredMap dataMap = dataStoreView.getDataMap();
-                    StoredMap propertyMap = dataStoreView.getPropertyMap();
                     if (dataMap.containsKey(id)) {
-                        Data data = (Data) dataMap.get(id);
-                        List<String> relatedTags = new ArrayList<String>(data.getRelatedTags());
-                        Map<String, Object> relatedProperties = new HashMap<String, Object>();
-                        for (int propertyId : data.getRelatedPropertyIds()) {
-                            Property property = (Property) propertyMap.get(propertyId);
-                            relatedProperties.put(property.getKey(), property.getValue());
-                        }
-                        result.add(new DataInfo(id, relatedTags, relatedProperties));
+                        result.add(Utils.convertDataToDataInfo(id));
                     }
                 }
 
@@ -245,7 +228,6 @@ public final class DataStoreManager {
 
                 public void doWork() throws Exception {
                     StoredSortedMap dataMap = (StoredSortedMap) dataStoreView.getDataMap();
-                    StoredMap propertyMap = dataStoreView.getPropertyMap();
 
                     @SuppressWarnings("unchecked")
                     List<Integer> idList = new ArrayList<Integer>(dataMap.keySet());
@@ -253,14 +235,7 @@ public final class DataStoreManager {
 
                     for (int id : idList) {
                         if (id >= startId && id <= endId) {
-                            Data data = (Data) dataMap.get(id);
-                            List<String> relatedTags = new ArrayList<String>(data.getRelatedTags());
-                            Map<String, Object> relatedProperties = new HashMap<String, Object>();
-                            for (int propertyId : data.getRelatedPropertyIds()) {
-                                Property property = (Property) propertyMap.get(propertyId);
-                                relatedProperties.put(property.getKey(), property.getValue());
-                            }
-                            result.add(new DataInfo(id, relatedTags, relatedProperties));
+                            result.add(Utils.convertDataToDataInfo(id));
                         } else {
                             break;
                         }
@@ -273,11 +248,6 @@ public final class DataStoreManager {
             log.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
-    }
-
-    public List<DataInfo> getDataByCriteria(Map<String, Object> criteria) {
-        // TODO Auto-generated method stub
-        return null;
     }
 
     /**
@@ -710,5 +680,4 @@ public final class DataStoreManager {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         return formatter.format(currentDate);
     }
-
 }

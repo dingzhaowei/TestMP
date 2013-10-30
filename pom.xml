@@ -42,7 +42,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <testsync.version>1.0.1</testsync.version>
-    <datastore-client.version>1.0.1</datastore-client.version>
+    <datastore-client.version>1.0.0</datastore-client.version>
     <datastore.version>1.0.1</datastore.version>
 
     <servlet.version>2.5</servlet.version>

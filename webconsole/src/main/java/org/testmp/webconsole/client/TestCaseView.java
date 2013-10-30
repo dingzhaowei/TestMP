@@ -38,6 +38,7 @@ import com.google.gwt.json.client.JSONValue;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.OperationBinding;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.RestDataSource;
 import com.smartgwt.client.data.fields.DataSourceFloatField;
 import com.smartgwt.client.data.fields.DataSourceImageField;
@@ -47,6 +48,8 @@ import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.types.DSProtocol;
+import com.smartgwt.client.types.FetchMode;
+import com.smartgwt.client.types.GroupStartOpen;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
@@ -64,8 +67,11 @@ import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.SummaryFunction;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
+import com.smartgwt.client.widgets.tree.Tree;
+import com.smartgwt.client.widgets.tree.TreeNode;
 
 public class TestCaseView extends VLayout {
 
@@ -122,9 +128,16 @@ public class TestCaseView extends VLayout {
 
         testCaseGrid.setDataSource(testCaseSource);
         testCaseGrid.setAutoFetchData(true);
+        testCaseGrid.setDataFetchMode(FetchMode.LOCAL);
 
         testCaseGrid.setCanRemoveRecords(true);
         testCaseGrid.setWarnOnRemoval(true);
+
+        testCaseGrid.setGroupByField("project");
+        testCaseGrid.setGroupStartOpen(GroupStartOpen.ALL);
+
+        testCaseGrid.setShowGridSummary(true);
+        testCaseGrid.setShowGroupSummary(true);
 
         ListGridField projectField = new ListGridField("project", ClientConfig.messages.project());
         ListGridField nameField = new ListGridField("name", ClientConfig.messages.name());
@@ -157,6 +170,7 @@ public class TestCaseView extends VLayout {
 
         };
 
+        projectField.setHidden(true);
         projectField.setWidth(100);
         projectField.setShowHover(true);
         projectField.setHoverCustomizer(hoverCustomizer);
@@ -164,17 +178,24 @@ public class TestCaseView extends VLayout {
         nameField.setWidth(200);
         nameField.setShowHover(true);
         nameField.setHoverCustomizer(hoverCustomizer);
+        nameField.setSummaryFunction(new SummaryFunction() {
+
+            @Override
+            public Object getSummaryValue(Record[] records, ListGridField field) {
+                return records.length + " " + ClientConfig.messages.cases();
+            }
+
+        });
 
         tagsField.setWidth(150);
         tagsField.setShowHover(true);
         tagsField.setHoverCustomizer(hoverCustomizer);
 
-        descriptionField.setWidth(150);
+        descriptionField.setWidth(225);
         descriptionField.setShowHover(true);
         descriptionField.setHoverCustomizer(hoverCustomizer);
-        descriptionField.setWrap(true);
 
-        automationField.setWidth(200);
+        automationField.setWidth(225);
         automationField.setShowHover(true);
         automationField.setHoverCustomizer(hoverCustomizer);
 
@@ -280,6 +301,32 @@ public class TestCaseView extends VLayout {
 
         });
         controls.addMember(filterButton);
+
+        IButton foldOrUnfoldButton = new IButton(ClientConfig.messages.foldOrUnfold());
+        foldOrUnfoldButton.setIcon("fold.png");
+        foldOrUnfoldButton.addClickHandler(new ClickHandler() {
+
+            @Override
+            public void onClick(ClickEvent event) {
+                Tree groupTree = testCaseGrid.getGroupTree();
+                if (groupTree != null) {
+                    boolean hasOpenFolders = false;
+                    for (TreeNode folder : groupTree.getFolders(groupTree.getRoot())) {
+                        if (groupTree.isOpen(folder)) {
+                            hasOpenFolders = true;
+                            break;
+                        }
+                    }
+                    if (hasOpenFolders) {
+                        groupTree.closeAll();
+                    } else {
+                        groupTree.openAll();
+                    }
+                }
+            }
+
+        });
+        controls.addMember(foldOrUnfoldButton);
 
         IButton reloadButton = new IButton(ClientConfig.messages.reload());
         reloadButton.setIcon("reload.png");

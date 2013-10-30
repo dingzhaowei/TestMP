@@ -39,6 +39,7 @@ import org.testmp.datastore.client.DataStoreClient;
 import org.testmp.datastore.client.MetaInfo;
 import org.testmp.sync.TestCase;
 import org.testmp.sync.TestCase.RunRecord;
+import org.testmp.webconsole.server.Filter.Criteria;
 
 @SuppressWarnings("serial")
 public class TestCaseService extends HttpServlet {
@@ -78,17 +79,17 @@ public class TestCaseService extends HttpServlet {
         String operationType = dsRequest.get("operationType").toString();
         try {
             if (operationType.equals("fetch")) {
-                int startRow = Integer.parseInt(dsRequest.get("startRow").toString());
-                int endRow = Integer.parseInt(dsRequest.get("endRow").toString());
-                Map<String, Object> criteria = mapper.readValue(dsRequest.get("data").toString(),
-                        new TypeReference<Map<String, Object>>() {
-                        });
-                Map<String, Object> result = fetchData(startRow, endRow, criteria);
+                Criteria criteria = Criteria.valueOf(mapper.writeValueAsString(dsRequest.get("data")));
+                List<Map<String, Object>> dataList = fetchData();
+                if (criteria != null) {
+                    Filter filter = new Filter(criteria);
+                    dataList = filter.doFilter(dataList);
+                }
                 responseBody.put("status", 0);
-                responseBody.put("startRow", (Integer) result.get("startRow"));
-                responseBody.put("endRow", (Integer) result.get("endRow"));
-                responseBody.put("totalRows", (Integer) result.get("totalRow"));
-                JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(result.get("data")));
+                responseBody.put("startRow", 0);
+                responseBody.put("endRow", dataList.size());
+                responseBody.put("totalRows", dataList.size());
+                JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(dataList));
                 responseBody.put("data", dataNode);
             } else if (operationType.equals("update")) {
                 @SuppressWarnings("unchecked")
@@ -117,10 +118,8 @@ public class TestCaseService extends HttpServlet {
         output.flush();
     }
 
-    @SuppressWarnings("unchecked")
-    private Map<String, Object> fetchData(int startRow, int endRow, Map<String, Object> criteria) throws Exception {
-        Map<String, Object> result = client.getDataPage(TestCase.class, startRow, endRow, criteria);
-        List<DataInfo<TestCase>> dataInfoList = (List<DataInfo<TestCase>>) result.get("data");
+    private List<Map<String, Object>> fetchData() throws Exception {
+        List<DataInfo<TestCase>> dataInfoList = client.getDataByTag(TestCase.class, "TestCase");
         Map<Integer, MetaInfo> metaInfoLookingup = new HashMap<Integer, MetaInfo>();
 
         if (!dataInfoList.isEmpty()) {
@@ -135,14 +134,12 @@ public class TestCaseService extends HttpServlet {
             }
         }
 
-        List<Map<String, Object>> dataList = new ArrayList<Map<String, Object>>();
+        List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
         for (DataInfo<TestCase> dataInfo : dataInfoList) {
             MetaInfo metaInfo = metaInfoLookingup.get(dataInfo.getId());
             Map<String, Object> m = combineInfoToMap(dataInfo, metaInfo);
-            dataList.add(m);
+            result.add(m);
         }
-
-        result.put("data", dataList);
         return result;
     }
 
