@@ -13,10 +13,15 @@
 
 package org.testmp.webconsole.client;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.testmp.webconsole.shared.ClientConfig;
+import org.testmp.webconsole.shared.ClientUtil;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ContentsType;
@@ -24,7 +29,16 @@ import com.smartgwt.client.types.Side;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.HTMLPane;
+import com.smartgwt.client.widgets.IButton;
+import com.smartgwt.client.widgets.IconButton;
 import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.Window;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.PasswordItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
@@ -51,14 +65,34 @@ public class WebConsole implements EntryPoint {
         vLayout.setAlign(Alignment.CENTER);
         vLayout.setSize("100%", "100%");
 
-        final Label header = new Label();
-        header.setIcon("testmp-logo.png");
-        header.setIconWidth(265);
-        header.setIconHeight(82);
+        HLayout header = new HLayout();
         header.setWidth("95%");
         header.setHeight(72);
-        header.setValign(VerticalAlignment.TOP);
         header.setLayoutAlign(Alignment.CENTER);
+
+        Label logo = new Label();
+        logo.setIcon("testmp-logo.png");
+        logo.setIconWidth(265);
+        logo.setIconHeight(82);
+        logo.setWidth("95%");
+        logo.setValign(VerticalAlignment.TOP);
+        logo.setLayoutAlign(Alignment.CENTER);
+        header.addMember(logo);
+
+        IconButton loginBtn = new IconButton(ClientConfig.messages.login());
+        loginBtn.setIcon("person.png");
+        loginBtn.setLayoutAlign(VerticalAlignment.TOP);
+        loginBtn.addClickHandler(new ClickHandler() {
+
+            @Override
+            public void onClick(ClickEvent event) {
+                LoginWindow window = new LoginWindow();
+                window.show();
+            }
+
+        });
+        header.addMember(loginBtn);
+
         vLayout.addMember(header);
 
         TabSet appTabSet = new TabSet();
@@ -119,5 +153,74 @@ public class WebConsole implements EntryPoint {
         appTabSet.addTab(testEnvTab);
 
         vLayout.draw();
+    }
+
+    public class LoginWindow extends Window {
+
+        public LoginWindow() {
+            setWidth(250);
+            setHeight(150);
+            setTitle(ClientConfig.messages.login());
+            ClientUtil.unifySimpleWindowStyle(this);
+
+            final VLayout layout = new VLayout();
+            ClientUtil.unifyWindowLayoutStyle(layout);
+            addItem(layout);
+
+            final DynamicForm form = new DynamicForm();
+            TextItem userItem = new TextItem("username");
+            userItem.setTitle(ClientConfig.messages.user());
+            userItem.setRequired(true);
+            PasswordItem passwordItem = new PasswordItem("password");
+            passwordItem.setTitle(ClientConfig.messages.password());
+            form.setFields(userItem, passwordItem);
+            layout.addMember(form);
+
+            HLayout controls = new HLayout();
+            ClientUtil.unifyControlsLayoutStyle(controls);
+            layout.addMember(controls);
+
+            IButton okButton = new IButton(ClientConfig.messages.ok());
+            okButton.addClickHandler(new ClickHandler() {
+
+                @Override
+                public void onClick(ClickEvent event) {
+                    if (form.validate()) {
+                        LoginWindow.this.removeItem(layout);
+                        final Label loading = ClientUtil.createLoadingLabel();
+                        LoginWindow.this.addItem(loading);
+
+                        String username = form.getValueAsString("username");
+                        String password = form.getValueAsString("password");
+                        Map<String, String> params = new HashMap<String, String>();
+                        params.put("username", username.trim());
+                        params.put("password", password == null ? "" : password.trim());
+                        StringBuilder dataBuilder = new StringBuilder();
+                        for (Map.Entry<String, String> param : params.entrySet()) {
+                            String key = param.getKey();
+                            String value = param.getValue();
+                            dataBuilder.append('&').append(key).append('=').append(URL.encode(value));
+                        }
+                        String data = dataBuilder.toString();
+                        String servicePath = ClientConfig.constants.loginService();
+                        ClientUtil.sendDataFromWindow(layout, LoginWindow.this, loading, data, servicePath);
+                    }
+                }
+
+            });
+            controls.addMember(okButton);
+
+            IButton cancelButton = new IButton(ClientConfig.messages.cancel());
+            cancelButton.addClickHandler(new ClickHandler() {
+
+                @Override
+                public void onClick(ClickEvent event) {
+                    LoginWindow.this.destroy();
+                }
+
+            });
+            controls.addMember(cancelButton);
+        }
+
     }
 }
