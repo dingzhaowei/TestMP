@@ -25,6 +25,7 @@ import java.util.Set;
 
 import org.testmp.webconsole.client.ReportWindow.ReportType;
 import org.testmp.webconsole.shared.ClientConfig;
+import org.testmp.webconsole.shared.ClientUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.json.client.JSONArray;
@@ -52,15 +53,17 @@ import com.smartgwt.client.types.FetchMode;
 import com.smartgwt.client.types.GroupStartOpen;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.ImgButton;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.events.CloseClickEvent;
-import com.smartgwt.client.widgets.events.CloseClickHandler;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.FilterBuilder;
+import com.smartgwt.client.widgets.form.fields.CheckboxItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
@@ -77,6 +80,8 @@ public class TestCaseView extends VLayout {
 
     private DataSource testCaseSource;
 
+    private DataSource userFilterSource;
+
     private ListGrid testCaseGrid;
 
     @Override
@@ -84,6 +89,8 @@ public class TestCaseView extends VLayout {
         super.onInit();
 
         testCaseSource = new TestCaseSource();
+
+        userFilterSource = new UserFilterSource();
 
         testCaseGrid = new ListGrid() {
             @Override
@@ -469,22 +476,13 @@ public class TestCaseView extends VLayout {
             setWidth(700);
             setHeight(300);
             setTitle(ClientConfig.messages.testCaseFilter());
+
+            ClientUtil.unifySimpleWindowStyle(this);
             setShowMaximizeButton(true);
             setCanDragResize(true);
-            setIsModal(true);
-            setShowModalMask(true);
-            centerInPage();
-            addCloseClickHandler(new CloseClickHandler() {
-                public void onCloseClick(CloseClickEvent event) {
-                    FilterWindow.this.destroy();
-                }
-            });
 
             VLayout layout = new VLayout();
-            layout.setSize("100%", "100%");
-            layout.setMargin(5);
-            layout.setMembersMargin(5);
-            layout.setAlign(Alignment.CENTER);
+            ClientUtil.unifyWindowLayoutStyle(layout);
             addItem(layout);
 
             VLayout filterLayout = new VLayout();
@@ -500,11 +498,7 @@ public class TestCaseView extends VLayout {
             layout.addMember(filterLayout);
 
             HLayout controls = new HLayout();
-            controls.setSize("99%", "20");
-            controls.setMargin(5);
-            controls.setMembersMargin(5);
-            controls.setLayoutAlign(Alignment.CENTER);
-            controls.setAlign(Alignment.CENTER);
+            ClientUtil.unifyControlsLayoutStyle(controls);
             layout.addMember(controls);
 
             IButton okButton = new IButton(ClientConfig.messages.ok());
@@ -530,6 +524,103 @@ public class TestCaseView extends VLayout {
 
             });
             controls.addMember(cancelButton);
+
+            IButton saveButton = new IButton(ClientConfig.messages.save());
+            saveButton.addClickHandler(new ClickHandler() {
+
+                @Override
+                public void onClick(ClickEvent event) {
+                    Criteria criteria = filterBuilder.getCriteria();
+                    if (criteria != null) {
+                        Window window = new SaveFilterWindow(criteria);
+                        window.show();
+                    } else {
+                        SC.say(ClientConfig.messages.nullFilter());
+                    }
+                }
+
+            });
+            controls.addMember(saveButton);
+
+            IButton loadButton = new IButton(ClientConfig.messages.load());
+            loadButton.addClickHandler(new ClickHandler() {
+
+                @Override
+                public void onClick(ClickEvent event) {
+                    // TODO Auto-generated method stub
+
+                }
+
+            });
+            controls.addMember(loadButton);
+
+            if (ClientConfig.currentUser == null) {
+                saveButton.setDisabled(true);
+                loadButton.setDisabled(true);
+            }
+        }
+
+    }
+
+    private class SaveFilterWindow extends Window {
+
+        String criteriaJson;
+
+        SaveFilterWindow(Criteria criteria) {
+            criteriaJson = criteria.getJsObj().toSource();
+            setWidth(350);
+            setHeight(150);
+            setTitle(ClientConfig.messages.save());
+            ClientUtil.unifySimpleWindowStyle(this);
+
+            VLayout layout = new VLayout();
+            ClientUtil.unifyWindowLayoutStyle(layout);
+            addItem(layout);
+
+            final DynamicForm form = new DynamicForm();
+            form.setWidth100();
+            TextItem filterNameItem = new TextItem("filterName");
+            filterNameItem.setTitle(ClientConfig.messages.filterName());
+            CheckboxItem isDefaultItem = new CheckboxItem("isDefault");
+            isDefaultItem.setTitle(ClientConfig.messages.isDefault());
+            form.setFields(filterNameItem, isDefaultItem);
+            layout.addMember(form);
+
+            HLayout controls = new HLayout();
+            ClientUtil.unifyControlsLayoutStyle(controls);
+            layout.addMember(controls);
+
+            IButton okButton = new IButton(ClientConfig.messages.ok());
+            okButton.addClickHandler(new ClickHandler() {
+
+                @Override
+                public void onClick(ClickEvent event) {
+                    if (form.validate()) {
+                        String filterName = form.getValueAsString("filterName").trim();
+                        String isDefault = form.getValueAsString("isDefault");
+                        SaveFilterWindow.this.destroy();
+                        Record record = new Record();
+                        record.setAttribute("filterName", filterName);
+                        record.setAttribute("criteria", criteriaJson);
+                        record.setAttribute("isDefault", isDefault);
+                        record.setAttribute("userName", ClientConfig.currentUser);
+                        userFilterSource.addData(record);
+                    }
+                }
+
+            });
+            controls.addMember(okButton);
+
+            IButton cancelButton = new IButton(ClientConfig.messages.cancel());
+            cancelButton.addClickHandler(new ClickHandler() {
+
+                @Override
+                public void onClick(ClickEvent event) {
+                    SaveFilterWindow.this.destroy();
+                }
+
+            });
+            controls.addMember(cancelButton);
         }
 
     }
@@ -540,15 +631,7 @@ public class TestCaseView extends VLayout {
             setWidth(900);
             setHeight(300);
             setTitle("Run History");
-            setShowMinimizeButton(false);
-            setIsModal(true);
-            setShowModalMask(true);
-            centerInPage();
-            addCloseClickHandler(new CloseClickHandler() {
-                public void onCloseClick(CloseClickEvent event) {
-                    RunHistoryWindow.this.destroy();
-                }
-            });
+            ClientUtil.unifySimpleWindowStyle(this);
 
             final ListGrid runHistoryGrid = new ListGrid();
             runHistoryGrid.setShowRecordComponents(true);
@@ -647,11 +730,7 @@ public class TestCaseView extends VLayout {
             runHistoryGrid.setData(recordList.toArray(new ListGridRecord[0]));
 
             HLayout controls = new HLayout();
-            controls.setSize("99%", "20");
-            controls.setMargin(5);
-            controls.setMembersMargin(5);
-            controls.setLayoutAlign(Alignment.CENTER);
-            controls.setAlign(Alignment.CENTER);
+            ClientUtil.unifyControlsLayoutStyle(controls);
 
             IButton saveButton = new IButton(ClientConfig.messages.save());
             saveButton.addClickHandler(new ClickHandler() {
@@ -689,10 +768,7 @@ public class TestCaseView extends VLayout {
             controls.addMember(saveButton);
 
             VLayout layout = new VLayout();
-            layout.setWidth100();
-            layout.setHeight100();
-            layout.setMargin(5);
-            layout.setMembersMargin(5);
+            ClientUtil.unifyWindowLayoutStyle(layout);
             layout.addMember(runHistoryGrid);
             layout.addMember(controls);
 
@@ -761,5 +837,37 @@ public class TestCaseView extends VLayout {
                     robustnessField, robustnessTrendField, avgTestTimeField, timeVolatilityField, createTimeField,
                     lastModifyTimeField);
         }
+    }
+
+    private class UserFilterSource extends RestDataSource {
+
+        UserFilterSource() {
+            setID("userFilterDS");
+            setDataFormat(DSDataFormat.JSON);
+            setClientOnly(false);
+
+            String baseUrl = GWT.getModuleBaseURL();
+            String servicePath = ClientConfig.constants.userService();
+            String requestUrl = baseUrl + servicePath.substring(servicePath.lastIndexOf('/') + 1);
+            setDataURL(requestUrl);
+
+            OperationBinding fetch = new OperationBinding();
+            fetch.setOperationType(DSOperationType.FETCH);
+            fetch.setDataProtocol(DSProtocol.POSTMESSAGE);
+            fetch.setDataFormat(DSDataFormat.JSON);
+            OperationBinding add = new OperationBinding();
+            add.setOperationType(DSOperationType.ADD);
+            add.setDataProtocol(DSProtocol.POSTMESSAGE);
+            OperationBinding remove = new OperationBinding();
+            remove.setOperationType(DSOperationType.REMOVE);
+            remove.setDataProtocol(DSProtocol.POSTMESSAGE);
+            setOperationBindings(fetch, add, remove);
+
+            DataSourceTextField filterNameField = new DataSourceTextField("filterName");
+            DataSourceTextField criteriaField = new DataSourceTextField("criteria");
+
+            setFields(filterNameField, criteriaField);
+        }
+
     }
 }

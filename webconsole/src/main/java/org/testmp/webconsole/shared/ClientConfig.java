@@ -24,4 +24,6 @@ public final class ClientConfig {
 
     public final static Constants constants = GWT.create(Constants.class);
 
+    public static String currentUser;
+
 }

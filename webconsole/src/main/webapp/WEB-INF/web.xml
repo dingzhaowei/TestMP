@@ -79,6 +79,11 @@
 		<servlet-class>org.testmp.webconsole.server.TaskService</servlet-class>
 	</servlet>
 
+	<servlet>
+		<servlet-name>UserService</servlet-name>
+		<servlet-class>org.testmp.webconsole.server.UserService</servlet-class>
+	</servlet>
+
 	<servlet-mapping>
 		<servlet-name>TestCaseService</servlet-name>
 		<url-pattern>/webconsole/TestCase.do</url-pattern>
@@ -102,6 +107,11 @@
 	<servlet-mapping>
 		<servlet-name>EnvTaskService</servlet-name>
 		<url-pattern>/webconsole/EnvTask.do</url-pattern>
+	</servlet-mapping>
+
+	<servlet-mapping>
+		<servlet-name>UserService</servlet-name>
+		<url-pattern>/webconsole/User.do</url-pattern>
 	</servlet-mapping>
 
 	<welcome-file-list>

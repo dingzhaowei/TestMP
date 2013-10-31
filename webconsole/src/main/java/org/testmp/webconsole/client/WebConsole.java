@@ -13,18 +13,22 @@
 
 package org.testmp.webconsole.client;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.testmp.webconsole.shared.ClientConfig;
 import org.testmp.webconsole.shared.ClientUtil;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.http.client.URL;
 import com.google.gwt.i18n.client.LocaleInfo;
+import com.smartgwt.client.data.DataSource;
+import com.smartgwt.client.data.OperationBinding;
+import com.smartgwt.client.data.Record;
+import com.smartgwt.client.data.RestDataSource;
+import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ContentsType;
+import com.smartgwt.client.types.DSDataFormat;
+import com.smartgwt.client.types.DSOperationType;
+import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -36,8 +40,8 @@ import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.PasswordItem;
-import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
+import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tab.Tab;
@@ -47,6 +51,10 @@ import com.smartgwt.client.widgets.tab.TabSet;
  * Entry point for Web Console module.
  */
 public class WebConsole implements EntryPoint {
+
+    private DataSource userNameSource;
+
+    private IconButton loginBtn;
 
     /**
      * This is called when the browser loads Application.html.
@@ -58,6 +66,28 @@ public class WebConsole implements EntryPoint {
                 t.printStackTrace();
             }
         });
+
+        userNameSource = new RestDataSource();
+        userNameSource.setID("userNameDS");
+        userNameSource.setDataFormat(DSDataFormat.JSON);
+
+        String baseUrl = GWT.getModuleBaseURL();
+        String servicePath = ClientConfig.constants.userService();
+        String requestUrl = baseUrl + servicePath.substring(servicePath.lastIndexOf('/') + 1);
+        userNameSource.setDataURL(requestUrl);
+
+        OperationBinding fetch = new OperationBinding();
+        fetch.setOperationType(DSOperationType.FETCH);
+        fetch.setDataProtocol(DSProtocol.POSTMESSAGE);
+        fetch.setDataFormat(DSDataFormat.JSON);
+        OperationBinding add = new OperationBinding();
+        add.setOperationType(DSOperationType.ADD);
+        add.setDataProtocol(DSProtocol.POSTMESSAGE);
+        userNameSource.setOperationBindings(fetch, add);
+
+        DataSourceTextField userNameField = new DataSourceTextField("name");
+        userNameField.setRequired(true);
+        userNameSource.setFields(userNameField);
 
         VLayout vLayout = new VLayout();
         vLayout.setMargin(5);
@@ -79,7 +109,7 @@ public class WebConsole implements EntryPoint {
         logo.setLayoutAlign(Alignment.CENTER);
         header.addMember(logo);
 
-        IconButton loginBtn = new IconButton(ClientConfig.messages.login());
+        loginBtn = new IconButton(ClientConfig.messages.login());
         loginBtn.setIcon("person.png");
         loginBtn.setLayoutAlign(VerticalAlignment.TOP);
         loginBtn.addClickHandler(new ClickHandler() {
@@ -92,7 +122,6 @@ public class WebConsole implements EntryPoint {
 
         });
         header.addMember(loginBtn);
-
         vLayout.addMember(header);
 
         TabSet appTabSet = new TabSet();
@@ -158,27 +187,32 @@ public class WebConsole implements EntryPoint {
     public class LoginWindow extends Window {
 
         public LoginWindow() {
-            setWidth(250);
-            setHeight(150);
+            setWidth(320);
+            setHeight(70);
             setTitle(ClientConfig.messages.login());
             ClientUtil.unifySimpleWindowStyle(this);
 
-            final VLayout layout = new VLayout();
+            HLayout layout = new HLayout();
             ClientUtil.unifyWindowLayoutStyle(layout);
             addItem(layout);
 
             final DynamicForm form = new DynamicForm();
-            TextItem userItem = new TextItem("username");
-            userItem.setTitle(ClientConfig.messages.user());
-            userItem.setRequired(true);
-            PasswordItem passwordItem = new PasswordItem("password");
-            passwordItem.setTitle(ClientConfig.messages.password());
-            form.setFields(userItem, passwordItem);
-            layout.addMember(form);
+            ComboBoxItem userNameItem = new ComboBoxItem("name");
+            userNameItem.setTitle(ClientConfig.messages.user());
+            userNameItem.setOptionDataSource(userNameSource);
+            userNameItem.setValidators(new CustomValidator() {
 
-            HLayout controls = new HLayout();
-            ClientUtil.unifyControlsLayoutStyle(controls);
-            layout.addMember(controls);
+                @Override
+                protected boolean condition(Object value) {
+                    if (value == null)
+                        return false;
+                    String v = value.toString().trim();
+                    return !v.equalsIgnoreCase("login") && v.length() <= 50;
+                }
+
+            });
+            form.setFields(userNameItem);
+            layout.addMember(form);
 
             IButton okButton = new IButton(ClientConfig.messages.ok());
             okButton.addClickHandler(new ClickHandler() {
@@ -186,41 +220,18 @@ public class WebConsole implements EntryPoint {
                 @Override
                 public void onClick(ClickEvent event) {
                     if (form.validate()) {
-                        LoginWindow.this.removeItem(layout);
-                        final Label loading = ClientUtil.createLoadingLabel();
-                        LoginWindow.this.addItem(loading);
-
-                        String username = form.getValueAsString("username");
-                        String password = form.getValueAsString("password");
-                        Map<String, String> params = new HashMap<String, String>();
-                        params.put("username", username.trim());
-                        params.put("password", password == null ? "" : password.trim());
-                        StringBuilder dataBuilder = new StringBuilder();
-                        for (Map.Entry<String, String> param : params.entrySet()) {
-                            String key = param.getKey();
-                            String value = param.getValue();
-                            dataBuilder.append('&').append(key).append('=').append(URL.encode(value));
-                        }
-                        String data = dataBuilder.toString();
-                        String servicePath = ClientConfig.constants.loginService();
-                        ClientUtil.sendDataFromWindow(layout, LoginWindow.this, loading, data, servicePath);
+                        String name = form.getValueAsString("name").trim();
+                        LoginWindow.this.destroy();
+                        Record record = new Record();
+                        record.setAttribute("name", name);
+                        userNameSource.addData(record);
+                        loginBtn.setTitle(ClientConfig.messages.hi() + ", " + name);
+                        ClientConfig.currentUser = name;
                     }
                 }
 
             });
-            controls.addMember(okButton);
-
-            IButton cancelButton = new IButton(ClientConfig.messages.cancel());
-            cancelButton.addClickHandler(new ClickHandler() {
-
-                @Override
-                public void onClick(ClickEvent event) {
-                    LoginWindow.this.destroy();
-                }
-
-            });
-            controls.addMember(cancelButton);
+            layout.addMember(okButton);
         }
-
     }
 }

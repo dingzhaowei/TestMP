@@ -27,6 +27,7 @@ import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 public class ClientUtil {
@@ -51,7 +52,7 @@ public class ClientUtil {
         });
     }
 
-    public static void unifyWindowLayoutStyle(final VLayout layout) {
+    public static void unifyWindowLayoutStyle(final Layout layout) {
         layout.setSize("100%", "100%");
         layout.setMargin(5);
         layout.setMembersMargin(5);
