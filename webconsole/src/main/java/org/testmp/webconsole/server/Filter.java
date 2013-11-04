@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.math.NumberUtils;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -123,19 +124,18 @@ public class Filter {
             String fieldName = criteria.getFieldName();
             String value = criteria.getValue();
             String value1 = (String) data.get(fieldName);
-            return value1 != null && value1.equalsIgnoreCase(value);
+            return equalTo(value1, value, true);
         } else if (operator.equals(OPERATOR_NOT_EQUAL_DISREGARD_CASE)) {
             String fieldName = criteria.getFieldName();
             String value = criteria.getValue();
             String value1 = (String) data.get(fieldName);
-            return value1 != null && !value1.equalsIgnoreCase(value);
+            return !equalTo(value1, value, true);
         } else if (operator.equals(OPERATOR_BETWEEN_INCLUSIVE)) {
             String fieldName = criteria.getFieldName();
             String start = criteria.getStart();
             String end = criteria.getEnd();
             String value1 = (String) data.get(fieldName);
-            return value1 != null && value1.toLowerCase().compareTo(start.toLowerCase()) >= 0
-                    && value1.toLowerCase().compareTo(end.toLowerCase()) <= 0;
+            return greaterThanOrEqualTo(value1, start, true) && lessThanOrEqualTo(value1, end, true);
         } else if (operator.equals(OPERATOR_CONTAINS)) {
             String fieldName = criteria.getFieldName();
             String value = criteria.getValue();
@@ -170,38 +170,38 @@ public class Filter {
             String fieldName = criteria.getFieldName();
             String value = criteria.getValue();
             String value1 = (String) data.get(fieldName);
-            return value1 != null && value1.equals(value);
+            return equalTo(value1, value, false);
         } else if (operator.equals(OPERATOR_NOT_EQUAL)) {
             String fieldName = criteria.getFieldName();
             String value = criteria.getValue();
             String value1 = (String) data.get(fieldName);
-            return value1 != null && !value1.equals(value);
+            return !equalTo(value1, value, false);
         } else if (operator.equals(OPERATOR_LESS_THAN)) {
             String fieldName = criteria.getFieldName();
             String value = criteria.getValue();
             String value1 = (String) data.get(fieldName);
-            return value1 != null && value1.compareTo(value) < 0;
+            return lessThan(value1, value, false);
         } else if (operator.equals(OPERATOR_GREATER_THAN)) {
             String fieldName = criteria.getFieldName();
             String value = criteria.getValue();
             String value1 = (String) data.get(fieldName);
-            return value1 != null && value1.compareTo(value) > 0;
+            return greaterThan(value1, value, false);
         } else if (operator.equals(OPERATOR_LESS_THAN_OR_EQUAL_TO)) {
             String fieldName = criteria.getFieldName();
             String value = criteria.getValue();
             String value1 = (String) data.get(fieldName);
-            return value1 != null && value1.compareTo(value) <= 0;
+            return lessThanOrEqualTo(value1, value, false);
         } else if (operator.equals(OPERATOR_GREATER_THAN_OR_EQUAL_TO)) {
             String fieldName = criteria.getFieldName();
             String value = criteria.getValue();
             String value1 = (String) data.get(fieldName);
-            return value1 != null && value1.compareTo(value) >= 0;
+            return greaterThanOrEqualTo(value1, value, false);
         } else if (operator.equals(OPERATOR_BETWEEN_INCLUSIVE_MATCH_CASE)) {
             String fieldName = criteria.getFieldName();
             String start = criteria.getStart();
             String end = criteria.getEnd();
             String value1 = (String) data.get(fieldName);
-            return value1 != null && value1.compareTo(start) >= 0 && value1.compareTo(end) <= 0;
+            return greaterThanOrEqualTo(value1, start, false) && lessThanOrEqualTo(value1, end, false);
         } else if (operator.equals(OPERATOR_IS_NULL)) {
             String fieldName = criteria.getFieldName();
             String value1 = (String) data.get(fieldName);
@@ -214,44 +214,118 @@ public class Filter {
             String fieldName = criteria.getFieldName();
             String value = (String) data.get(criteria.getValue());
             String value1 = (String) data.get(fieldName);
-            return value1 != null && value != null && value1.equals(value);
+            return equalTo(value1, value, false);
         } else if (operator.equals(OPERATOR_DIFFERS_FROM_FIELD)) {
             String fieldName = criteria.getFieldName();
             String value = (String) data.get(criteria.getValue());
             String value1 = (String) data.get(fieldName);
-            return value1 != null && value != null && !value1.equals(value);
+            return !equalTo(value1, value, false);
         } else if (operator.equals(OPERATOR_MATCHES_OTHER_FIELD_CASE_INCENSITIVE)) {
             String fieldName = criteria.getFieldName();
             String value = (String) data.get(criteria.getValue());
             String value1 = (String) data.get(fieldName);
-            return value1 != null && value != null && value1.equalsIgnoreCase(value);
+            return equalTo(value1, value, true);
         } else if (operator.equals(OPERATOR_DIFFERS_FROM_FIELD_CASE_INCENSITIVE)) {
             String fieldName = criteria.getFieldName();
             String value = (String) data.get(criteria.getValue());
             String value1 = (String) data.get(fieldName);
-            return value1 != null && value != null && !value1.equalsIgnoreCase(value);
+            return !equalTo(value1, value, true);
         } else if (operator.equals(OPERATOR_LESS_THAN_FIELD)) {
             String fieldName = criteria.getFieldName();
             String value = (String) data.get(criteria.getValue());
             String value1 = (String) data.get(fieldName);
-            return value1 != null && value != null && value1.compareTo(value) < 0;
+            return lessThan(value1, value, false);
         } else if (operator.equals(OPERATOR_GREATER_THAN_FIELD)) {
             String fieldName = criteria.getFieldName();
             String value = (String) data.get(criteria.getValue());
             String value1 = (String) data.get(fieldName);
-            return value1 != null && value != null && value1.compareTo(value) > 0;
+            return greaterThan(value1, value, false);
         } else if (operator.equals(OPERATOR_LESS_THAN_OR_EQUAL_TO_FIELD)) {
             String fieldName = criteria.getFieldName();
             String value = (String) data.get(criteria.getValue());
             String value1 = (String) data.get(fieldName);
-            return value1 != null && value != null && value1.compareTo(value) <= 0;
+            return lessThanOrEqualTo(value1, value, false);
         } else if (operator.equals(OPERATOR_GREATER_THAN_OR_EQUAL_TO_FIELD)) {
             String fieldName = criteria.getFieldName();
             String value = (String) data.get(criteria.getValue());
             String value1 = (String) data.get(fieldName);
-            return value1 != null && value != null && value1.compareTo(value) >= 0;
+            return greaterThanOrEqualTo(value1, value, false);
         }
         return false;
+    }
+
+    private static boolean isNumber(String v) {
+        return NumberUtils.isNumber(v);
+    }
+
+    private static boolean lessThan(String value1, String value, boolean ignoreCase) {
+        if (value1 == null || value == null) {
+            return false;
+        }
+        if (isNumber(value1) && isNumber(value)) {
+            return Double.parseDouble(value1) < Double.parseDouble(value);
+        }
+        if (ignoreCase) {
+            value1 = value1.toLowerCase();
+            value = value.toLowerCase();
+        }
+        return value1.compareTo(value) < 0;
+    }
+
+    private static boolean lessThanOrEqualTo(String value1, String value, boolean ignoreCase) {
+        if (value1 == null || value == null) {
+            return false;
+        }
+        if (isNumber(value1) && isNumber(value)) {
+            return Double.parseDouble(value1) <= Double.parseDouble(value);
+        }
+        if (ignoreCase) {
+            value1 = value1.toLowerCase();
+            value = value.toLowerCase();
+        }
+        return value1.compareTo(value) <= 0;
+    }
+
+    private static boolean greaterThan(String value1, String value, boolean ignoreCase) {
+        if (value1 == null || value == null) {
+            return false;
+        }
+        if (isNumber(value1) && isNumber(value)) {
+            return Double.parseDouble(value1) > Double.parseDouble(value);
+        }
+        if (ignoreCase) {
+            value1 = value1.toLowerCase();
+            value = value.toLowerCase();
+        }
+        return value1.compareTo(value) > 0;
+    }
+
+    private static boolean greaterThanOrEqualTo(String value1, String value, boolean ignoreCase) {
+        if (value1 == null || value == null) {
+            return false;
+        }
+        if (isNumber(value1) && isNumber(value)) {
+            return Double.parseDouble(value1) >= Double.parseDouble(value);
+        }
+        if (ignoreCase) {
+            value1 = value1.toLowerCase();
+            value = value.toLowerCase();
+        }
+        return value1.compareTo(value) >= 0;
+    }
+
+    private static boolean equalTo(String value1, String value, boolean ignoreCase) {
+        if (value1 == null || value == null) {
+            return false;
+        }
+        if (isNumber(value1) && isNumber(value)) {
+            return Double.parseDouble(value1) == Double.parseDouble(value);
+        }
+        if (ignoreCase) {
+            value1 = value1.toLowerCase();
+            value = value.toLowerCase();
+        }
+        return value1.equals(value);
     }
 
     public static class Criteria {
@@ -350,9 +424,5 @@ public class Filter {
         public void setEnd(String end) {
             this.end = end;
         }
-        
-//        public String toString() {
-//            return null;
-//        }
     }
 }

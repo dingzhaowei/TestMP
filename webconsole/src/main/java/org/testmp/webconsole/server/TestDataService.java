@@ -40,6 +40,7 @@ import org.codehaus.jackson.type.TypeReference;
 import org.testmp.datastore.client.DataInfo;
 import org.testmp.datastore.client.DataStoreClient;
 import org.testmp.datastore.client.MetaInfo;
+import org.testmp.webconsole.server.Filter.Criteria;
 
 @SuppressWarnings("serial")
 public class TestDataService extends HttpServlet {
@@ -80,10 +81,20 @@ public class TestDataService extends HttpServlet {
         try {
             if (operationType.equals("fetch")) {
                 List<Map<String, Object>> dataList = fetchData();
+                Criteria criteria = Criteria.valueOf(mapper.writeValueAsString(dsRequest.get("data")));
+                if (criteria != null) {
+                    Filter filter = new Filter(criteria);
+                    dataList = filter.doFilter(dataList);
+                }
+                int startRow = Integer.parseInt(dsRequest.get("startRow").toString());
+                int endRow = Integer.parseInt(dsRequest.get("endRow").toString());
+                int actualEndRow = endRow > dataList.size() ? dataList.size() : endRow;
+                int totalRows = dataList.size();
+                dataList = dataList.subList(startRow, actualEndRow);
                 responseBody.put("status", 0);
-                responseBody.put("startRow", 0);
-                responseBody.put("endRow", dataList.size());
-                responseBody.put("totalRows", dataList.size());
+                responseBody.put("startRow", startRow);
+                responseBody.put("endRow", actualEndRow);
+                responseBody.put("totalRows", totalRows);
                 JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(dataList));
                 responseBody.put("data", dataNode);
             } else if (operationType.equals("update")) {
