@@ -78,8 +78,8 @@ public class UserService extends HttpServlet {
         String operationType = dsRequest.get("operationType").toString();
         try {
             if (dataSource.equals("userNameDS")) {
-                List<String> nameList = client.getPropertyValues("name", "User");
                 if (operationType.equals("fetch")) {
+                    List<String> nameList = client.getPropertyValues("name", "User");
                     List<Map<String, Object>> dataList = new ArrayList<Map<String, Object>>();
                     for (String name : nameList) {
                         Map<String, Object> data = new HashMap<String, Object>();
@@ -90,14 +90,13 @@ public class UserService extends HttpServlet {
                 } else if (operationType.equals("add")) {
                     Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
                     String name = data.get("name").toString();
-                    if (!nameList.contains(name)) {
-                        DataInfo<User> userInfo = new DataInfo<User>();
-                        userInfo.setData(new User(name));
-                        userInfo.setTags(Arrays.asList(new String[] { "User" }));
-                        client.addData(userInfo);
-                    }
+                    DataInfo<User> userInfo = new DataInfo<User>();
+                    userInfo.setData(new User(name));
+                    userInfo.setTags(Arrays.asList(new String[] { "User" }));
+                    Integer id = client.addData(userInfo).get(0);
+                    User addedUser = client.getDataById(User.class, id).getData();
                     responseBody.put("status", 0);
-                    JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(data));
+                    JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(addedUser));
                     responseBody.put("data", dataNode);
                 }
             } else if (dataSource.endsWith("FilterDS")) {

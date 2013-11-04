@@ -19,6 +19,10 @@ import org.testmp.webconsole.shared.ClientUtil;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.LocaleInfo;
+import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.DSCallback;
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.OperationBinding;
 import com.smartgwt.client.data.Record;
@@ -221,11 +225,25 @@ public class WebConsole implements EntryPoint {
                 @Override
                 public void onClick(ClickEvent event) {
                     if (form.validate()) {
-                        String name = form.getValueAsString("name").trim();
+                        final String name = form.getValueAsString("name").trim();
                         LoginWindow.this.destroy();
-                        Record record = new Record();
-                        record.setAttribute("name", name);
-                        userNameSource.addData(record);
+                        Criteria criteria = new Criteria();
+                        userNameSource.fetchData(criteria, new DSCallback() {
+
+                            @Override
+                            public void execute(DSResponse response, Object rawData, DSRequest request) {
+                                Record[] records = response.getData();
+                                for (Record record : records) {
+                                    if (record.getAttribute("name").equals(name)) {
+                                        return;
+                                    }
+                                }
+                                Record record = new Record();
+                                record.setAttribute("name", name);
+                                userNameSource.addData(record);
+                            }
+
+                        });
                         loginBtn.setTitle(ClientConfig.messages.hi() + ", " + name);
                         ClientConfig.currentUser = name;
                     }
