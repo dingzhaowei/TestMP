@@ -14,17 +14,24 @@
 package org.testmp.webconsole.model;
 
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 
 public class User {
 
+    public static final String FILTER_TYPE_TESTCASE = "TestCase";
+
+    public static final String FILTER_TYPE_TESTDATA = "TestData";
+
+    public static final String FILTER_TYPE_TESTENV = "TestEnv";
+
     private String name;
 
-    private String defaultFilter;
+    private String defaultTestCaseFilter;
 
-    private Map<String, String> savedFilters;
+    private Map<String, String> savedTestCaseFilters = new TreeMap<String, String>();
 
     public User() {
 
@@ -42,20 +49,34 @@ public class User {
         this.name = name;
     }
 
-    public String getDefaultFilter() {
-        return defaultFilter;
+    public String getDefaultTestCaseFilter() {
+        return defaultTestCaseFilter;
     }
 
-    public void setDefaultFilter(String defaultFilter) {
-        this.defaultFilter = defaultFilter;
+    public void setDefaultTestCaseFilter(String defaultTestCaseFilter) {
+        this.defaultTestCaseFilter = defaultTestCaseFilter;
     }
 
-    public Map<String, String> getSavedFilters() {
-        return savedFilters;
+    public Map<String, String> getSavedTestCaseFilters() {
+        return savedTestCaseFilters;
     }
 
-    public void setSavedFilters(Map<String, String> savedFilters) {
-        this.savedFilters = savedFilters;
+    public void setSavedTestCaseFilters(Map<String, String> savedTestCaseFilters) {
+        this.savedTestCaseFilters = savedTestCaseFilters;
+    }
+
+    public String getDefaultFilter(String type) {
+        if (type.equalsIgnoreCase(FILTER_TYPE_TESTCASE)) {
+            return getDefaultTestCaseFilter();
+        }
+        return null;
+    }
+
+    public Map<String, String> getSavedFilters(String type) {
+        if (type.equalsIgnoreCase(FILTER_TYPE_TESTCASE)) {
+            return getSavedTestCaseFilters();
+        }
+        return null;
     }
 
     public Map<String, Object> toMap() {

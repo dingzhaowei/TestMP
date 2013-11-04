@@ -87,6 +87,7 @@ public class WebConsole implements EntryPoint {
 
         DataSourceTextField userNameField = new DataSourceTextField("name");
         userNameField.setRequired(true);
+        userNameField.setPrimaryKey(true);
         userNameSource.setFields(userNameField);
 
         VLayout vLayout = new VLayout();

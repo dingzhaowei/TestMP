@@ -50,7 +50,7 @@ public class TestDataService extends HttpServlet {
 
     @Override
     public void init() throws ServletException {
-        client = new DataStoreClient((String)getServletContext().getAttribute("testDataStoreUrl"));
+        client = new DataStoreClient((String) getServletContext().getAttribute("testDataStoreUrl"));
         super.init();
     }
 
@@ -244,9 +244,6 @@ public class TestDataService extends HttpServlet {
         Collections.sort(tags);
         StringBuilder sb = new StringBuilder();
         for (String tag : tags) {
-            if (tag.equals("TestCase")) {
-                continue;
-            }
             if (sb.length() > 0) {
                 sb.append(',');
             }

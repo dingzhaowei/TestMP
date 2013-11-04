@@ -35,6 +35,7 @@ import org.codehaus.jackson.node.ObjectNode;
 import org.codehaus.jackson.type.TypeReference;
 import org.testmp.datastore.client.DataInfo;
 import org.testmp.datastore.client.DataStoreClient;
+import org.testmp.datastore.client.DataStoreClientException;
 import org.testmp.webconsole.model.User;
 
 @SuppressWarnings("serial")
@@ -77,9 +78,7 @@ public class UserService extends HttpServlet {
         String operationType = dsRequest.get("operationType").toString();
         try {
             if (dataSource.equals("userNameDS")) {
-
-                List<String> nameList = client.getPropertyValues("name", "Person");
-
+                List<String> nameList = client.getPropertyValues("name", "User");
                 if (operationType.equals("fetch")) {
                     List<Map<String, Object>> dataList = new ArrayList<Map<String, Object>>();
                     for (String name : nameList) {
@@ -87,50 +86,51 @@ public class UserService extends HttpServlet {
                         data.put("name", name);
                         dataList.add(data);
                     }
-                    responseBody.put("status", 0);
-                    responseBody.put("startRow", 0);
-                    responseBody.put("endRow", dataList.size());
-                    responseBody.put("totalRows", dataList.size());
-                    JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(dataList));
-                    responseBody.put("data", dataNode);
+                    populateResponseBody(responseBody, dataList);
                 } else if (operationType.equals("add")) {
                     Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
                     String name = data.get("name").toString();
                     if (!nameList.contains(name)) {
                         DataInfo<User> userInfo = new DataInfo<User>();
                         userInfo.setData(new User(name));
-                        userInfo.setTags(Arrays.asList(new String[] { "Person" }));
+                        userInfo.setTags(Arrays.asList(new String[] { "User" }));
                         client.addData(userInfo);
                     }
                     responseBody.put("status", 0);
                     JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(data));
                     responseBody.put("data", dataNode);
                 }
-            } else if (dataSource.equals("userFilterDS")) {
+            } else if (dataSource.endsWith("FilterDS")) {
+                String filterType = capitailize(dataSource.substring(0, dataSource.length() - 8));
+                Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
+
                 if (operationType.equals("fetch")) {
-
-                } else if (operationType.equals("add")) {
-                    Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
-                    String filterName = data.get("filterName").toString();
-                    String criteria = data.get("criteria").toString();
-                    String isDefault = data.get("isDefault").toString();
-                    String userName = data.get("userName").toString();
-
-                    Map<String, Object> properties = new HashMap<String, Object>();
-                    properties.put("name", userName);
-                    DataInfo<User> userInfo = client.getDataByProperty(User.class, properties).get(0);
-                    User user = userInfo.getData();
-
-                    Map<String, String> savedFilters = user.getSavedFilters();
-                    savedFilters.put(filterName, criteria);
-                    user.setSavedFilters(savedFilters);
-
-                    if (isDefault.equalsIgnoreCase("true")) {
-                        user.setDefaultFilter(criteria);
+                    User user = getUser(data.get("userName").toString());
+                    if (data.containsKey("isDefault")) {
+                        String filterName = user.getDefaultTestCaseFilter();
+                        if (filterName != null && !filterName.isEmpty()) {
+                            responseBody.put("data", user.getSavedTestCaseFilters().get(filterName));
+                        } else {
+                            responseBody.put("data", "");
+                        }
+                    } else if (data.containsKey("filterName")) {
+                        String filterName = data.get("filterName").toString();
+                        if (user.getSavedTestCaseFilters().containsKey(filterName)) {
+                            responseBody.put("data", user.getSavedTestCaseFilters().get(filterName));
+                        } else {
+                            responseBody.put("data", "");
+                        }
+                    } else {
+                        List<Map<String, Object>> dataList = getFilters(user, filterType);
+                        populateResponseBody(responseBody, dataList);
                     }
-
-                    userInfo.setData(user);
-                    client.addData(userInfo);
+                } else if (operationType.equals("add")) {
+                    addFilter(data, filterType);
+                    responseBody.put("status", 0);
+                    JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(data));
+                    responseBody.put("data", dataNode);
+                } else if (operationType.equals("remove")) {
+                    removeFilter(data, filterType);
                     responseBody.put("status", 0);
                     JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(data));
                     responseBody.put("data", dataNode);
@@ -146,6 +146,86 @@ public class UserService extends HttpServlet {
         PrintWriter output = resp.getWriter();
         output.print(dsResponse.toString());
         output.flush();
+    }
+
+    private User getUser(String userName) throws DataStoreClientException {
+        Map<String, Object> properties = new HashMap<String, Object>();
+        properties.put("name", userName);
+        DataInfo<User> userInfo = client.getData(User.class, new String[] { "User" }, properties).get(0);
+        User user = userInfo.getData();
+        return user;
+    }
+
+    private void populateResponseBody(ObjectNode responseBody, List<Map<String, Object>> dataList) {
+        responseBody.put("status", 0);
+        responseBody.put("startRow", 0);
+        responseBody.put("endRow", dataList.size());
+        responseBody.put("totalRows", dataList.size());
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(dataList));
+            responseBody.put("data", dataNode);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private List<Map<String, Object>> getFilters(User user, String type) {
+        List<Map<String, Object>> dataList = new ArrayList<Map<String, Object>>();
+        for (Map.Entry<String, String> f : user.getSavedFilters(type).entrySet()) {
+            Map<String, Object> filterInfo = new HashMap<String, Object>();
+            filterInfo.put("userName", user.getName());
+            String filterName = f.getKey();
+            String criteria = f.getValue();
+            boolean isDefault = filterName.equals(user.getDefaultFilter(type));
+            filterInfo.put("filterName", filterName);
+            filterInfo.put("criteria", criteria);
+            filterInfo.put("isDefault", String.valueOf(isDefault));
+            dataList.add(filterInfo);
+        }
+        return dataList;
+    }
+
+    private void addFilter(Map<String, Object> filterInfo, String type) throws DataStoreClientException {
+        String userName = filterInfo.get("userName").toString();
+        String filterName = filterInfo.get("filterName").toString();
+        String criteria = filterInfo.get("criteria").toString();
+        String isDefault = filterInfo.get("isDefault").toString();
+
+        Map<String, Object> properties = new HashMap<String, Object>();
+        properties.put("name", userName);
+        DataInfo<User> userInfo = client.getDataByProperty(User.class, properties).get(0);
+        Integer userId = userInfo.getId();
+        User user = userInfo.getData();
+
+        Map<String, String> savedFilters = user.getSavedFilters(type);
+        savedFilters.put(filterName, criteria);
+        client.addPropertyToData(userId, "saved" + type + "Filters", savedFilters);
+        if (isDefault.equalsIgnoreCase("true")) {
+            client.addPropertyToData(userId, "default" + type + "Filter", filterName);
+        }
+    }
+
+    private void removeFilter(Map<String, Object> filterInfo, String type) throws DataStoreClientException {
+        String userName = filterInfo.get("userName").toString();
+        String filterName = filterInfo.get("filterName").toString();
+
+        Map<String, Object> properties = new HashMap<String, Object>();
+        properties.put("name", userName);
+        DataInfo<User> userInfo = client.getDataByProperty(User.class, properties).get(0);
+        Integer userId = userInfo.getId();
+        User user = userInfo.getData();
+
+        Map<String, String> savedFilters = user.getSavedFilters(type);
+        savedFilters.remove(filterName);
+        client.addPropertyToData(userId, "saved" + type + "Filters", savedFilters);
+    }
+
+    private String capitailize(String s) {
+        if (s == null || s.isEmpty()) {
+            return s;
+        }
+        return s.substring(0, 1).toUpperCase() + s.substring(1);
     }
 
 }
