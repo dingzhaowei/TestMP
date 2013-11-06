@@ -106,16 +106,16 @@ public class UserService extends HttpServlet {
                 if (operationType.equals("fetch")) {
                     User user = getUser(data.get("userName").toString());
                     if (data.containsKey("isDefault")) {
-                        String filterName = user.getDefaultTestCaseFilter();
+                        String filterName = user.getDefaultFilter(filterType);
                         if (filterName != null && !filterName.isEmpty()) {
-                            responseBody.put("data", user.getSavedTestCaseFilters().get(filterName));
+                            responseBody.put("data", user.getSavedFilters(filterType).get(filterName));
                         } else {
                             responseBody.put("data", "");
                         }
                     } else if (data.containsKey("filterName")) {
                         String filterName = data.get("filterName").toString();
-                        if (user.getSavedTestCaseFilters().containsKey(filterName)) {
-                            responseBody.put("data", user.getSavedTestCaseFilters().get(filterName));
+                        if (user.getSavedFilters(filterType).containsKey(filterName)) {
+                            responseBody.put("data", user.getSavedFilters(filterType).get(filterName));
                         } else {
                             responseBody.put("data", "");
                         }
@@ -218,6 +218,10 @@ public class UserService extends HttpServlet {
         Map<String, String> savedFilters = user.getSavedFilters(type);
         savedFilters.remove(filterName);
         client.addPropertyToData(userId, "saved" + type + "Filters", savedFilters);
+
+        if (filterName.equals(user.getDefaultFilter(type))) {
+            client.addPropertyToData(userId, "default" + type + "Filter", null);
+        }
     }
 
     private String capitailize(String s) {

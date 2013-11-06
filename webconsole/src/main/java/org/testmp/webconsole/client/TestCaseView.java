@@ -23,9 +23,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.testmp.webconsole.client.FilterWindow.FilterType;
 import org.testmp.webconsole.client.ReportWindow.ReportType;
 import org.testmp.webconsole.shared.ClientConfig;
-import org.testmp.webconsole.shared.ClientUtil;
+import org.testmp.webconsole.shared.ClientUtils;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -47,7 +48,6 @@ import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.OperationBinding;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.RestDataSource;
-import com.smartgwt.client.data.fields.DataSourceBooleanField;
 import com.smartgwt.client.data.fields.DataSourceFloatField;
 import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
@@ -59,18 +59,12 @@ import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.types.FetchMode;
 import com.smartgwt.client.types.GroupStartOpen;
 import com.smartgwt.client.types.ListGridFieldType;
-import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.ImgButton;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.FilterBuilder;
-import com.smartgwt.client.widgets.form.fields.CheckboxItem;
-import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
 import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
@@ -91,8 +85,6 @@ public class TestCaseView extends VLayout {
 
     private ListGrid testCaseGrid;
 
-    private AdvancedCriteria currentCriteria;
-
     @Override
     protected void onDraw() {
         super.onDraw();
@@ -110,8 +102,8 @@ public class TestCaseView extends VLayout {
                     } else {
                         JavaScriptObject jsonObj = JsonUtils.safeEval(rawData.toString());
                         AdvancedCriteria initialCriteria = new AdvancedCriteria(jsonObj);
-                        currentCriteria = initialCriteria;
-                        testCaseGrid.fetchData(currentCriteria);
+                        ClientConfig.setCurrentFilterCriteria(initialCriteria, FilterType.TEST_CASE);
+                        testCaseGrid.fetchData(initialCriteria);
                     }
                 }
 
@@ -125,9 +117,7 @@ public class TestCaseView extends VLayout {
 
         testCaseSource = new TestCaseSource();
 
-        testCaseFilterSource = new TestCaseFilterSource();
-
-        currentCriteria = new AdvancedCriteria();
+        testCaseFilterSource = ClientUtils.createFilterSource("testCaseFilterDS");
 
         testCaseGrid = new ListGrid() {
             @Override
@@ -338,7 +328,7 @@ public class TestCaseView extends VLayout {
 
             @Override
             public void onClick(ClickEvent event) {
-                FilterWindow window = new FilterWindow();
+                FilterWindow window = new FilterWindow(FilterType.TEST_CASE, testCaseGrid, testCaseFilterSource);
                 window.show();
             }
 
@@ -506,236 +496,13 @@ public class TestCaseView extends VLayout {
         }
     }
 
-    private class FilterWindow extends Window {
-
-        FilterWindow() {
-            setWidth(700);
-            setHeight(300);
-            setTitle(ClientConfig.messages.testCaseFilter());
-
-            ClientUtil.unifySimpleWindowStyle(this);
-            setShowMaximizeButton(true);
-            setCanDragResize(true);
-
-            VLayout layout = new VLayout();
-            ClientUtil.unifyWindowLayoutStyle(layout);
-            addItem(layout);
-
-            VLayout filterLayout = new VLayout();
-            filterLayout.setWidth("99%");
-            filterLayout.setMargin(5);
-            layout.addMember(filterLayout);
-
-            final FilterBuilder filterBuilder = new FilterBuilder();
-            filterBuilder.setCriteria(currentCriteria);
-            filterBuilder.setDataSource(testCaseSource);
-            filterBuilder.setLayoutAlign(Alignment.CENTER);
-            filterBuilder.setAutoWidth();
-            filterBuilder.setOverflow(Overflow.VISIBLE);
-            filterLayout.addMember(filterBuilder);
-
-            HLayout controls = new HLayout();
-            ClientUtil.unifyControlsLayoutStyle(controls);
-            layout.addMember(controls);
-
-            IButton okButton = new IButton(ClientConfig.messages.ok());
-            okButton.addClickHandler(new ClickHandler() {
-
-                @Override
-                public void onClick(ClickEvent event) {
-                    AdvancedCriteria criteria = filterBuilder.getCriteria();
-                    FilterWindow.this.destroy();
-                    currentCriteria = criteria;
-                    testCaseGrid.filterData(criteria);
-                }
-
-            });
-            controls.addMember(okButton);
-
-            IButton saveButton = new IButton(ClientConfig.messages.save());
-            saveButton.addClickHandler(new ClickHandler() {
-
-                @SuppressWarnings("unchecked")
-                @Override
-                public void onClick(ClickEvent event) {
-                    AdvancedCriteria criteria = filterBuilder.getCriteria();
-                    List<Object> c = (List<Object>) criteria.getValues().get("criteria");
-                    if (c != null && c.size() > 0) {
-                        Window window = new SaveFilterWindow(criteria);
-                        window.show();
-                    } else {
-                        SC.say(ClientConfig.messages.nullFilter());
-                    }
-                }
-
-            });
-            controls.addMember(saveButton);
-
-            IButton loadButton = new IButton(ClientConfig.messages.load());
-            loadButton.addClickHandler(new ClickHandler() {
-
-                @Override
-                public void onClick(ClickEvent event) {
-                    Window window = new LoadFilterWindow(filterBuilder);
-                    window.show();
-                }
-
-            });
-            controls.addMember(loadButton);
-
-            IButton resetButton = new IButton(ClientConfig.messages.reset());
-            resetButton.addClickHandler(new ClickHandler() {
-
-                @Override
-                public void onClick(ClickEvent event) {
-                    filterBuilder.setCriteria(new AdvancedCriteria());
-                }
-
-            });
-            controls.addMember(resetButton);
-
-            if (ClientConfig.currentUser == null) {
-                saveButton.setDisabled(true);
-                loadButton.setDisabled(true);
-            }
-        }
-
-    }
-
-    private class SaveFilterWindow extends Window {
-
-        String criteriaJson;
-
-        SaveFilterWindow(AdvancedCriteria criteria) {
-            criteriaJson = new JSONObject(criteria.getJsObj()).toString();
-            setWidth(420);
-            setHeight(100);
-            setTitle(ClientConfig.messages.save());
-            ClientUtil.unifySimpleWindowStyle(this);
-
-            VLayout layout = new VLayout();
-            ClientUtil.unifyWindowLayoutStyle(layout);
-            addItem(layout);
-
-            final DynamicForm form = new DynamicForm();
-            form.setWidth100();
-            form.setNumCols(4);
-            ComboBoxItem filterNameItem = new ComboBoxItem("filterName");
-            filterNameItem.setTitle(ClientConfig.messages.filterName());
-            filterNameItem.setOptionDataSource(testCaseFilterSource);
-            filterNameItem.setRequired(true);
-            CheckboxItem isDefaultItem = new CheckboxItem("isDefault");
-            isDefaultItem.setTitle(ClientConfig.messages.isDefault());
-            form.setFields(filterNameItem, isDefaultItem);
-            layout.addMember(form);
-
-            HLayout controls = new HLayout();
-            ClientUtil.unifyControlsLayoutStyle(controls);
-            layout.addMember(controls);
-
-            IButton okButton = new IButton(ClientConfig.messages.ok());
-            okButton.addClickHandler(new ClickHandler() {
-
-                @Override
-                public void onClick(ClickEvent event) {
-                    if (form.validate()) {
-                        String filterName = form.getValueAsString("filterName").trim();
-                        String isDefault = form.getValueAsString("isDefault");
-                        SaveFilterWindow.this.destroy();
-                        Record record = new Record();
-                        record.setAttribute("userName", ClientConfig.currentUser);
-                        record.setAttribute("filterName", filterName);
-                        record.setAttribute("criteria", criteriaJson);
-                        record.setAttribute("isDefault", isDefault);
-                        testCaseFilterSource.addData(record);
-                    }
-                }
-
-            });
-            controls.addMember(okButton);
-        }
-
-    }
-
-    private class LoadFilterWindow extends Window {
-
-        FilterBuilder filterBuilder;
-
-        LoadFilterWindow(FilterBuilder fb) {
-            this.filterBuilder = fb;
-            setWidth(420);
-            setHeight(100);
-            setTitle(ClientConfig.messages.load());
-            ClientUtil.unifySimpleWindowStyle(this);
-
-            VLayout layout = new VLayout();
-            ClientUtil.unifyWindowLayoutStyle(layout);
-            addItem(layout);
-
-            final DynamicForm form = new DynamicForm();
-            form.setWidth100();
-            form.setNumCols(4);
-            ComboBoxItem filterNameItem = new ComboBoxItem("filterName");
-            filterNameItem.setTitle(ClientConfig.messages.filterName());
-            filterNameItem.setOptionDataSource(testCaseFilterSource);
-            filterNameItem.setRequired(true);
-            CheckboxItem toRemoveItem = new CheckboxItem("toRemove");
-            toRemoveItem.setTitle(ClientConfig.messages.remove());
-            form.setFields(filterNameItem, toRemoveItem);
-            layout.addMember(form);
-
-            HLayout controls = new HLayout();
-            ClientUtil.unifyControlsLayoutStyle(controls);
-            layout.addMember(controls);
-
-            IButton okButton = new IButton(ClientConfig.messages.ok());
-            okButton.addClickHandler(new ClickHandler() {
-
-                @Override
-                public void onClick(ClickEvent event) {
-                    if (form.validate()) {
-                        final String filterName = form.getValueAsString("filterName").trim();
-                        final String toRemove = form.getValueAsString("toRemove");
-                        LoadFilterWindow.this.destroy();
-
-                        Criteria criteria = new Criteria("filterName", filterName);
-                        testCaseFilterSource.fetchData(criteria, new DSCallback() {
-
-                            @Override
-                            public void execute(DSResponse response, Object rawData, DSRequest request) {
-                                if (rawData.toString().isEmpty()) {
-                                    SC.say(ClientConfig.messages.nullFilter());
-                                } else {
-                                    JavaScriptObject jsonObj = JsonUtils.safeEval(rawData.toString());
-                                    AdvancedCriteria initialCriteria = new AdvancedCriteria(jsonObj);
-                                    currentCriteria = initialCriteria;
-                                    filterBuilder.setCriteria(currentCriteria);
-                                    if (toRemove.equalsIgnoreCase("true")) {
-                                        Record record = new Record();
-                                        record.setAttribute("userName", ClientConfig.currentUser);
-                                        record.setAttribute("filterName", filterName);
-                                        testCaseFilterSource.removeData(record);
-                                    }
-                                }
-                            }
-
-                        });
-                    }
-                }
-
-            });
-            controls.addMember(okButton);
-        }
-
-    }
-
     private class RunHistoryWindow extends Window {
 
         RunHistoryWindow(final ListGridRecord record) {
             setWidth(900);
             setHeight(300);
             setTitle("Run History");
-            ClientUtil.unifySimpleWindowStyle(this);
+            ClientUtils.unifySimpleWindowStyle(this);
 
             final ListGrid runHistoryGrid = new ListGrid();
             runHistoryGrid.setShowRecordComponents(true);
@@ -834,7 +601,7 @@ public class TestCaseView extends VLayout {
             runHistoryGrid.setData(recordList.toArray(new ListGridRecord[0]));
 
             HLayout controls = new HLayout();
-            ClientUtil.unifyControlsLayoutStyle(controls);
+            ClientUtils.unifyControlsLayoutStyle(controls);
 
             IButton saveButton = new IButton(ClientConfig.messages.save());
             saveButton.addClickHandler(new ClickHandler() {
@@ -872,7 +639,7 @@ public class TestCaseView extends VLayout {
             controls.addMember(saveButton);
 
             VLayout layout = new VLayout();
-            ClientUtil.unifyWindowLayoutStyle(layout);
+            ClientUtils.unifyWindowLayoutStyle(layout);
             layout.addMember(runHistoryGrid);
             layout.addMember(controls);
 
@@ -941,54 +708,5 @@ public class TestCaseView extends VLayout {
                     robustnessField, robustnessTrendField, avgTestTimeField, timeVolatilityField, createTimeField,
                     lastModifyTimeField);
         }
-    }
-
-    private class TestCaseFilterSource extends RestDataSource {
-
-        TestCaseFilterSource() {
-            setID("testCaseFilterDS");
-            setDataFormat(DSDataFormat.JSON);
-            setClientOnly(false);
-
-            String baseUrl = GWT.getModuleBaseURL();
-            String servicePath = ClientConfig.constants.userService();
-            String requestUrl = baseUrl + servicePath.substring(servicePath.lastIndexOf('/') + 1);
-            setDataURL(requestUrl);
-
-            OperationBinding fetch = new OperationBinding();
-            fetch.setOperationType(DSOperationType.FETCH);
-            fetch.setDataProtocol(DSProtocol.POSTMESSAGE);
-            fetch.setDataFormat(DSDataFormat.JSON);
-            OperationBinding add = new OperationBinding();
-            add.setOperationType(DSOperationType.ADD);
-            add.setDataProtocol(DSProtocol.POSTMESSAGE);
-            OperationBinding remove = new OperationBinding();
-            remove.setOperationType(DSOperationType.REMOVE);
-            remove.setDataProtocol(DSProtocol.POSTMESSAGE);
-            setOperationBindings(fetch, add, remove);
-
-            DataSourceTextField userNameField = new DataSourceTextField("userName");
-            userNameField.setPrimaryKey(true);
-            DataSourceTextField filterNameField = new DataSourceTextField("filterName");
-            filterNameField.setPrimaryKey(true);
-            DataSourceTextField criteriaField = new DataSourceTextField("criteria");
-            DataSourceBooleanField isDefaultField = new DataSourceBooleanField("isDefault");
-
-            setFields(userNameField, filterNameField, criteriaField, isDefaultField);
-        }
-
-        @Override
-        protected Object transformRequest(DSRequest dsRequest) {
-            if (dsRequest.getAttributeAsString("operationType").equals("fetch")) {
-                Criteria criteria = dsRequest.getCriteria();
-                if (criteria == null) {
-                    criteria = new Criteria();
-                }
-                criteria.setAttribute("userName", ClientConfig.currentUser);
-                dsRequest.setCriteria(criteria);
-            }
-            return super.transformRequest(dsRequest);
-        }
-
     }
 }

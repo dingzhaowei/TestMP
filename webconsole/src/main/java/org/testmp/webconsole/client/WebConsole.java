@@ -14,7 +14,7 @@
 package org.testmp.webconsole.client;
 
 import org.testmp.webconsole.shared.ClientConfig;
-import org.testmp.webconsole.shared.ClientUtil;
+import org.testmp.webconsole.shared.ClientUtils;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
@@ -192,16 +192,17 @@ public class WebConsole implements EntryPoint {
     public class LoginWindow extends Window {
 
         public LoginWindow() {
-            setWidth(320);
-            setHeight(70);
+            setWidth(300);
+            setHeight(100);
             setTitle(ClientConfig.messages.login());
-            ClientUtil.unifySimpleWindowStyle(this);
+            ClientUtils.unifySimpleWindowStyle(this);
 
-            HLayout layout = new HLayout();
-            ClientUtil.unifyWindowLayoutStyle(layout);
+            VLayout layout = new VLayout();
+            ClientUtils.unifyWindowLayoutStyle(layout);
             addItem(layout);
 
             final DynamicForm form = new DynamicForm();
+            form.setWidth100();
             ComboBoxItem userNameItem = new ComboBoxItem("name");
             userNameItem.setTitle(ClientConfig.messages.user());
             userNameItem.setOptionDataSource(userNameSource);
@@ -218,6 +219,10 @@ public class WebConsole implements EntryPoint {
             });
             form.setFields(userNameItem);
             layout.addMember(form);
+
+            HLayout controls = new HLayout();
+            ClientUtils.unifyControlsLayoutStyle(controls);
+            layout.addMember(controls);
 
             IButton okButton = new IButton(ClientConfig.messages.ok());
             okButton.addClickHandler(new ClickHandler() {
@@ -250,7 +255,7 @@ public class WebConsole implements EntryPoint {
                 }
 
             });
-            layout.addMember(okButton);
+            controls.addMember(okButton);
         }
     }
 }

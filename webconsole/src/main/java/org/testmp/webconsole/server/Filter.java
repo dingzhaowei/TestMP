@@ -14,8 +14,10 @@
 package org.testmp.webconsole.server;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.lang.math.NumberUtils;
 import org.codehaus.jackson.JsonNode;
@@ -345,7 +347,9 @@ public class Filter {
             try {
                 JsonNode criteriaNode = mapper.readTree(json);
                 if (criteriaNode.has("operator")) {
-                    return parseCriteriaNode(criteriaNode);
+                    return parseAdvancedCriteriaNode(criteriaNode);
+                } else if (criteriaNode.size() > 0) {
+                    return parseSimpleCriteriaNode(criteriaNode);
                 } else {
                     return null;
                 }
@@ -354,15 +358,34 @@ public class Filter {
             }
         }
 
-        private static Criteria parseCriteriaNode(JsonNode criteriaNode) {
+        private static Criteria parseSimpleCriteriaNode(JsonNode criteriaNode) {
             Criteria criteria = new Criteria();
-            String operator = criteriaNode.get("operator").asText();
+            criteria.setOperator(OPERATOR_AND);
+            List<Criteria> subCriteria = new ArrayList<Criteria>();
+            Iterator<Entry<String, JsonNode>> iter = criteriaNode.getFields();
+            while (iter.hasNext()) {
+                Entry<String, JsonNode> field = iter.next();
+                String fieldName = field.getKey();
+                String fieldValue = field.getValue().asText();
+                Criteria c = new Criteria();
+                c.setOperator(OPERATOR_CONTAINS);
+                c.setFieldName(fieldName);
+                c.setValue(fieldValue);
+                subCriteria.add(c);
+            }
+            criteria.setSubCriteria(subCriteria);
+            return criteria;
+        }
+
+        private static Criteria parseAdvancedCriteriaNode(JsonNode criteriaNode) {
+            Criteria criteria = new Criteria();
+            String operator = criteriaNode.get("operator").isNull()? "and" : criteriaNode.get("operator").asText();
             criteria.setOperator(operator);
             if (operator.equals(OPERATOR_AND) || operator.equals(OPERATOR_OR) || operator.equals(OPERATOR_NOT)) {
                 JsonNode subCriteriaNode = criteriaNode.get("criteria");
                 List<Criteria> subCriteria = new ArrayList<Criteria>();
                 for (int i = 0; i < subCriteriaNode.size(); i++) {
-                    subCriteria.add(parseCriteriaNode(subCriteriaNode.get(i)));
+                    subCriteria.add(parseAdvancedCriteriaNode(subCriteriaNode.get(i)));
                 }
                 criteria.setSubCriteria(subCriteria);
             } else {

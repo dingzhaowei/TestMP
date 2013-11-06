@@ -33,6 +33,10 @@ public class User {
 
     private Map<String, String> savedTestCaseFilters = new TreeMap<String, String>();
 
+    private String defaultTestDataFilter;
+
+    private Map<String, String> savedTestDataFilters = new TreeMap<String, String>();
+
     public User() {
 
     }
@@ -65,9 +69,28 @@ public class User {
         this.savedTestCaseFilters = savedTestCaseFilters;
     }
 
+    public String getDefaultTestDataFilter() {
+        return defaultTestDataFilter;
+    }
+
+    public void setDefaultTestDataFilter(String defaultTestDataFilter) {
+        this.defaultTestDataFilter = defaultTestDataFilter;
+    }
+
+    public Map<String, String> getSavedTestDataFilters() {
+        return savedTestDataFilters;
+    }
+
+    public void setSavedTestDataFilters(Map<String, String> savedTestDataFilters) {
+        this.savedTestDataFilters = savedTestDataFilters;
+    }
+
     public String getDefaultFilter(String type) {
         if (type.equalsIgnoreCase(FILTER_TYPE_TESTCASE)) {
             return getDefaultTestCaseFilter();
+        }
+        if (type.equalsIgnoreCase(FILTER_TYPE_TESTDATA)) {
+            return getDefaultTestDataFilter();
         }
         return null;
     }
@@ -75,6 +98,9 @@ public class User {
     public Map<String, String> getSavedFilters(String type) {
         if (type.equalsIgnoreCase(FILTER_TYPE_TESTCASE)) {
             return getSavedTestCaseFilters();
+        }
+        if (type.equalsIgnoreCase(FILTER_TYPE_TESTDATA)) {
+            return getSavedTestDataFilters();
         }
         return null;
     }

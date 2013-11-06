@@ -54,6 +54,7 @@ public class TestCaseService extends HttpServlet {
         super.init();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         BufferedReader input = new BufferedReader(new InputStreamReader(req.getInputStream(), "ISO-8859-1"));
@@ -79,8 +80,8 @@ public class TestCaseService extends HttpServlet {
         String operationType = dsRequest.get("operationType").toString();
         try {
             if (operationType.equals("fetch")) {
-                Criteria criteria = Criteria.valueOf(mapper.writeValueAsString(dsRequest.get("data")));
                 List<Map<String, Object>> dataList = fetchData();
+                Criteria criteria = Criteria.valueOf(mapper.writeValueAsString(dsRequest.get("data")));
                 if (criteria != null) {
                     Filter filter = new Filter(criteria);
                     dataList = filter.doFilter(dataList);
@@ -92,14 +93,12 @@ public class TestCaseService extends HttpServlet {
                 JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(dataList));
                 responseBody.put("data", dataNode);
             } else if (operationType.equals("update")) {
-                @SuppressWarnings("unchecked")
                 Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
                 Map<String, Object> updatedData = updateData(data);
                 responseBody.put("status", 0);
                 JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(updatedData));
                 responseBody.put("data", dataNode);
             } else if (operationType.equals("remove")) {
-                @SuppressWarnings("unchecked")
                 Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
                 Map<String, Object> removedData = removeData(data);
                 responseBody.put("status", 0);

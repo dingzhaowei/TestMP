@@ -13,14 +13,14 @@
 
 package org.testmp.webconsole.client;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
+import org.testmp.webconsole.client.FilterWindow.FilterType;
 import org.testmp.webconsole.shared.ClientConfig;
+import org.testmp.webconsole.shared.ClientUtils;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsonUtils;
+import com.smartgwt.client.data.AdvancedCriteria;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -52,8 +52,6 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.SummaryFunction;
-import com.smartgwt.client.widgets.grid.events.FilterEditorSubmitEvent;
-import com.smartgwt.client.widgets.grid.events.FilterEditorSubmitHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
@@ -61,7 +59,35 @@ public class TestDataView extends VLayout {
 
     private DataSource testDataSource;
 
+    private DataSource testDataFilterSource;
+
     private ListGrid testDataGrid;
+
+    @Override
+    protected void onDraw() {
+        super.onDraw();
+
+        if (ClientConfig.currentUser == null) {
+            testDataGrid.fetchData();
+        } else {
+            Criteria criteria = new Criteria("isDefault", "true");
+            testDataFilterSource.fetchData(criteria, new DSCallback() {
+
+                @Override
+                public void execute(DSResponse response, Object rawData, DSRequest request) {
+                    if (rawData.toString().isEmpty()) {
+                        testDataGrid.fetchData();
+                    } else {
+                        JavaScriptObject jsonObj = JsonUtils.safeEval(rawData.toString());
+                        AdvancedCriteria initialCriteria = new AdvancedCriteria(jsonObj);
+                        ClientConfig.setCurrentFilterCriteria(initialCriteria, FilterType.TEST_DATA);
+                        testDataGrid.fetchData(initialCriteria);
+                    }
+                }
+
+            });
+        }
+    }
 
     @Override
     protected void onInit() {
@@ -69,11 +95,12 @@ public class TestDataView extends VLayout {
 
         testDataSource = new TestDataSource();
 
+        testDataFilterSource = ClientUtils.createFilterSource("testDataFilterDS");
+
         testDataGrid = new ListGrid();
         testDataGrid.setWidth("99%");
         testDataGrid.setLayoutAlign(Alignment.CENTER);
         testDataGrid.setDataSource(testDataSource);
-        testDataGrid.setAutoFetchData(true);
         testDataGrid.setDataFetchMode(FetchMode.PAGED);
         testDataGrid.setFixedRecordHeights(false);
         testDataGrid.setCanRemoveRecords(true);
@@ -81,41 +108,8 @@ public class TestDataView extends VLayout {
         testDataGrid.setCanEdit(true);
         testDataGrid.setShowRollOver(false);
         testDataGrid.setShowGridSummary(true);
-        testDataGrid.setShowFilterEditor(true);
-        testDataGrid.addFilterEditorSubmitHandler(new FilterEditorSubmitHandler() {
 
-            @SuppressWarnings("rawtypes")
-            @Override
-            public void onFilterEditorSubmit(FilterEditorSubmitEvent event) {
-                Criteria criteria = event.getCriteria();
-                Map values = criteria.getValues();
-                Criteria convertedCriteria = new Criteria();
-                for (Object entry : values.entrySet()) {
-                    String key = ((Map.Entry) entry).getKey().toString();
-                    String value = ((Map.Entry) entry).getValue().toString();
-                    if (key.equals("tags")) {
-                        List<String> tags = Arrays.asList(value.split("\\s*,\\s*"));
-                        Collections.sort(tags);
-                        StringBuilder sb = new StringBuilder();
-                        for (String tag : tags) {
-                            if (sb.length() > 0) {
-                                sb.append(',');
-                            }
-                            sb.append(tag);
-                        }
-                        value = sb.toString();
-                    } else if (key.equals("id")) {
-                        value = value.trim();
-                    }
-                    convertedCriteria.addCriteria(new Criteria(key, value));
-                }
-                testDataGrid.filterData(convertedCriteria);
-                event.cancel();
-            }
-
-        });
-
-        ListGridField idField = new ListGridField("id", "Id", 50);
+        ListGridField idField = new ListGridField("id", "id", 50);
         idField.setAlign(Alignment.LEFT);
         idField.setCanEdit(false);
         idField.setShowGridSummary(false);
@@ -157,13 +151,11 @@ public class TestDataView extends VLayout {
         ListGridField createTimeField = new ListGridField("createTime", ClientConfig.messages.createTime(), 150);
         createTimeField.setType(ListGridFieldType.DATE);
         createTimeField.setCanEdit(false);
-        createTimeField.setCanFilter(false);
 
         ListGridField lastModifyTimeField = new ListGridField("lastModifyTime", ClientConfig.messages.lastModifyTime(),
                 150);
         lastModifyTimeField.setType(ListGridFieldType.DATE);
         lastModifyTimeField.setCanEdit(false);
-        lastModifyTimeField.setCanFilter(false);
 
         testDataGrid.setFields(idField, tagsField, propertiesField, createTimeField, lastModifyTimeField);
 
@@ -188,6 +180,19 @@ public class TestDataView extends VLayout {
 
         });
         controls.addMember(newDataButton);
+
+        IButton filterButton = new IButton(ClientConfig.messages.filter());
+        filterButton.setIcon("filter.png");
+        filterButton.addClickHandler(new ClickHandler() {
+
+            @Override
+            public void onClick(ClickEvent event) {
+                FilterWindow window = new FilterWindow(FilterType.TEST_DATA, testDataGrid, testDataFilterSource);
+                window.show();
+            }
+
+        });
+        controls.addMember(filterButton);
 
         IButton reloadButton = new IButton(ClientConfig.messages.reload());
         reloadButton.setIcon("reload.png");
@@ -312,17 +317,23 @@ public class TestDataView extends VLayout {
             remove.setDataProtocol(DSProtocol.POSTMESSAGE);
             setOperationBindings(fetch, add, update, remove);
 
-            DataSourceIntegerField idField = new DataSourceIntegerField("id", "ID");
+            DataSourceIntegerField idField = new DataSourceIntegerField("id", "id");
             idField.setPrimaryKey(true);
-            idField.setRequired(true);
 
             DataSourceTextField tagsField = new DataSourceTextField("tags", ClientConfig.messages.tags());
+            tagsField.setRequired(true);
+
             DataSourceTextField propertiesField = new DataSourceTextField("properties",
                     ClientConfig.messages.properties(), Integer.MAX_VALUE);
+            propertiesField.setRequired(true);
+
             DataSourceTextField createTimeField = new DataSourceTextField("createTime",
                     ClientConfig.messages.createTime());
+            createTimeField.setCanFilter(false);
+
             DataSourceTextField lastModifyTimeField = new DataSourceTextField("lastModifyTime",
                     ClientConfig.messages.lastModifyTime());
+            lastModifyTimeField.setCanFilter(false);
 
             setFields(idField, tagsField, propertiesField, createTimeField, lastModifyTimeField);
         }

@@ -18,8 +18,18 @@ import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
+import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DataSource;
+import com.smartgwt.client.data.OperationBinding;
+import com.smartgwt.client.data.RestDataSource;
+import com.smartgwt.client.data.fields.DataSourceBooleanField;
+import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.AnimationEffect;
+import com.smartgwt.client.types.DSDataFormat;
+import com.smartgwt.client.types.DSOperationType;
+import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.AnimationCallback;
 import com.smartgwt.client.widgets.Label;
@@ -30,7 +40,7 @@ import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
-public class ClientUtil {
+public class ClientUtils {
 
     public static void unifyControlsLayoutStyle(HLayout controls) {
         controls.setSize("99%", "20");
@@ -106,5 +116,56 @@ public class ClientUtil {
             window.removeItem(loadingLabel);
             window.addItem(windowLayout);
         }
+    }
+
+    public static DataSource createFilterSource(final String dsName) {
+        return new RestDataSource() {
+
+            {
+                setID(dsName);
+                setDataFormat(DSDataFormat.JSON);
+                setClientOnly(false);
+
+                String baseUrl = GWT.getModuleBaseURL();
+                String servicePath = ClientConfig.constants.userService();
+                String requestUrl = baseUrl + servicePath.substring(servicePath.lastIndexOf('/') + 1);
+                setDataURL(requestUrl);
+
+                OperationBinding fetch = new OperationBinding();
+                fetch.setOperationType(DSOperationType.FETCH);
+                fetch.setDataProtocol(DSProtocol.POSTMESSAGE);
+                fetch.setDataFormat(DSDataFormat.JSON);
+                OperationBinding add = new OperationBinding();
+                add.setOperationType(DSOperationType.ADD);
+                add.setDataProtocol(DSProtocol.POSTMESSAGE);
+                OperationBinding remove = new OperationBinding();
+                remove.setOperationType(DSOperationType.REMOVE);
+                remove.setDataProtocol(DSProtocol.POSTMESSAGE);
+                setOperationBindings(fetch, add, remove);
+
+                DataSourceTextField userNameField = new DataSourceTextField("userName");
+                userNameField.setPrimaryKey(true);
+                DataSourceTextField filterNameField = new DataSourceTextField("filterName");
+                filterNameField.setPrimaryKey(true);
+                DataSourceTextField criteriaField = new DataSourceTextField("criteria");
+                DataSourceBooleanField isDefaultField = new DataSourceBooleanField("isDefault");
+
+                setFields(userNameField, filterNameField, criteriaField, isDefaultField);
+            }
+
+            @Override
+            protected Object transformRequest(DSRequest dsRequest) {
+                if (dsRequest.getAttributeAsString("operationType").equals("fetch")) {
+                    Criteria criteria = dsRequest.getCriteria();
+                    if (criteria == null) {
+                        criteria = new Criteria();
+                    }
+                    criteria.setAttribute("userName", ClientConfig.currentUser);
+                    dsRequest.setCriteria(criteria);
+                }
+                return super.transformRequest(dsRequest);
+            }
+
+        };
     }
 }
