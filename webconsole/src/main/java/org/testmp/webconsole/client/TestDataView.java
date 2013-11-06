@@ -109,7 +109,7 @@ public class TestDataView extends VLayout {
         testDataGrid.setShowRollOver(false);
         testDataGrid.setShowGridSummary(true);
 
-        ListGridField idField = new ListGridField("id", "id", 50);
+        ListGridField idField = new ListGridField("id", "ID", 50);
         idField.setAlign(Alignment.LEFT);
         idField.setCanEdit(false);
         idField.setShowGridSummary(false);
@@ -317,7 +317,7 @@ public class TestDataView extends VLayout {
             remove.setDataProtocol(DSProtocol.POSTMESSAGE);
             setOperationBindings(fetch, add, update, remove);
 
-            DataSourceIntegerField idField = new DataSourceIntegerField("id", "id");
+            DataSourceIntegerField idField = new DataSourceIntegerField("id", "ID");
             idField.setPrimaryKey(true);
 
             DataSourceTextField tagsField = new DataSourceTextField("tags", ClientConfig.messages.tags());

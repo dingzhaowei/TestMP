@@ -21,7 +21,7 @@
 
         <gwt.version>2.4.0</gwt.version>
         <jackson.version.override>1.9.12</jackson.version.override>
-        <smartgwt.version>3.1</smartgwt.version>
+        <smartgwt.version>4.0</smartgwt.version>
     </properties>
 
     <dependencies>
