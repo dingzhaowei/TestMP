@@ -27,7 +27,6 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.OperationBinding;
-import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.RestDataSource;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
@@ -51,7 +50,6 @@ import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.grid.SummaryFunction;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
@@ -107,23 +105,13 @@ public class TestDataView extends VLayout {
         testDataGrid.setWarnOnRemoval(true);
         testDataGrid.setCanEdit(true);
         testDataGrid.setShowRollOver(false);
-        testDataGrid.setShowGridSummary(true);
 
         ListGridField idField = new ListGridField("id", "ID", 50);
         idField.setAlign(Alignment.LEFT);
         idField.setCanEdit(false);
-        idField.setShowGridSummary(false);
 
         ListGridField tagsField = new ListGridField("tags", ClientConfig.messages.tags(), 200);
         tagsField.setShowHover(true);
-        tagsField.setSummaryFunction(new SummaryFunction() {
-
-            @Override
-            public Object getSummaryValue(Record[] records, ListGridField field) {
-                return ClientConfig.messages.totalData() + ": " + records.length;
-            }
-
-        });
 
         ListGridField propertiesField = new ListGridField("properties", ClientConfig.messages.properties());
         propertiesField.setShowHover(true);
@@ -131,8 +119,7 @@ public class TestDataView extends VLayout {
 
             @Override
             public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-                boolean isSummary = record.getIsGridSummary() != null && record.getIsGridSummary().booleanValue();
-                if (value == null || value.toString().isEmpty() || isSummary) {
+                if (value == null || value.toString().isEmpty()) {
                     return null;
                 }
                 return "<pre>" + escapeHtml(value) + "</pre>";
