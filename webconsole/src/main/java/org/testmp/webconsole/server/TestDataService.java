@@ -36,7 +36,6 @@ import org.apache.commons.lang.math.NumberUtils;
 import org.apache.log4j.Logger;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.ObjectWriter;
 import org.codehaus.jackson.node.ObjectNode;
 import org.codehaus.jackson.type.TypeReference;
 import org.testmp.datastore.client.DataInfo;
@@ -51,9 +50,16 @@ public class TestDataService extends HttpServlet {
 
     private DataStoreClient client;
 
+    private Cache cache;
+
+    private DataAssemblyStrategy strategy;
+
     @Override
     public void init() throws ServletException {
-        client = new DataStoreClient((String) getServletContext().getAttribute("testDataStoreUrl"));
+        String testDataStoreUrl = (String) getServletContext().getAttribute("testDataStoreUrl");
+        client = new DataStoreClient(testDataStoreUrl);
+        cache = Cache.getInstance(testDataStoreUrl);
+        strategy = new TestDataAssemblyStrategy();
         super.init();
     }
 
@@ -83,7 +89,7 @@ public class TestDataService extends HttpServlet {
         String operationType = dsRequest.get("operationType").toString();
         try {
             if (operationType.equals("fetch")) {
-                List<Map<String, Object>> dataList = fetchData();
+                List<Map<String, Object>> dataList = new ArrayList<Map<String, Object>>(cache.getContent().values());
                 Criteria criteria = Criteria.valueOf(mapper.writeValueAsString(dsRequest.get("data")));
                 if (criteria != null) {
                     Filter filter = new Filter(criteria);
@@ -162,33 +168,6 @@ public class TestDataService extends HttpServlet {
     }
 
     @SuppressWarnings("rawtypes")
-    private List<Map<String, Object>> fetchData() throws Exception {
-
-        List<DataInfo<Map>> dataInfoList = client.getDataByRange(Map.class, 0, Integer.MAX_VALUE);
-        Map<Integer, MetaInfo> metaInfoLookingup = new HashMap<Integer, MetaInfo>();
-
-        if (!dataInfoList.isEmpty()) {
-            List<Integer> dataIdList = new ArrayList<Integer>();
-            for (DataInfo<Map> dataInfo : dataInfoList) {
-                dataIdList.add(dataInfo.getId());
-            }
-
-            List<MetaInfo> metaInfoList = client.getMetaInfo(dataIdList.toArray(new Integer[0]));
-            for (MetaInfo metaInfo : metaInfoList) {
-                metaInfoLookingup.put(metaInfo.getDataId(), metaInfo);
-            }
-        }
-
-        List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
-        for (DataInfo<Map> dataInfo : dataInfoList) {
-            MetaInfo metaInfo = metaInfoLookingup.get(dataInfo.getId());
-            Map<String, Object> m = combineInfoToMap(dataInfo, metaInfo);
-            result.add(m);
-        }
-        return result;
-    }
-
-    @SuppressWarnings("rawtypes")
     private Map<String, Object> updateData(Map<String, Object> data, Map<String, Object> oldValues) throws Exception {
         Integer id = (Integer) data.get("id");
 
@@ -239,7 +218,8 @@ public class TestDataService extends HttpServlet {
 
         DataInfo<Map> dataInfo = client.getDataById(Map.class, id);
         MetaInfo metaInfo = client.getMetaInfo(id).get(0);
-        Map<String, Object> updatedData = combineInfoToMap(dataInfo, metaInfo);
+        Map<String, Object> updatedData = strategy.assemble(dataInfo, metaInfo);
+        cache.updateContent(dataInfo.getId(), updatedData);
         return updatedData;
     }
 
@@ -256,7 +236,8 @@ public class TestDataService extends HttpServlet {
 
         DataInfo<Map> dataInfo = client.getDataById(Map.class, id);
         MetaInfo metaInfo = client.getMetaInfo(id).get(0);
-        Map<String, Object> addedData = combineInfoToMap(dataInfo, metaInfo);
+        Map<String, Object> addedData = strategy.assemble(dataInfo, metaInfo);
+        cache.updateContent(dataInfo.getId(), addedData);
         return addedData;
     }
 
@@ -265,34 +246,10 @@ public class TestDataService extends HttpServlet {
         if (client.deleteData(id)) {
             Map<String, Object> m = new HashMap<String, Object>();
             m.put("id", id);
+            cache.updateContent(id, null);
             return m;
         } else {
             throw new RuntimeException("Cannot remove the data");
         }
-    }
-
-    @SuppressWarnings("rawtypes")
-    private Map<String, Object> combineInfoToMap(DataInfo<Map> dataInfo, MetaInfo metaInfo) throws Exception {
-        Map data = dataInfo.getData();
-        Map<String, Object> m = new HashMap<String, Object>();
-        ObjectMapper mapper = new ObjectMapper();
-        ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();
-
-        m.put("id", dataInfo.getId().toString());
-        List<String> tags = dataInfo.getTags();
-        Collections.sort(tags);
-        StringBuilder sb = new StringBuilder();
-        for (String tag : tags) {
-            if (sb.length() > 0) {
-                sb.append(',');
-            }
-            sb.append(tag);
-        }
-        m.put("tags", sb.toString());
-        m.put("properties", writer.writeValueAsString(data));
-        m.put("createTime", metaInfo.getMetaInfo().get("create_time"));
-        m.put("lastModifyTime", metaInfo.getMetaInfo().get("last_modify_time"));
-
-        return m;
     }
 }

@@ -17,9 +17,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,9 +46,16 @@ public class TestCaseService extends HttpServlet {
 
     private DataStoreClient client;
 
+    private Cache cache;
+
+    private DataAssemblyStrategy strategy;
+
     @Override
     public void init() throws ServletException {
-        client = new DataStoreClient((String) getServletContext().getAttribute("testCaseStoreUrl"));
+        String testCaseStoreUrl = (String) getServletContext().getAttribute("testCaseStoreUrl");
+        client = new DataStoreClient(testCaseStoreUrl);
+        cache = Cache.getInstance(testCaseStoreUrl);
+        strategy = new TestCaseAssemblyStrategy();
         super.init();
     }
 
@@ -80,7 +85,7 @@ public class TestCaseService extends HttpServlet {
         String operationType = dsRequest.get("operationType").toString();
         try {
             if (operationType.equals("fetch")) {
-                List<Map<String, Object>> dataList = fetchData();
+                List<Map<String, Object>> dataList = new ArrayList<Map<String, Object>>(cache.getContent().values());
                 Criteria criteria = Criteria.valueOf(mapper.writeValueAsString(dsRequest.get("data")));
                 if (criteria != null) {
                     Filter filter = new Filter(criteria);
@@ -117,31 +122,6 @@ public class TestCaseService extends HttpServlet {
         output.flush();
     }
 
-    private List<Map<String, Object>> fetchData() throws Exception {
-        List<DataInfo<TestCase>> dataInfoList = client.getDataByTag(TestCase.class, "TestCase");
-        Map<Integer, MetaInfo> metaInfoLookingup = new HashMap<Integer, MetaInfo>();
-
-        if (!dataInfoList.isEmpty()) {
-            List<Integer> dataIdList = new ArrayList<Integer>();
-            for (DataInfo<TestCase> dataInfo : dataInfoList) {
-                dataIdList.add(dataInfo.getId());
-            }
-
-            List<MetaInfo> metaInfoList = client.getMetaInfo(dataIdList.toArray(new Integer[0]));
-            for (MetaInfo metaInfo : metaInfoList) {
-                metaInfoLookingup.put(metaInfo.getDataId(), metaInfo);
-            }
-        }
-
-        List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
-        for (DataInfo<TestCase> dataInfo : dataInfoList) {
-            MetaInfo metaInfo = metaInfoLookingup.get(dataInfo.getId());
-            Map<String, Object> m = combineInfoToMap(dataInfo, metaInfo);
-            result.add(m);
-        }
-        return result;
-    }
-
     private Map<String, Object> updateData(Map<String, Object> data) throws Exception {
         Integer id = (Integer) data.get("id");
         TestCase tc = client.getDataById(TestCase.class, id).getData();
@@ -157,7 +137,8 @@ public class TestCaseService extends HttpServlet {
 
         DataInfo<TestCase> dataInfo = client.getDataById(TestCase.class, id);
         MetaInfo metaInfo = client.getMetaInfo(id).get(0);
-        Map<String, Object> updatedData = combineInfoToMap(dataInfo, metaInfo);
+        Map<String, Object> updatedData = strategy.assemble(dataInfo, metaInfo);
+        cache.updateContent(dataInfo.getId(), updatedData);
         return updatedData;
     }
 
@@ -166,51 +147,10 @@ public class TestCaseService extends HttpServlet {
         if (client.deleteData(id)) {
             Map<String, Object> m = new HashMap<String, Object>();
             m.put("id", id);
+            cache.updateContent(id, null);
             return m;
         } else {
             throw new RuntimeException("Cannot remove the data");
         }
-    }
-
-    private Map<String, Object> combineInfoToMap(DataInfo<TestCase> dataInfo, MetaInfo metaInfo) throws Exception {
-        TestCase tc = dataInfo.getData();
-        Map<String, Object> m = new HashMap<String, Object>();
-        m.put("id", dataInfo.getId().toString());
-        m.put("project", tc.getProject());
-        m.put("name", tc.getName());
-        m.put("description", tc.getDescription());
-        m.put("automation", tc.getAutomation());
-        m.put("robustness", String.format("%.3f", tc.evaluateRobustness()));
-        m.put("robustnessTrend", tc.getRobustnessTrend() + ".png");
-        m.put("avgTestTime", String.format("%.1f", tc.evaluateAverageTestTime()));
-        m.put("timeVolatility", String.format("%.3f", tc.evaluateTimeVolatility()));
-
-        List<String> tags = dataInfo.getTags();
-        StringBuilder sb = new StringBuilder();
-        for (String tag : tags) {
-            if (tag.equals("TestCase")) {
-                continue;
-            }
-            if (sb.length() > 0) {
-                sb.append(',');
-            }
-            sb.append(tag);
-        }
-        m.put("tags", sb.toString());
-        m.put("createTime", metaInfo.getMetaInfo().get("create_time"));
-        m.put("lastModifyTime", metaInfo.getMetaInfo().get("last_modify_time"));
-
-        List<RunRecord> runRecordList = tc.getRunHistory();
-        ObjectMapper mapper = new ObjectMapper();
-        m.put("runHistory", mapper.writeValueAsString(runRecordList));
-
-        if (!runRecordList.isEmpty()) {
-            RunRecord record = runRecordList.get(runRecordList.size() - 1);
-            Date lastRunTime = new Date(record.getRecordTime());
-            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            m.put("lastRunTime", format.format(lastRunTime));
-        }
-
-        return m;
     }
 }

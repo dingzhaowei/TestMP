@@ -359,13 +359,14 @@ public class Filter {
         }
 
         private static Criteria parseSimpleCriteriaNode(JsonNode criteriaNode) {
-            Criteria criteria = new Criteria();
-            criteria.setOperator(OPERATOR_AND);
             List<Criteria> subCriteria = new ArrayList<Criteria>();
             Iterator<Entry<String, JsonNode>> iter = criteriaNode.getFields();
             while (iter.hasNext()) {
                 Entry<String, JsonNode> field = iter.next();
                 String fieldName = field.getKey();
+                if (fieldName.startsWith("__gwt")) {
+                    continue;
+                }
                 String fieldValue = field.getValue().asText();
                 Criteria c = new Criteria();
                 c.setOperator(OPERATOR_CONTAINS);
@@ -373,13 +374,19 @@ public class Filter {
                 c.setValue(fieldValue);
                 subCriteria.add(c);
             }
-            criteria.setSubCriteria(subCriteria);
-            return criteria;
+            if (subCriteria.isEmpty()) {
+                return null;
+            } else {
+                Criteria criteria = new Criteria();
+                criteria.setOperator(OPERATOR_AND);
+                criteria.setSubCriteria(subCriteria);
+                return criteria;
+            }
         }
 
         private static Criteria parseAdvancedCriteriaNode(JsonNode criteriaNode) {
             Criteria criteria = new Criteria();
-            String operator = criteriaNode.get("operator").isNull()? "and" : criteriaNode.get("operator").asText();
+            String operator = criteriaNode.get("operator").isNull() ? "and" : criteriaNode.get("operator").asText();
             criteria.setOperator(operator);
             if (operator.equals(OPERATOR_AND) || operator.equals(OPERATOR_OR) || operator.equals(OPERATOR_NOT)) {
                 JsonNode subCriteriaNode = criteriaNode.get("criteria");
