@@ -20,6 +20,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -31,6 +32,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang.math.NumberUtils;
 import org.apache.log4j.Logger;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -86,6 +88,35 @@ public class TestDataService extends HttpServlet {
                 if (criteria != null) {
                     Filter filter = new Filter(criteria);
                     dataList = filter.doFilter(dataList);
+                }
+                final List<String> sortBy = (List<String>) dsRequest.get("sortBy");
+                if (sortBy != null) {
+                    Collections.sort(dataList, new Comparator<Map<String, Object>>() {
+
+                        @Override
+                        public int compare(Map<String, Object> data1, Map<String, Object> data2) {
+                            for (String fieldName : sortBy) {
+                                boolean descending = fieldName.startsWith("-");
+                                fieldName = descending ? fieldName.substring(1) : fieldName;
+                                Object o1 = data1.get(fieldName);
+                                Object o2 = data2.get(fieldName);
+                                if (o1 == null || o2 == null || o1.equals(o2)) {
+                                    continue;
+                                }
+                                if (NumberUtils.isNumber(o1.toString())) {
+                                    Double d1 = Double.valueOf(o1.toString());
+                                    Double d2 = Double.valueOf(o2.toString());
+                                    return descending ? d2.compareTo(d1) : d1.compareTo(d2);
+                                } else {
+                                    String s1 = o1.toString();
+                                    String s2 = o2.toString();
+                                    return descending ? s2.compareTo(s1) : s1.compareTo(s2);
+                                }
+                            }
+                            return 0;
+                        }
+
+                    });
                 }
                 int startRow = Integer.parseInt(dsRequest.get("startRow").toString());
                 int endRow = Integer.parseInt(dsRequest.get("endRow").toString());
