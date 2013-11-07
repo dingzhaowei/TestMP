@@ -126,9 +126,9 @@ public class WebConsoleContextListener implements ServletContextListener {
 
         // Prepare caches
         String testCaseStoreUrl = (String) context.getAttribute("testCaseStoreUrl");
-        Cache.getInstance(testCaseStoreUrl).load(testCaseStoreUrl, TestCase.class, new TestCaseAssemblyStrategy());
+        Cache.getInstance("TestCase").load(testCaseStoreUrl, TestCase.class, new TestCaseAssemblyStrategy());
         String testDataStoreUrl = (String) context.getAttribute("testDataStoreUrl");
-        Cache.getInstance(testDataStoreUrl).load(testDataStoreUrl, Map.class, new TestDataAssemblyStrategy());
+        Cache.getInstance("TestData").load(testDataStoreUrl, Map.class, new TestDataAssemblyStrategy());
 
         // Start the task runner
         int size = Integer.parseInt(context.getAttribute("executionThreadNum").toString());

@@ -58,7 +58,7 @@ public class TestDataService extends HttpServlet {
     public void init() throws ServletException {
         String testDataStoreUrl = (String) getServletContext().getAttribute("testDataStoreUrl");
         client = new DataStoreClient(testDataStoreUrl);
-        cache = Cache.getInstance(testDataStoreUrl);
+        cache = Cache.getInstance("TestData");
         strategy = new TestDataAssemblyStrategy();
         super.init();
     }
