@@ -87,8 +87,6 @@ public class TestCaseView extends VLayout {
 
     @Override
     protected void onDraw() {
-        super.onDraw();
-
         if (ClientConfig.currentUser == null) {
             testCaseGrid.fetchData();
         } else {
@@ -109,6 +107,7 @@ public class TestCaseView extends VLayout {
 
             });
         }
+        super.onDraw();
     }
 
     @Override

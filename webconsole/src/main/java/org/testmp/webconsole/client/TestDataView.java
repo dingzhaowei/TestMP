@@ -63,8 +63,6 @@ public class TestDataView extends VLayout {
 
     @Override
     protected void onDraw() {
-        super.onDraw();
-
         if (ClientConfig.currentUser == null) {
             testDataGrid.fetchData();
         } else {
@@ -85,6 +83,7 @@ public class TestDataView extends VLayout {
 
             });
         }
+        super.onDraw();
     }
 
     @Override
