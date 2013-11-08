@@ -36,10 +36,15 @@ public class DataLoader<T> {
         this.strategy = strategy;
     }
 
-    public List<Map<String, Object>> load() {
+    public List<Map<String, Object>> load(String... tags) {
         try {
             DataStoreClient client = new DataStoreClient(url);
-            List<DataInfo<T>> dataInfoList = client.getDataByRange(type, 0, Integer.MAX_VALUE);
+            List<DataInfo<T>> dataInfoList = null;
+            if (tags.length == 0) {
+                dataInfoList = client.getDataByRange(type, 0, Integer.MAX_VALUE);
+            } else {
+                dataInfoList = client.getDataByTag(type, tags);
+            }
             Map<Integer, MetaInfo> metaInfoLookingup = new HashMap<Integer, MetaInfo>();
 
             if (!dataInfoList.isEmpty()) {

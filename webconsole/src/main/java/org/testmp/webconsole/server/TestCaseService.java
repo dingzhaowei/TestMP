@@ -84,7 +84,7 @@ public class TestCaseService extends HttpServlet {
         String operationType = dsRequest.get("operationType").toString();
         try {
             if (operationType.equals("fetch")) {
-                List<Map<String, Object>> dataList = loader.load();
+                List<Map<String, Object>> dataList = loader.load("TestCase");
                 Criteria criteria = Criteria.valueOf(mapper.writeValueAsString(dsRequest.get("data")));
                 if (criteria != null) {
                     Filter filter = new Filter(criteria);
