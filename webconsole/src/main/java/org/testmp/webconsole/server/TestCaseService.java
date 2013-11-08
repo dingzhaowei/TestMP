@@ -17,7 +17,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,16 +45,16 @@ public class TestCaseService extends HttpServlet {
 
     private DataStoreClient client;
 
-    private Cache cache;
-
     private DataAssemblyStrategy strategy;
+
+    private DataLoader<TestCase> loader;
 
     @Override
     public void init() throws ServletException {
         String testCaseStoreUrl = (String) getServletContext().getAttribute("testCaseStoreUrl");
         client = new DataStoreClient(testCaseStoreUrl);
-        cache = Cache.getInstance("TestCase");
         strategy = new TestCaseAssemblyStrategy();
+        loader = new DataLoader<TestCase>(testCaseStoreUrl, TestCase.class, strategy);
         super.init();
     }
 
@@ -85,7 +84,7 @@ public class TestCaseService extends HttpServlet {
         String operationType = dsRequest.get("operationType").toString();
         try {
             if (operationType.equals("fetch")) {
-                List<Map<String, Object>> dataList = new ArrayList<Map<String, Object>>(cache.getContent().values());
+                List<Map<String, Object>> dataList = loader.load();
                 Criteria criteria = Criteria.valueOf(mapper.writeValueAsString(dsRequest.get("data")));
                 if (criteria != null) {
                     Filter filter = new Filter(criteria);
@@ -138,7 +137,6 @@ public class TestCaseService extends HttpServlet {
         DataInfo<TestCase> dataInfo = client.getDataById(TestCase.class, id);
         MetaInfo metaInfo = client.getMetaInfo(id).get(0);
         Map<String, Object> updatedData = strategy.assemble(dataInfo, metaInfo);
-        cache.updateContent(dataInfo.getId(), updatedData);
         return updatedData;
     }
 
@@ -147,7 +145,6 @@ public class TestCaseService extends HttpServlet {
         if (client.deleteData(id)) {
             Map<String, Object> m = new HashMap<String, Object>();
             m.put("id", id);
-            cache.updateContent(id, null);
             return m;
         } else {
             throw new RuntimeException("Cannot remove the data");

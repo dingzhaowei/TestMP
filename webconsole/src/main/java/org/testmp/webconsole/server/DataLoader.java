@@ -17,52 +17,26 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.testmp.datastore.client.DataInfo;
 import org.testmp.datastore.client.DataStoreClient;
 import org.testmp.datastore.client.MetaInfo;
 
-public class Cache {
+public class DataLoader<T> {
 
-    private static Map<String, Cache> instances = new TreeMap<String, Cache>();
+    private String url;
 
-    private Map<Integer, Map<String, Object>> content = new TreeMap<Integer, Map<String, Object>>();
+    private Class<T> type;
 
-    private String name;
+    private DataAssemblyStrategy strategy;
 
-    private Cache(String name) {
-        this.name = name;
+    public DataLoader(String url, Class<T> type, DataAssemblyStrategy strategy) {
+        this.url = url;
+        this.type = type;
+        this.strategy = strategy;
     }
 
-    public static Cache getInstance(String name) {
-        synchronized (Cache.class) {
-            if (instances.containsKey(name)) {
-                return instances.get(name);
-            }
-            Cache instance = new Cache(name);
-            instances.put(name, instance);
-            return instance;
-        }
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public synchronized Map<Integer, Map<String, Object>> getContent() {
-        return content;
-    }
-
-    public synchronized void updateContent(Integer id, Map<String, Object> newData) {
-        if (newData == null) {
-            content.remove(id);
-        } else {
-            content.put(id, newData);
-        }
-    }
-
-    public synchronized <T> void load(String url, Class<T> type, DataAssemblyStrategy strategy) {
+    public List<Map<String, Object>> load() {
         try {
             DataStoreClient client = new DataStoreClient(url);
             List<DataInfo<T>> dataInfoList = client.getDataByRange(type, 0, Integer.MAX_VALUE);
@@ -80,17 +54,16 @@ public class Cache {
                 }
             }
 
+            List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
             for (DataInfo<T> dataInfo : dataInfoList) {
                 MetaInfo metaInfo = metaInfoLookingup.get(dataInfo.getId());
                 Map<String, Object> m = strategy.assemble(dataInfo, metaInfo);
-                content.put(dataInfo.getId(), m);
+                result.add(m);
             }
+            return result;
         } catch (Exception e) {
-            throw new RuntimeException("Failed to load data into cache: " + name, e);
+            throw new RuntimeException("Failed to load data", e);
         }
     }
 
-    public synchronized void clear() {
-        content = new TreeMap<Integer, Map<String, Object>>();
-    }
 }

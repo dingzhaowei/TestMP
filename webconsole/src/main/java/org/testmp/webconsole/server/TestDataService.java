@@ -17,7 +17,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -50,16 +49,18 @@ public class TestDataService extends HttpServlet {
 
     private DataStoreClient client;
 
-    private Cache cache;
-
     private DataAssemblyStrategy strategy;
 
+    @SuppressWarnings("rawtypes")
+    private DataLoader<Map> loader;
+
+    @SuppressWarnings("rawtypes")
     @Override
     public void init() throws ServletException {
         String testDataStoreUrl = (String) getServletContext().getAttribute("testDataStoreUrl");
         client = new DataStoreClient(testDataStoreUrl);
-        cache = Cache.getInstance("TestData");
         strategy = new TestDataAssemblyStrategy();
+        loader = new DataLoader<Map>(testDataStoreUrl, Map.class, strategy);
         super.init();
     }
 
@@ -89,7 +90,7 @@ public class TestDataService extends HttpServlet {
         String operationType = dsRequest.get("operationType").toString();
         try {
             if (operationType.equals("fetch")) {
-                List<Map<String, Object>> dataList = new ArrayList<Map<String, Object>>(cache.getContent().values());
+                List<Map<String, Object>> dataList = loader.load();
                 Criteria criteria = Criteria.valueOf(mapper.writeValueAsString(dsRequest.get("data")));
                 if (criteria != null) {
                     Filter filter = new Filter(criteria);
@@ -219,7 +220,6 @@ public class TestDataService extends HttpServlet {
         DataInfo<Map> dataInfo = client.getDataById(Map.class, id);
         MetaInfo metaInfo = client.getMetaInfo(id).get(0);
         Map<String, Object> updatedData = strategy.assemble(dataInfo, metaInfo);
-        cache.updateContent(dataInfo.getId(), updatedData);
         return updatedData;
     }
 
@@ -237,7 +237,6 @@ public class TestDataService extends HttpServlet {
         DataInfo<Map> dataInfo = client.getDataById(Map.class, id);
         MetaInfo metaInfo = client.getMetaInfo(id).get(0);
         Map<String, Object> addedData = strategy.assemble(dataInfo, metaInfo);
-        cache.updateContent(dataInfo.getId(), addedData);
         return addedData;
     }
 
@@ -246,7 +245,6 @@ public class TestDataService extends HttpServlet {
         if (client.deleteData(id)) {
             Map<String, Object> m = new HashMap<String, Object>();
             m.put("id", id);
-            cache.updateContent(id, null);
             return m;
         } else {
             throw new RuntimeException("Cannot remove the data");

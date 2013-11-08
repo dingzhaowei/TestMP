@@ -23,7 +23,6 @@ import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.util.Enumeration;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Timer;
@@ -33,7 +32,6 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
 import org.apache.log4j.Logger;
-import org.testmp.sync.TestCase;
 
 public class WebConsoleContextListener implements ServletContextListener {
 
@@ -123,12 +121,6 @@ public class WebConsoleContextListener implements ServletContextListener {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
-        // Prepare caches
-        String testCaseStoreUrl = (String) context.getAttribute("testCaseStoreUrl");
-        Cache.getInstance("TestCase").load(testCaseStoreUrl, TestCase.class, new TestCaseAssemblyStrategy());
-        String testDataStoreUrl = (String) context.getAttribute("testDataStoreUrl");
-        Cache.getInstance("TestData").load(testDataStoreUrl, Map.class, new TestDataAssemblyStrategy());
 
         // Start the task runner
         int size = Integer.parseInt(context.getAttribute("executionThreadNum").toString());
