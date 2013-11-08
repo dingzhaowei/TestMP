@@ -85,6 +85,24 @@ public class TestCaseView extends VLayout {
 
     private ListGrid testCaseGrid;
 
+    private HoverCustomizer hoverCustomizer = new HoverCustomizer() {
+
+        @Override
+        public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+            Boolean isFolder = record.getAttributeAsBoolean("isFolder");
+            Boolean isGridSummary = record.getIsGridSummary();
+            Boolean isGroupSummary = record.getIsGroupSummary();
+            if (value == null || (isFolder != null && isFolder.booleanValue())
+                    || (isGridSummary != null && isGridSummary.booleanValue())
+                    || (isGroupSummary != null && isGroupSummary.booleanValue())) {
+                return null;
+            }
+            String v = value.toString().replace("&nbsp;", "");
+            return v.isEmpty() ? null : v;
+        }
+
+    };
+
     @Override
     protected void onDraw() {
         if (ClientConfig.currentUser == null) {
@@ -183,24 +201,6 @@ public class TestCaseView extends VLayout {
         ListGridField runHistoryField = new ListGridField("runHistory", ClientConfig.messages.runHistory());
         ListGridField createTimeField = new ListGridField("createTime", ClientConfig.messages.createTime());
         ListGridField lastModifyTimeField = new ListGridField("lastModifyTime", ClientConfig.messages.lastModifyTime());
-
-        HoverCustomizer hoverCustomizer = new HoverCustomizer() {
-
-            @Override
-            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-                Boolean isFolder = record.getAttributeAsBoolean("isFolder");
-                Boolean isGridSummary = record.getIsGridSummary();
-                Boolean isGroupSummary = record.getIsGroupSummary();
-                if (value == null || (isFolder != null && isFolder.booleanValue())
-                        || (isGridSummary != null && isGridSummary.booleanValue())
-                        || (isGroupSummary != null && isGroupSummary.booleanValue())) {
-                    return null;
-                }
-                String v = value.toString().replace("&nbsp;", "");
-                return v.isEmpty() ? null : v;
-            }
-
-        };
 
         projectField.setHidden(true);
         projectField.setWidth(100);
@@ -557,6 +557,7 @@ public class TestCaseView extends VLayout {
                 }
 
             });
+            failureTraceField.setHoverCustomizer(hoverCustomizer);
 
             ListGridField falseFailureField = new ListGridField("falseFailure", ClientConfig.messages.falseFailure(),
                     100);
