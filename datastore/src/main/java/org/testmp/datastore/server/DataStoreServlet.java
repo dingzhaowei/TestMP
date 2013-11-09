@@ -78,13 +78,13 @@ public class DataStoreServlet extends HttpServlet {
 
         resp.setContentType("text/plain");
         resp.setCharacterEncoding("UTF-8");
-        PrintWriter writer = resp.getWriter();
 
         String action = params.get("action");
         if (action.equals("count")) {
             String type = params.get("type");
             if (type.equals("data")) {
-                writer.print(manager.countTotalData());
+                String result = String.valueOf(manager.countTotalData());
+                printResult(resp, result, false);
             }
         } else if (action.equals("get")) {
             String type = params.get("type");
@@ -101,24 +101,28 @@ public class DataStoreServlet extends HttpServlet {
                     if (propertiesParam != null) {
                         propertyIds = Utils.convertJsonToPropertyIdList(propertiesParam);
                     }
-                    writer.print(Utils.converDataInfoListToJson(manager.getData(tags, propertyIds)));
+                    String result = Utils.converDataInfoListToJson(manager.getData(tags, propertyIds));
+                    printResult(resp, result, false);
                 }
                 // Get data by id
                 else if (params.containsKey("id")) {
                     int id = Integer.parseInt(params.get("id"));
-                    writer.print(Utils.converDataInfoListToJson(manager.getDataById(id)));
+                    String result = Utils.converDataInfoListToJson(manager.getDataById(id));
+                    printResult(resp, result, false);
                 }
                 // Get data by range
                 else if (params.containsKey("range")) {
                     String[] range = params.get("range").split(",");
                     int startId = Integer.parseInt(range[0]);
                     int endId = Integer.parseInt(range[1]);
-                    writer.print(Utils.converDataInfoListToJson(manager.getDataByRange(startId, endId)));
+                    String result = Utils.converDataInfoListToJson(manager.getDataByRange(startId, endId));
+                    printResult(resp, result, false);
                 }
             }
             // Get tags
             else if (type.equals("tag")) {
-                writer.print(Utils.convertTagListToJson(manager.getTags()));
+                String result = Utils.convertTagListToJson(manager.getTags());
+                printResult(resp, result, false);
             }
             // Get property values
             else if (type.equals("property")) {
@@ -129,7 +133,8 @@ public class DataStoreServlet extends HttpServlet {
                         tags.add(tag);
                     }
                 }
-                writer.print(Utils.convertPropertyValueListToJson(manager.getPropertyValues(key, tags)));
+                String result = Utils.convertPropertyValueListToJson(manager.getPropertyValues(key, tags));
+                printResult(resp, result, false);
             }
             // Get meta info
             else if (type.equals("meta")) {
@@ -137,8 +142,9 @@ public class DataStoreServlet extends HttpServlet {
                 for (String id : params.get("id").split(",")) {
                     idList.add(Integer.parseInt(id));
                 }
-                List<Object> result = new ArrayList<Object>(manager.getMetaInfo(idList));
-                writer.print(Utils.convertPropertyValueListToJson(result));
+                List<Object> metaInfoList = new ArrayList<Object>(manager.getMetaInfo(idList));
+                String result = Utils.convertPropertyValueListToJson(metaInfoList);
+                printResult(resp, result, false);
             }
         } else if (action.equals("find")) {
             String type = params.get("type");
@@ -154,19 +160,21 @@ public class DataStoreServlet extends HttpServlet {
                     if (propertiesParam != null) {
                         propertyIds = Utils.convertJsonToPropertyIdList(propertiesParam);
                     }
-                    List<Integer> result = new ArrayList<Integer>();
+                    List<Integer> idList = new ArrayList<Integer>();
                     for (DataInfo dataInfo : manager.getData(tags, propertyIds)) {
-                        result.add(dataInfo.getId());
+                        idList.add(dataInfo.getId());
                     }
                     ObjectMapper mapper = new ObjectMapper();
-                    writer.print(mapper.writeValueAsString(result));
+                    String result = mapper.writeValueAsString(idList);
+                    printResult(resp, result, false);
                 }
             }
         } else if (action.equals("add")) {
             String type = params.get("type");
             if (type.equals("data")) {
                 String content = params.get("content");
-                writer.print(manager.addData(Utils.convertJsonToDataInfoList(content)).toString());
+                String result = manager.addData(Utils.convertJsonToDataInfoList(content)).toString();
+                printResult(resp, result, false);
             } else if (type.equals("tag")) {
                 int dataId = Integer.parseInt(params.get("id"));
                 String tag = params.get("tag");
@@ -215,7 +223,15 @@ public class DataStoreServlet extends HttpServlet {
             // manager.deleteMetaInfoFromData(idList, key);
             // }
         }
+    }
 
+    private void printResult(HttpServletResponse resp, String result, boolean gzip) throws IOException {
+        PrintWriter writer = resp.getWriter();
+        if (gzip) {
+            writer.print(Utils.compress(result));
+        } else {
+            writer.print(result);
+        }
         writer.flush();
         writer.close();
     }

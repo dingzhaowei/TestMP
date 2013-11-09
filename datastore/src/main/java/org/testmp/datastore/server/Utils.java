@@ -13,6 +13,9 @@
 
 package org.testmp.datastore.server;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -20,6 +23,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -196,5 +201,25 @@ public class Utils {
         } else {
             return ((Property) c.iterator().next()).getId();
         }
+    }
+
+    public static String compress(String s) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        GZIPOutputStream gzip = new GZIPOutputStream(out);
+        gzip.write(s.getBytes("UTF-8"));
+        gzip.close();
+        return Base64.encode(out.toByteArray());
+    }
+
+    public static String decompress(String s) throws IOException {
+        ByteArrayInputStream in = new ByteArrayInputStream(Base64.decode(s));
+        GZIPInputStream gzip = new GZIPInputStream(in);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buf = new byte[1024];
+        int i = 0;
+        while ((i = gzip.read(buf)) >= 0) {
+            out.write(buf, 0, i);
+        }
+        return out.toString("UTF-8");
     }
 }

@@ -148,6 +148,30 @@ public class DataInfoTest {
         public Pair getAnotherP2() {
             return anotherP2;
         }
+
+        public void setP1(String p1) {
+            this.p1 = p1;
+        }
+
+        public void setP2(int p2) {
+            this.p2 = p2;
+        }
+
+        public void setP3(Map<String, String> p3) {
+            this.p3 = p3;
+        }
+
+        public void setP4(Pair p4) {
+            this.p4 = p4;
+        }
+
+        public void setAnotherP1(String anotherP1) {
+            this.anotherP1 = anotherP1;
+        }
+
+        public void setAnotherP2(Pair anotherP2) {
+            this.anotherP2 = anotherP2;
+        }
     }
 
     @Test
