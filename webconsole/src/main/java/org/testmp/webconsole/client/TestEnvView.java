@@ -520,7 +520,9 @@ public class TestEnvView extends VLayout {
                                     int colNum = taskGrid.getFieldNum("run");
                                     Layout recordComp = (Layout) taskGrid.getRecordComponent(rowNum, colNum);
                                     IButton taskControl = (IButton) recordComp.getMember(0);
-                                    taskControl.setTitle(isTaskRunning(record) ? "Cancel" : "Run");
+                                    String cancel = ClientConfig.messages.cancel();
+                                    String run = ClientConfig.messages.run();
+                                    taskControl.setTitle(isTaskRunning(record) ? cancel : run);
                                     taskGrid.refreshRow(rowNum);
                                 }
                             }
