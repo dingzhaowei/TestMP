@@ -18,7 +18,6 @@ import org.testmp.webconsole.shared.ClientUtils;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.i18n.client.LocaleInfo;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -29,14 +28,12 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.RestDataSource;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.ContentsType;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.HTMLPane;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.IconButton;
 import com.smartgwt.client.widgets.Label;
@@ -151,21 +148,7 @@ public class WebConsole implements EntryPoint {
         welcomeTab.setName("welcomeTab");
         welcomeTab.setIcon("welcome.png");
         welcomeTab.setWidth(120);
-        VLayout introLayout = new VLayout();
-        HTMLPane introView = new HTMLPane();
-        String localeName = LocaleInfo.getCurrentLocale().getLocaleName();
-        if (localeName.startsWith("zh")) {
-            introView.setContentsURL(GWT.getModuleBaseURL() + "intro_zh.html");
-        } else {
-            introView.setContentsURL(GWT.getModuleBaseURL() + "intro.html");
-        }
-        introView.setContentsType(ContentsType.PAGE);
-        introView.setSize("100%", "100%");
-        introView.setMargin(5);
-        introView.setLayoutAlign(Alignment.CENTER);
-        introView.setEvalScriptBlocks(true);
-        introLayout.addMember(introView);
-        welcomeTab.setPane(introLayout);
+        welcomeTab.setPane(new MainPageView());
         appTabSet.addTab(welcomeTab);
 
         Tab testCaseTab = new Tab(ClientConfig.messages.testCase());

@@ -40,8 +40,6 @@ import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.events.CloseClickEvent;
-import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
@@ -201,15 +199,7 @@ public class TestDataView extends VLayout {
             setWidth(400);
             setHeight(250);
             setTitle(ClientConfig.messages.newTestData());
-            setShowMinimizeButton(false);
-            setIsModal(true);
-            setShowModalMask(true);
-            centerInPage();
-            addCloseClickHandler(new CloseClickHandler() {
-                public void onCloseClick(CloseClickEvent event) {
-                    NewDataWindow.this.destroy();
-                }
-            });
+            ClientUtils.unifySimpleWindowStyle(this);
 
             VLayout layout = new VLayout();
             layout.setSize("100%", "100%");

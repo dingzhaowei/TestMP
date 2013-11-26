@@ -53,7 +53,6 @@ public class ClientUtils {
     public static void unifySimpleWindowStyle(final Window window) {
         window.setShowMinimizeButton(false);
         window.setIsModal(true);
-        window.setShowModalMask(true);
         window.centerInPage();
         window.addCloseClickHandler(new CloseClickHandler() {
             public void onCloseClick(CloseClickEvent event) {

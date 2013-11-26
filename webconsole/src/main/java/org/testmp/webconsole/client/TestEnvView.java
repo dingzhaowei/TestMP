@@ -19,6 +19,7 @@ import java.util.Map;
 
 import org.testmp.webconsole.client.ReportWindow.ReportType;
 import org.testmp.webconsole.shared.ClientConfig;
+import org.testmp.webconsole.shared.ClientUtils;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.Request;
@@ -258,16 +259,12 @@ public class TestEnvView extends VLayout {
             setWidth(750);
             setHeight(260);
             setTitle(envRecord.getAttribute("envName"));
-            setShowMinimizeButton(false);
-            setIsModal(true);
-            setShowModalMask(true);
-            centerInPage();
+            ClientUtils.unifySimpleWindowStyle(this);
             addCloseClickHandler(new CloseClickHandler() {
                 public void onCloseClick(CloseClickEvent event) {
                     if (taskRefreshing != null) {
                         taskRefreshing.cancel();
                     }
-                    TasksWindow.this.destroy();
                 }
             });
 
@@ -823,15 +820,7 @@ public class TestEnvView extends VLayout {
             setWidth(450);
             setHeight(350);
             setTitle(ClientConfig.messages.hosts());
-            setShowMinimizeButton(false);
-            setIsModal(true);
-            setShowModalMask(true);
-            centerInPage();
-            addCloseClickHandler(new CloseClickHandler() {
-                public void onCloseClick(CloseClickEvent event) {
-                    HostsWindow.this.destroy();
-                }
-            });
+            ClientUtils.unifySimpleWindowStyle(this);
 
             VLayout layout = new VLayout();
             layout.setMargin(5);

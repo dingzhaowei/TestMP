@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.testmp.webconsole.shared.ClientConfig;
+import org.testmp.webconsole.shared.ClientUtils;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.Request;
@@ -36,8 +37,6 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.events.CloseClickEvent;
-import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.IntegerItem;
@@ -71,16 +70,8 @@ public class ReportWindow extends Window {
     public ReportWindow() {
         setWidth(950);
         setHeight("85%");
-        setShowMaximizeButton(true);
         setCanDragResize(true);
-        setIsModal(true);
-        setShowModalMask(true);
-        centerInPage();
-        addCloseClickHandler(new CloseClickHandler() {
-            public void onCloseClick(CloseClickEvent event) {
-                ReportWindow.this.destroy();
-            }
-        });
+        ClientUtils.unifySimpleWindowStyle(this);
 
         windowLayout = new VLayout();
         windowLayout.setSize("100%", "100%");
@@ -177,15 +168,7 @@ public class ReportWindow extends Window {
             setWidth(600);
             setHeight(450);
             setTitle(ClientConfig.messages.sendReport());
-            setShowMinimizeButton(false);
-            setIsModal(true);
-            setShowModalMask(true);
-            centerInPage();
-            addCloseClickHandler(new CloseClickHandler() {
-                public void onCloseClick(CloseClickEvent event) {
-                    SendWindow.this.destroy();
-                }
-            });
+            ClientUtils.unifySimpleWindowStyle(this);
 
             final VLayout layout = new VLayout();
             layout.setSize("100%", "100%");
