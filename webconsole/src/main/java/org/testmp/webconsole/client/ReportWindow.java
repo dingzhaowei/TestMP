@@ -54,7 +54,7 @@ public class ReportWindow extends Window {
     private String requestUrl;
 
     public enum ReportType {
-        TEST_METRICS("Test Metrics"), ENVIRONMENT_STATUS("Environment Status");
+        TEST_METRICS("Test Metrics"), DATA_ANALYTICS("Data Analytics"), ENVIRONMENT_STATUS("Environment Status");
 
         public String getTypeName() {
             return typeName;
@@ -86,6 +86,9 @@ public class ReportWindow extends Window {
         switch (type) {
         case TEST_METRICS:
             setTitle(ClientConfig.messages.testMetricsReport());
+            break;
+        case DATA_ANALYTICS:
+            setTitle(ClientConfig.messages.dataAnalyticsReport());
             break;
         case ENVIRONMENT_STATUS:
             setTitle(ClientConfig.messages.environmentStatusReport());
@@ -283,11 +286,7 @@ public class ReportWindow extends Window {
             }
 
             HLayout controls = new HLayout();
-            controls.setSize("99%", "20");
-            controls.setMargin(5);
-            controls.setMembersMargin(5);
-            controls.setLayoutAlign(Alignment.CENTER);
-            controls.setAlign(Alignment.CENTER);
+            ClientUtils.unifyControlsLayoutStyle(controls);
             layout.addMember(controls);
 
             IButton okButton = new IButton(ClientConfig.messages.ok());

@@ -44,6 +44,7 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
 import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
@@ -56,6 +57,8 @@ public class WebConsole implements EntryPoint {
     private DataSource userNameSource;
 
     private IconButton loginBtn;
+
+    private IconButton settingBtn;
 
     /**
      * This is called when the browser loads Application.html.
@@ -100,6 +103,7 @@ public class WebConsole implements EntryPoint {
         HLayout header = new HLayout();
         header.setWidth("95%");
         header.setHeight(72);
+        header.setMembersMargin(5);
         header.setLayoutAlign(Alignment.CENTER);
 
         Label logo = new Label();
@@ -124,6 +128,20 @@ public class WebConsole implements EntryPoint {
 
         });
         header.addMember(loginBtn);
+
+        settingBtn = new IconButton(ClientConfig.messages.setting());
+        settingBtn.setIcon("setting.png");
+        settingBtn.setLayoutAlign(VerticalAlignment.TOP);
+        settingBtn.addClickHandler(new ClickHandler() {
+
+            public void onClick(ClickEvent event) {
+                SettingWindow window = new SettingWindow();
+                window.show();
+            }
+
+        });
+        header.addMember(settingBtn);
+
         vLayout.addMember(header);
 
         TabSet appTabSet = new TabSet();
@@ -240,5 +258,49 @@ public class WebConsole implements EntryPoint {
             });
             controls.addMember(okButton);
         }
+    }
+
+    public class SettingWindow extends Window {
+
+        public SettingWindow() {
+            setWidth(700);
+            setHeight(500);
+            setTitle(ClientConfig.messages.setting());
+            ClientUtils.unifySimpleWindowStyle(this);
+
+            VLayout layout = new VLayout();
+            ClientUtils.unifyWindowLayoutStyle(layout);
+            addItem(layout);
+
+            SectionStack sectionStack = new SectionStack();
+            layout.addMember(sectionStack);
+
+            HLayout controls = new HLayout();
+            ClientUtils.unifyControlsLayoutStyle(controls);
+            layout.addMember(controls);
+
+            IButton okButton = new IButton(ClientConfig.messages.ok());
+            okButton.addClickHandler(new ClickHandler() {
+
+                @Override
+                public void onClick(ClickEvent event) {
+                    SettingWindow.this.destroy();
+                }
+
+            });
+            controls.addMember(okButton);
+
+            IButton cancelButton = new IButton(ClientConfig.messages.cancel());
+            cancelButton.addClickHandler(new ClickHandler() {
+
+                @Override
+                public void onClick(ClickEvent event) {
+                    SettingWindow.this.destroy();
+                }
+
+            });
+            controls.addMember(cancelButton);
+        }
+
     }
 }

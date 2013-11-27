@@ -319,20 +319,16 @@ public class TestCaseView extends VLayout {
         controls.setMargin(10);
         controls.setMembersMargin(5);
         controls.setLayoutAlign(Alignment.CENTER);
-        controls.setAlign(Alignment.RIGHT);
+        addMember(controls);
 
-        IButton filterButton = new IButton(ClientConfig.messages.filter());
-        filterButton.setIcon("filter.png");
-        filterButton.addClickHandler(new ClickHandler() {
+        HLayout additionalControls = new HLayout();
+        additionalControls.setMembersMargin(5);
+        controls.addMember(additionalControls);
 
-            @Override
-            public void onClick(ClickEvent event) {
-                FilterWindow window = new FilterWindow(FilterType.TEST_CASE, testCaseGrid, testCaseFilterSource);
-                window.show();
-            }
-
-        });
-        controls.addMember(filterButton);
+        HLayout primaryControls = new HLayout();
+        primaryControls.setAlign(Alignment.RIGHT);
+        primaryControls.setMembersMargin(5);
+        controls.addMember(primaryControls);
 
         IButton foldOrUnfoldButton = new IButton(ClientConfig.messages.foldOrUnfold());
         foldOrUnfoldButton.setIcon("fold.png");
@@ -358,7 +354,32 @@ public class TestCaseView extends VLayout {
             }
 
         });
-        controls.addMember(foldOrUnfoldButton);
+        additionalControls.addMember(foldOrUnfoldButton);
+
+        IButton newCaseButton = new IButton(ClientConfig.messages.new_());
+        newCaseButton.setIcon("newcase.png");
+        newCaseButton.addClickHandler(new ClickHandler() {
+
+            @Override
+            public void onClick(ClickEvent event) {
+
+            }
+
+        });
+        primaryControls.addMember(newCaseButton);
+
+        IButton filterButton = new IButton(ClientConfig.messages.filter());
+        filterButton.setIcon("filter.png");
+        filterButton.addClickHandler(new ClickHandler() {
+
+            @Override
+            public void onClick(ClickEvent event) {
+                FilterWindow window = new FilterWindow(FilterType.TEST_CASE, testCaseGrid, testCaseFilterSource);
+                window.show();
+            }
+
+        });
+        primaryControls.addMember(filterButton);
 
         IButton reloadButton = new IButton(ClientConfig.messages.reload());
         reloadButton.setIcon("reload.png");
@@ -370,7 +391,7 @@ public class TestCaseView extends VLayout {
             }
 
         });
-        controls.addMember(reloadButton);
+        primaryControls.addMember(reloadButton);
 
         IButton reportButton = new IButton(ClientConfig.messages.report());
         reportButton.setIcon("report.png");
@@ -402,9 +423,7 @@ public class TestCaseView extends VLayout {
             }
 
         });
-        controls.addMember(reportButton);
-
-        addMember(controls);
+        primaryControls.addMember(reportButton);
     }
 
     private class TestMetrics {

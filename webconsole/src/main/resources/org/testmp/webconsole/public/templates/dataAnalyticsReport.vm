@@ -1,0 +1,16 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+    <title>Test Data Analytics</title>
+  </head>
+  <body>
+    <br>
+    <table style="border-collapse: collapse; text-align: center; font-family: Calibri,sans-serif,serif; margin: 50px; font-size: 0.9em" cellspacing="2" border="1" cellpadding="2" width="800">
+      <tbody>
+        <tr><td>$dataAnalyticsResult.totalData</td></tr>
+      </tbody>
+    </table>
+    <br>
+  </body>
+</html>

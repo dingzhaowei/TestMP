@@ -31,9 +31,9 @@ public class User {
 
     private String defaultTestCaseFilter;
 
-    private Map<String, String> savedTestCaseFilters = new TreeMap<String, String>();
-
     private String defaultTestDataFilter;
+
+    private Map<String, String> savedTestCaseFilters = new TreeMap<String, String>();
 
     private Map<String, String> savedTestDataFilters = new TreeMap<String, String>();
 

@@ -10,6 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  */
+
 package org.testmp.webconsole.client;
 
 import com.google.gwt.core.client.GWT;
@@ -24,19 +25,19 @@ public class MainPageView extends VLayout {
     @Override
     protected void onInit() {
         super.onInit();
-        HTMLPane introView = new HTMLPane();
+        HTMLPane introPane = new HTMLPane();
         String localeName = LocaleInfo.getCurrentLocale().getLocaleName();
         if (localeName.startsWith("zh")) {
-            introView.setContentsURL(GWT.getModuleBaseURL() + "intro_zh.html");
+            introPane.setContentsURL(GWT.getModuleBaseURL() + "intro_zh.html");
         } else {
-            introView.setContentsURL(GWT.getModuleBaseURL() + "intro.html");
+            introPane.setContentsURL(GWT.getModuleBaseURL() + "intro.html");
         }
-        introView.setContentsType(ContentsType.PAGE);
-        introView.setSize("100%", "100%");
-        introView.setMargin(5);
-        introView.setLayoutAlign(Alignment.CENTER);
-        introView.setEvalScriptBlocks(true);
-        addMember(introView);
+        introPane.setContentsType(ContentsType.PAGE);
+        introPane.setSize("100%", "100%");
+        introPane.setMargin(5);
+        introPane.setLayoutAlign(Alignment.CENTER);
+        introPane.setEvalScriptBlocks(true);
+        addMember(introPane);
     }
 
 }

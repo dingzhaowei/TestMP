@@ -88,7 +88,8 @@
 
 			<entry key="testMetricsReportRecipients" value="" />
 			<entry key="testMetricsReportSubject" value="" />
-
+			<entry key="dataAnalyticsReportRecipients" value="" />
+			<entry key="dataAnalyticsReportSubject" value="" />
 			<entry key="envStatusReportRecipients" value="" />
 			<entry key="envStatusReportSubject" value="" />
 
