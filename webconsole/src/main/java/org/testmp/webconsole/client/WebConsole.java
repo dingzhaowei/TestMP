@@ -13,6 +13,9 @@
 
 package org.testmp.webconsole.client;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.testmp.webconsole.shared.ClientConfig;
 import org.testmp.webconsole.shared.ClientUtils;
 
@@ -26,6 +29,8 @@ import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.OperationBinding;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.RestDataSource;
+import com.smartgwt.client.data.fields.DataSourceBooleanField;
+import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.DSDataFormat;
@@ -33,6 +38,8 @@ import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.types.VerticalAlignment;
+import com.smartgwt.client.util.SC;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.IconButton;
@@ -45,6 +52,7 @@ import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
 import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.SectionStack;
+import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
@@ -54,11 +62,44 @@ import com.smartgwt.client.widgets.tab.TabSet;
  */
 public class WebConsole implements EntryPoint {
 
-    private DataSource userNameSource;
+    private Map<String, DataSource> dataSources;
 
     private IconButton loginBtn;
 
     private IconButton settingBtn;
+
+    public static DataSource createDataSource(String dataSourceId, String servicePath) {
+        DataSource ds = new RestDataSource();
+        ds.setID(dataSourceId);
+        ds.setDataFormat(DSDataFormat.JSON);
+
+        String baseUrl = GWT.getModuleBaseURL();
+        String requestUrl = baseUrl + servicePath.substring(servicePath.lastIndexOf('/') + 1);
+        ds.setDataURL(requestUrl);
+
+        OperationBinding fetch = new OperationBinding();
+        fetch.setOperationType(DSOperationType.FETCH);
+        fetch.setDataProtocol(DSProtocol.POSTMESSAGE);
+        fetch.setDataFormat(DSDataFormat.JSON);
+
+        OperationBinding update = new OperationBinding();
+        update.setOperationType(DSOperationType.UPDATE);
+        update.setDataProtocol(DSProtocol.POSTMESSAGE);
+        update.setDataFormat(DSDataFormat.JSON);
+
+        OperationBinding add = new OperationBinding();
+        add.setOperationType(DSOperationType.ADD);
+        add.setDataProtocol(DSProtocol.POSTMESSAGE);
+        add.setDataFormat(DSDataFormat.JSON);
+
+        OperationBinding remove = new OperationBinding();
+        remove.setOperationType(DSOperationType.REMOVE);
+        remove.setDataProtocol(DSProtocol.POSTMESSAGE);
+        remove.setDataFormat(DSDataFormat.JSON);
+
+        ds.setOperationBindings(fetch, update, add, remove);
+        return ds;
+    }
 
     /**
      * This is called when the browser loads Application.html.
@@ -71,28 +112,7 @@ public class WebConsole implements EntryPoint {
             }
         });
 
-        userNameSource = new RestDataSource();
-        userNameSource.setID("userNameDS");
-        userNameSource.setDataFormat(DSDataFormat.JSON);
-
-        String baseUrl = GWT.getModuleBaseURL();
-        String servicePath = ClientConfig.constants.userService();
-        String requestUrl = baseUrl + servicePath.substring(servicePath.lastIndexOf('/') + 1);
-        userNameSource.setDataURL(requestUrl);
-
-        OperationBinding fetch = new OperationBinding();
-        fetch.setOperationType(DSOperationType.FETCH);
-        fetch.setDataProtocol(DSProtocol.POSTMESSAGE);
-        fetch.setDataFormat(DSDataFormat.JSON);
-        OperationBinding add = new OperationBinding();
-        add.setOperationType(DSOperationType.ADD);
-        add.setDataProtocol(DSProtocol.POSTMESSAGE);
-        userNameSource.setOperationBindings(fetch, add);
-
-        DataSourceTextField userNameField = new DataSourceTextField("name");
-        userNameField.setRequired(true);
-        userNameField.setPrimaryKey(true);
-        userNameSource.setFields(userNameField);
+        prepareDataSources();
 
         VLayout vLayout = new VLayout();
         vLayout.setMargin(5);
@@ -129,14 +149,18 @@ public class WebConsole implements EntryPoint {
         });
         header.addMember(loginBtn);
 
-        settingBtn = new IconButton(ClientConfig.messages.setting());
+        settingBtn = new IconButton(ClientConfig.messages.settings());
         settingBtn.setIcon("setting.png");
         settingBtn.setLayoutAlign(VerticalAlignment.TOP);
         settingBtn.addClickHandler(new ClickHandler() {
 
             public void onClick(ClickEvent event) {
-                SettingWindow window = new SettingWindow();
-                window.show();
+                if (ClientConfig.currentUser != null) {
+                    SettingWindow window = new SettingWindow();
+                    window.show();
+                } else {
+                    SC.say(ClientConfig.messages.nullUser());
+                }
             }
 
         });
@@ -190,6 +214,60 @@ public class WebConsole implements EntryPoint {
         vLayout.draw();
     }
 
+    private void prepareDataSources() {
+        dataSources = new HashMap<String, DataSource>();
+
+        DataSource userNameSource = createDataSource("userNameDS", ClientConfig.constants.userService());
+        DataSourceTextField userNameField = new DataSourceTextField("name");
+        userNameField.setRequired(true);
+        userNameField.setPrimaryKey(true);
+        userNameSource.setFields(userNameField);
+        dataSources.put("userNameDS", userNameSource);
+
+        DataSource personalSettingsSource = createDataSource("personalSettingsDS", ClientConfig.constants.userService());
+        DataSourceTextField fullNameField = new DataSourceTextField("fullName", ClientConfig.messages.fullName());
+        DataSourceTextField emailField = new DataSourceTextField("email", ClientConfig.messages.email());
+        personalSettingsSource.setFields(fullNameField, emailField);
+        dataSources.put("personalSettingsDS", personalSettingsSource);
+
+        DataSource tmrReportSettingsSource = createDataSource("tmrReportSettingsDS",
+                ClientConfig.constants.userService());
+        DataSourceTextField tmrRecipientsField = new DataSourceTextField("tmrRecipients",
+                ClientConfig.messages.recipients());
+        DataSourceTextField tmrSubjectField = new DataSourceTextField("tmrSubject", ClientConfig.messages.subject());
+        tmrReportSettingsSource.setFields(tmrRecipientsField, tmrSubjectField);
+        dataSources.put("tmrReportSettingsDS", tmrReportSettingsSource);
+
+        DataSource darReportSettingsSource = createDataSource("darReportSettingsDS",
+                ClientConfig.constants.userService());
+        DataSourceTextField darRecipientsField = new DataSourceTextField("darRecipients",
+                ClientConfig.messages.recipients());
+        DataSourceTextField darSubjectField = new DataSourceTextField("darSubjet", ClientConfig.messages.subject());
+        darReportSettingsSource.setFields(darRecipientsField, darSubjectField);
+        dataSources.put("darReportSettingsDS", darReportSettingsSource);
+
+        DataSource esrReportSettingsSource = createDataSource("esrReportSettingsDS",
+                ClientConfig.constants.userService());
+        DataSourceTextField esrRecipientsField = new DataSourceTextField("esrRecipients",
+                ClientConfig.messages.recipients());
+        DataSourceTextField esrSubjectField = new DataSourceTextField("esrSubject", ClientConfig.messages.subject());
+        esrReportSettingsSource.setFields(esrRecipientsField, esrSubjectField);
+        dataSources.put("esrReportSettingsDS", esrReportSettingsSource);
+
+        DataSource mailSettingsSource = createDataSource("mailSettingsDS", ClientConfig.messages.mailSettings());
+        DataSourceTextField smtpSettingUserField = new DataSourceTextField("smtpSettingUser",
+                ClientConfig.messages.user());
+        DataSourceTextField smtpSettingHostField = new DataSourceTextField("smtpSettingHost",
+                ClientConfig.messages.smtpHost());
+        DataSourceIntegerField smtpSettingPortField = new DataSourceIntegerField("smtpSettingPort",
+                ClientConfig.messages.smtpPort());
+        DataSourceBooleanField smtpSettingSTARTTLSField = new DataSourceBooleanField("smtpSettingSTARTTLS",
+                ClientConfig.messages.useStarttls());
+        mailSettingsSource.setFields(smtpSettingUserField, smtpSettingHostField, smtpSettingPortField,
+                smtpSettingSTARTTLSField);
+        dataSources.put("mailSettingsDS", mailSettingsSource);
+    }
+
     public class LoginWindow extends Window {
 
         public LoginWindow() {
@@ -206,15 +284,12 @@ public class WebConsole implements EntryPoint {
             form.setWidth100();
             ComboBoxItem userNameItem = new ComboBoxItem("name");
             userNameItem.setTitle(ClientConfig.messages.user());
-            userNameItem.setOptionDataSource(userNameSource);
+            userNameItem.setOptionDataSource(dataSources.get("userNameDS"));
             userNameItem.setValidators(new CustomValidator() {
 
                 @Override
                 protected boolean condition(Object value) {
-                    if (value == null)
-                        return false;
-                    String v = value.toString().trim();
-                    return !v.equalsIgnoreCase("login") && v.length() <= 50;
+                    return value != null && value.toString().trim().length() <= 50;
                 }
 
             });
@@ -234,7 +309,7 @@ public class WebConsole implements EntryPoint {
                         final String name = form.getValueAsString("name").trim();
                         LoginWindow.this.destroy();
                         Criteria criteria = new Criteria();
-                        userNameSource.fetchData(criteria, new DSCallback() {
+                        dataSources.get("userNameDS").fetchData(criteria, new DSCallback() {
 
                             @Override
                             public void execute(DSResponse response, Object rawData, DSRequest request) {
@@ -246,7 +321,7 @@ public class WebConsole implements EntryPoint {
                                 }
                                 Record record = new Record();
                                 record.setAttribute("name", name);
-                                userNameSource.addData(record);
+                                dataSources.get("userNameDS").addData(record);
                             }
 
                         });
@@ -264,8 +339,8 @@ public class WebConsole implements EntryPoint {
 
         public SettingWindow() {
             setWidth(700);
-            setHeight(500);
-            setTitle(ClientConfig.messages.setting());
+            setHeight(400);
+            setTitle(ClientConfig.messages.settings());
             ClientUtils.unifySimpleWindowStyle(this);
 
             VLayout layout = new VLayout();
@@ -273,7 +348,23 @@ public class WebConsole implements EntryPoint {
             addItem(layout);
 
             SectionStack sectionStack = new SectionStack();
+            sectionStack.setWidth("99%");
             layout.addMember(sectionStack);
+
+            SectionStackSection personalInfoSection = new SectionStackSection();
+            personalInfoSection.setTitle(ClientConfig.messages.personalInfo());
+            personalInfoSection.setItems(createPersonalSettingsForm());
+            sectionStack.addSection(personalInfoSection);
+
+            SectionStackSection reportSettingsSection = new SectionStackSection();
+            reportSettingsSection.setTitle(ClientConfig.messages.reportSettings());
+            reportSettingsSection.setItems(createReportSettingsForm());
+            sectionStack.addSection(reportSettingsSection);
+
+            SectionStackSection mailSettingsSection = new SectionStackSection();
+            mailSettingsSection.setTitle(ClientConfig.messages.mailSettings());
+            mailSettingsSection.setItems(createMailSettingsForm());
+            sectionStack.addSection(mailSettingsSection);
 
             HLayout controls = new HLayout();
             ClientUtils.unifyControlsLayoutStyle(controls);
@@ -302,5 +393,68 @@ public class WebConsole implements EntryPoint {
             controls.addMember(cancelButton);
         }
 
+        private Canvas createPersonalSettingsForm() {
+            VLayout layout = new VLayout();
+            layout.setWidth100();
+            layout.setMargin(5);
+            layout.setMembersMargin(5);
+
+            DynamicForm form = new DynamicForm();
+            form.setSize("90%", "33%");
+            form.setDataSource(dataSources.get("personalSettingsDS"));
+            form.setAutoFetchData(true);
+            layout.addMember(form);
+
+            return layout;
+        }
+
+        private Canvas createReportSettingsForm() {
+            VLayout layout = new VLayout();
+            layout.setWidth100();
+            layout.setMargin(5);
+            layout.setMembersMargin(5);
+
+            DynamicForm tmrForm = new DynamicForm();
+            tmrForm.setGroupTitle("Test Metrics");
+            tmrForm.setIsGroup(true);
+            tmrForm.setSize("90%", "33%");
+            tmrForm.setDataSource(dataSources.get("tmrReportSettingsDS"));
+            // tmrForm.setAutoFetchData(true);
+            layout.addMember(tmrForm);
+
+            DynamicForm darForm = new DynamicForm();
+            darForm.setGroupTitle("Data Analytics");
+            darForm.setIsGroup(true);
+            darForm.setSize("90%", "33%");
+            darForm.setDataSource(dataSources.get("darReportSettingsDS"));
+            // darForm.setAutoFetchData(true);
+            layout.addMember(darForm);
+
+            DynamicForm esrForm = new DynamicForm();
+            esrForm.setGroupTitle("Envrionment Status");
+            esrForm.setIsGroup(true);
+            esrForm.setSize("90%", "33%");
+            esrForm.setDataSource(dataSources.get("esrReportSettingsDS"));
+            // esrForm.setAutoFetchData(true);
+            layout.addMember(esrForm);
+
+            return layout;
+        }
+
+        private Canvas createMailSettingsForm() {
+            VLayout layout = new VLayout();
+            layout.setWidth100();
+            layout.setMargin(5);
+            layout.setMembersMargin(5);
+
+            DynamicForm form = new DynamicForm();
+            form.setMargin(5);
+            form.setSize("90%", "33%");
+            form.setDataSource(dataSources.get("mailSettingsDS"));
+            // form.setAutoFetchData(true);
+            layout.addMember(form);
+
+            return layout;
+        }
     }
 }

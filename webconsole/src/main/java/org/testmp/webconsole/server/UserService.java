@@ -134,6 +134,11 @@ public class UserService extends HttpServlet {
                     JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(data));
                     responseBody.put("data", dataNode);
                 }
+            } else if (dataSource.endsWith("SettingsDS")) {
+                String settingType = capitailize(dataSource.substring(0, dataSource.length() - 10));
+                if (operationType.equals("fetch")) {
+
+                }
             }
         } catch (Exception e) {
             log.error(e.getMessage(), e);

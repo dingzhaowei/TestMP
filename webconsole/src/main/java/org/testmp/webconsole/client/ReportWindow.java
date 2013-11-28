@@ -237,7 +237,7 @@ public class ReportWindow extends Window {
             passwordItem.setRequired(true);
 
             SectionItem smtpInfoItem = new SectionItem();
-            smtpInfoItem.setDefaultValue(ClientConfig.messages.setting());
+            smtpInfoItem.setDefaultValue(ClientConfig.messages.settings());
             smtpInfoItem.setSectionExpanded(true);
             smtpInfoItem.setItemIds("smtphost", "smtpport", "starttls", "username", "password");
 
