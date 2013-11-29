@@ -817,7 +817,7 @@ public class TestEnvView extends VLayout {
     private class HostsWindow extends Window {
 
         HostsWindow() {
-            setWidth(450);
+            setWidth(460);
             setHeight(350);
             setTitle(ClientConfig.messages.hosts());
             ClientUtils.unifySimpleWindowStyle(this);

@@ -207,7 +207,7 @@ public class ReportWindow extends Window {
             commentItem.setWidth(400);
 
             SectionItem emailInfoItem = new SectionItem();
-            emailInfoItem.setDefaultValue(ClientConfig.messages.email());
+            emailInfoItem.setDefaultValue(ClientConfig.messages.mailbox());
             emailInfoItem.setSectionExpanded(true);
             emailInfoItem.setItemIds("recipients", "subject", "comment");
 

@@ -51,8 +51,6 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
 import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.SectionStack;
-import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
@@ -224,11 +222,11 @@ public class WebConsole implements EntryPoint {
         userNameSource.setFields(userNameField);
         dataSources.put("userNameDS", userNameSource);
 
-        DataSource personalSettingsSource = createDataSource("personalSettingsDS", ClientConfig.constants.userService());
+        DataSource personalSettingsSource = createDataSource("userSettingsDS", ClientConfig.constants.userService());
         DataSourceTextField fullNameField = new DataSourceTextField("fullName", ClientConfig.messages.fullName());
         DataSourceTextField emailField = new DataSourceTextField("email", ClientConfig.messages.email());
         personalSettingsSource.setFields(fullNameField, emailField);
-        dataSources.put("personalSettingsDS", personalSettingsSource);
+        dataSources.put("userSettingsDS", personalSettingsSource);
 
         DataSource tmrReportSettingsSource = createDataSource("tmrReportSettingsDS",
                 ClientConfig.constants.userService());
@@ -254,7 +252,7 @@ public class WebConsole implements EntryPoint {
         esrReportSettingsSource.setFields(esrRecipientsField, esrSubjectField);
         dataSources.put("esrReportSettingsDS", esrReportSettingsSource);
 
-        DataSource mailSettingsSource = createDataSource("mailSettingsDS", ClientConfig.messages.mailSettings());
+        DataSource mailSettingsSource = createDataSource("mailboxSettingsDS", ClientConfig.messages.email());
         DataSourceTextField smtpSettingUserField = new DataSourceTextField("smtpSettingUser",
                 ClientConfig.messages.user());
         DataSourceTextField smtpSettingHostField = new DataSourceTextField("smtpSettingHost",
@@ -265,7 +263,7 @@ public class WebConsole implements EntryPoint {
                 ClientConfig.messages.useStarttls());
         mailSettingsSource.setFields(smtpSettingUserField, smtpSettingHostField, smtpSettingPortField,
                 smtpSettingSTARTTLSField);
-        dataSources.put("mailSettingsDS", mailSettingsSource);
+        dataSources.put("mailboxSettingsDS", mailSettingsSource);
     }
 
     public class LoginWindow extends Window {
@@ -339,7 +337,7 @@ public class WebConsole implements EntryPoint {
 
         public SettingWindow() {
             setWidth(700);
-            setHeight(400);
+            setHeight(300);
             setTitle(ClientConfig.messages.settings());
             ClientUtils.unifySimpleWindowStyle(this);
 
@@ -347,24 +345,24 @@ public class WebConsole implements EntryPoint {
             ClientUtils.unifyWindowLayoutStyle(layout);
             addItem(layout);
 
-            SectionStack sectionStack = new SectionStack();
-            sectionStack.setWidth("99%");
-            layout.addMember(sectionStack);
+            TabSet settingsTabSet = new TabSet();
+            settingsTabSet.setWidth("99%");
+            layout.addMember(settingsTabSet);
 
-            SectionStackSection personalInfoSection = new SectionStackSection();
-            personalInfoSection.setTitle(ClientConfig.messages.personalInfo());
-            personalInfoSection.setItems(createPersonalSettingsForm());
-            sectionStack.addSection(personalInfoSection);
+            Tab personalInfoTab = new Tab();
+            personalInfoTab.setTitle(ClientConfig.messages.user());
+            personalInfoTab.setPane(createUserSettingsForm());
+            settingsTabSet.addTab(personalInfoTab);
 
-            SectionStackSection reportSettingsSection = new SectionStackSection();
-            reportSettingsSection.setTitle(ClientConfig.messages.reportSettings());
-            reportSettingsSection.setItems(createReportSettingsForm());
-            sectionStack.addSection(reportSettingsSection);
+            Tab reportSettingsTab = new Tab();
+            reportSettingsTab.setTitle(ClientConfig.messages.report());
+            reportSettingsTab.setPane(createReportSettingsForm());
+            settingsTabSet.addTab(reportSettingsTab);
 
-            SectionStackSection mailSettingsSection = new SectionStackSection();
-            mailSettingsSection.setTitle(ClientConfig.messages.mailSettings());
-            mailSettingsSection.setItems(createMailSettingsForm());
-            sectionStack.addSection(mailSettingsSection);
+            Tab mailboxSettingsTab = new Tab();
+            mailboxSettingsTab.setTitle(ClientConfig.messages.mailbox());
+            mailboxSettingsTab.setPane(createMailboxSettingsForm());
+            settingsTabSet.addTab(mailboxSettingsTab);
 
             HLayout controls = new HLayout();
             ClientUtils.unifyControlsLayoutStyle(controls);
@@ -393,17 +391,17 @@ public class WebConsole implements EntryPoint {
             controls.addMember(cancelButton);
         }
 
-        private Canvas createPersonalSettingsForm() {
+        private Canvas createUserSettingsForm() {
             VLayout layout = new VLayout();
             layout.setWidth100();
             layout.setMargin(5);
             layout.setMembersMargin(5);
 
-            DynamicForm form = new DynamicForm();
-            form.setSize("90%", "33%");
-            form.setDataSource(dataSources.get("personalSettingsDS"));
-            form.setAutoFetchData(true);
-            layout.addMember(form);
+            DynamicForm userForm = new DynamicForm();
+            userForm.setSize("90%", "33%");
+            userForm.setDataSource(dataSources.get("userSettingsDS"));
+            userForm.setAutoFetchData(true);
+            layout.addMember(userForm);
 
             return layout;
         }
@@ -412,10 +410,10 @@ public class WebConsole implements EntryPoint {
             VLayout layout = new VLayout();
             layout.setWidth100();
             layout.setMargin(5);
-            layout.setMembersMargin(5);
+            layout.setMembersMargin(8);
 
             DynamicForm tmrForm = new DynamicForm();
-            tmrForm.setGroupTitle("Test Metrics");
+            tmrForm.setGroupTitle(ClientConfig.messages.testMetricsReport());
             tmrForm.setIsGroup(true);
             tmrForm.setSize("90%", "33%");
             tmrForm.setDataSource(dataSources.get("tmrReportSettingsDS"));
@@ -423,7 +421,7 @@ public class WebConsole implements EntryPoint {
             layout.addMember(tmrForm);
 
             DynamicForm darForm = new DynamicForm();
-            darForm.setGroupTitle("Data Analytics");
+            darForm.setGroupTitle(ClientConfig.messages.dataAnalyticsReport());
             darForm.setIsGroup(true);
             darForm.setSize("90%", "33%");
             darForm.setDataSource(dataSources.get("darReportSettingsDS"));
@@ -431,7 +429,7 @@ public class WebConsole implements EntryPoint {
             layout.addMember(darForm);
 
             DynamicForm esrForm = new DynamicForm();
-            esrForm.setGroupTitle("Envrionment Status");
+            esrForm.setGroupTitle(ClientConfig.messages.environmentStatusReport());
             esrForm.setIsGroup(true);
             esrForm.setSize("90%", "33%");
             esrForm.setDataSource(dataSources.get("esrReportSettingsDS"));
@@ -441,18 +439,18 @@ public class WebConsole implements EntryPoint {
             return layout;
         }
 
-        private Canvas createMailSettingsForm() {
+        private Canvas createMailboxSettingsForm() {
             VLayout layout = new VLayout();
             layout.setWidth100();
             layout.setMargin(5);
             layout.setMembersMargin(5);
 
-            DynamicForm form = new DynamicForm();
-            form.setMargin(5);
-            form.setSize("90%", "33%");
-            form.setDataSource(dataSources.get("mailSettingsDS"));
+            DynamicForm mailboxForm = new DynamicForm();
+            mailboxForm.setMargin(5);
+            mailboxForm.setSize("90%", "33%");
+            mailboxForm.setDataSource(dataSources.get("mailboxSettingsDS"));
             // form.setAutoFetchData(true);
-            layout.addMember(form);
+            layout.addMember(mailboxForm);
 
             return layout;
         }
