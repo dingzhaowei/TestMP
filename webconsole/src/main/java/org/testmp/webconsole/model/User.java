@@ -14,50 +14,25 @@
 package org.testmp.webconsole.model;
 
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
+import org.testmp.webconsole.model.Settings.FilterSettings;
+import org.testmp.webconsole.model.Settings.MailboxSettings;
+import org.testmp.webconsole.model.Settings.ReportSettings;
+import org.testmp.webconsole.model.Settings.UserSettings;
 
 public class User {
 
-    /* user information */
     private String name;
 
-    private String fullName;
+    private UserSettings userSettings = new UserSettings();
 
-    private String email;
+    private FilterSettings filterSettings = new FilterSettings();
 
-    /* personal filters */
-    private String defaultTestCaseFilter;
+    private ReportSettings reportSettings = new ReportSettings();
 
-    private String defaultTestDataFilter;
-
-    private Map<String, String> savedTestCaseFilters = new TreeMap<String, String>();
-
-    private Map<String, String> savedTestDataFilters = new TreeMap<String, String>();
-
-    /* report sending */
-    private String testMetricsReportRecipients;
-
-    private String testMetricsReportSubject;
-
-    private String dataAnalyticsReportRecipients;
-
-    private String dataAnalyticsReportSubjet;
-
-    private String envStatusReportRecipients;
-
-    private String envStatusReportSubject;
-
-    /* mail server */
-    private String smtpSettingUser;
-
-    private String smtpSettingHost;
-
-    private Integer smtpSettingPort;
-
-    private boolean smtpSettingSTARTTLS;
+    private MailboxSettings mailboxSettings = new MailboxSettings();
 
     public User() {
 
@@ -75,152 +50,36 @@ public class User {
         this.name = name;
     }
 
-    public String getFullName() {
-        return fullName;
+    public UserSettings getUserSettings() {
+        return userSettings;
     }
 
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
+    public void setUserSettings(UserSettings userSettings) {
+        this.userSettings = userSettings;
     }
 
-    public String getEmail() {
-        return email;
+    public FilterSettings getFilterSettings() {
+        return filterSettings;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setFilterSettings(FilterSettings filterSettings) {
+        this.filterSettings = filterSettings;
     }
 
-    public String getDefaultTestCaseFilter() {
-        return defaultTestCaseFilter;
+    public ReportSettings getReportSettings() {
+        return reportSettings;
     }
 
-    public void setDefaultTestCaseFilter(String defaultTestCaseFilter) {
-        this.defaultTestCaseFilter = defaultTestCaseFilter;
+    public void setReportSettings(ReportSettings reportSettings) {
+        this.reportSettings = reportSettings;
     }
 
-    public Map<String, String> getSavedTestCaseFilters() {
-        return savedTestCaseFilters;
+    public MailboxSettings getMailboxSettings() {
+        return mailboxSettings;
     }
 
-    public void setSavedTestCaseFilters(Map<String, String> savedTestCaseFilters) {
-        this.savedTestCaseFilters = savedTestCaseFilters;
-    }
-
-    public String getDefaultTestDataFilter() {
-        return defaultTestDataFilter;
-    }
-
-    public void setDefaultTestDataFilter(String defaultTestDataFilter) {
-        this.defaultTestDataFilter = defaultTestDataFilter;
-    }
-
-    public Map<String, String> getSavedTestDataFilters() {
-        return savedTestDataFilters;
-    }
-
-    public void setSavedTestDataFilters(Map<String, String> savedTestDataFilters) {
-        this.savedTestDataFilters = savedTestDataFilters;
-    }
-
-    public String getDefaultFilter(String type) {
-        if (type.equalsIgnoreCase("TestCase")) {
-            return getDefaultTestCaseFilter();
-        }
-        if (type.equalsIgnoreCase("TestData")) {
-            return getDefaultTestDataFilter();
-        }
-        return null;
-    }
-
-    public Map<String, String> getSavedFilters(String type) {
-        if (type.equalsIgnoreCase("TestCase")) {
-            return getSavedTestCaseFilters();
-        }
-        if (type.equalsIgnoreCase("TestData")) {
-            return getSavedTestDataFilters();
-        }
-        return null;
-    }
-
-    public String getSmtpSettingUser() {
-        return smtpSettingUser;
-    }
-
-    public void setSmtpSettingUser(String smtpSettingUser) {
-        this.smtpSettingUser = smtpSettingUser;
-    }
-
-    public String getSmtpSettingHost() {
-        return smtpSettingHost;
-    }
-
-    public void setSmtpSettingHost(String smtpSettingHost) {
-        this.smtpSettingHost = smtpSettingHost;
-    }
-
-    public Integer getSmtpSettingPort() {
-        return smtpSettingPort;
-    }
-
-    public void setSmtpSettingPort(Integer smtpSettingPort) {
-        this.smtpSettingPort = smtpSettingPort;
-    }
-
-    public boolean isSmtpSettingSTARTTLS() {
-        return smtpSettingSTARTTLS;
-    }
-
-    public void setSmtpSettingSTARTTLS(boolean smtpSettingSTARTTLS) {
-        this.smtpSettingSTARTTLS = smtpSettingSTARTTLS;
-    }
-
-    public String getTestMetricsReportRecipients() {
-        return testMetricsReportRecipients;
-    }
-
-    public void setTestMetricsReportRecipients(String tmrRecipients) {
-        this.testMetricsReportRecipients = tmrRecipients;
-    }
-
-    public String getTestMetricsReportSubject() {
-        return testMetricsReportSubject;
-    }
-
-    public void setTestMetricsReportSubject(String tmrSubject) {
-        this.testMetricsReportSubject = tmrSubject;
-    }
-
-    public String getDataAnalyticsReportRecipients() {
-        return dataAnalyticsReportRecipients;
-    }
-
-    public void setDataAnalyticsReportRecipients(String darRecipients) {
-        this.dataAnalyticsReportRecipients = darRecipients;
-    }
-
-    public String getDataAnalyticsReportSubjet() {
-        return dataAnalyticsReportSubjet;
-    }
-
-    public void setDataAnalyticsReportSubjet(String darSubjet) {
-        this.dataAnalyticsReportSubjet = darSubjet;
-    }
-
-    public String getEnvStatusReportRecipients() {
-        return envStatusReportRecipients;
-    }
-
-    public void setEnvStatusReportRecipients(String esrRecipients) {
-        this.envStatusReportRecipients = esrRecipients;
-    }
-
-    public String getEnvStatusReportSubject() {
-        return envStatusReportSubject;
-    }
-
-    public void setEnvStatusReportSubject(String esrSubject) {
-        this.envStatusReportSubject = esrSubject;
+    public void setMailboxSettings(MailboxSettings mailboxSettings) {
+        this.mailboxSettings = mailboxSettings;
     }
 
     public Map<String, Object> toMap() {
