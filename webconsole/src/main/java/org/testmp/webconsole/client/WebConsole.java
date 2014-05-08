@@ -21,6 +21,7 @@ import org.testmp.webconsole.shared.ClientUtils;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Cookies;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -67,7 +68,22 @@ public class WebConsole implements EntryPoint {
     private IconButton settingBtn;
 
     public static DataSource createDataSource(String dataSourceId, String servicePath) {
-        DataSource ds = new RestDataSource();
+        DataSource ds = new RestDataSource() {
+
+            @Override
+            protected Object transformRequest(DSRequest dsRequest) {
+                if (dsRequest.getAttributeAsString("operationType").equals("fetch")) {
+                    Criteria criteria = dsRequest.getCriteria();
+                    if (criteria == null) {
+                        criteria = new Criteria();
+                    }
+                    criteria.setAttribute("userName", ClientConfig.currentUser);
+                    dsRequest.setCriteria(criteria);
+                }
+                return super.transformRequest(dsRequest);
+            }
+
+        };
         ds.setID(dataSourceId);
         ds.setDataFormat(DSDataFormat.JSON);
 
@@ -133,7 +149,12 @@ public class WebConsole implements EntryPoint {
         logo.setLayoutAlign(Alignment.CENTER);
         header.addMember(logo);
 
-        loginBtn = new IconButton(ClientConfig.messages.login());
+        ClientConfig.currentUser = Cookies.getCookie(ClientConfig.constants.currentUserCookie());
+        if (ClientConfig.currentUser == null) {
+            loginBtn = new IconButton(ClientConfig.messages.login());
+        } else {
+            loginBtn = new IconButton(ClientConfig.messages.hi() + ", " + ClientConfig.currentUser);
+        }
         loginBtn.setIcon("person.png");
         loginBtn.setLayoutAlign(VerticalAlignment.TOP);
         loginBtn.addClickHandler(new ClickHandler() {
@@ -252,7 +273,7 @@ public class WebConsole implements EntryPoint {
         esrReportSettingsSource.setFields(esrRecipientsField, esrSubjectField);
         dataSources.put("esrReportSettingsDS", esrReportSettingsSource);
 
-        DataSource mailSettingsSource = createDataSource("mailboxSettingsDS", ClientConfig.messages.email());
+        DataSource mailboxSettingsSource = createDataSource("mailboxSettingsDS", ClientConfig.constants.userService());
         DataSourceTextField smtpSettingUserField = new DataSourceTextField("smtpSettingUser",
                 ClientConfig.messages.user());
         DataSourceTextField smtpSettingHostField = new DataSourceTextField("smtpSettingHost",
@@ -261,16 +282,16 @@ public class WebConsole implements EntryPoint {
                 ClientConfig.messages.smtpPort());
         DataSourceBooleanField smtpSettingSTARTTLSField = new DataSourceBooleanField("smtpSettingSTARTTLS",
                 ClientConfig.messages.useStarttls());
-        mailSettingsSource.setFields(smtpSettingUserField, smtpSettingHostField, smtpSettingPortField,
+        mailboxSettingsSource.setFields(smtpSettingUserField, smtpSettingHostField, smtpSettingPortField,
                 smtpSettingSTARTTLSField);
-        dataSources.put("mailboxSettingsDS", mailSettingsSource);
+        dataSources.put("mailboxSettingsDS", mailboxSettingsSource);
     }
 
     public class LoginWindow extends Window {
 
         public LoginWindow() {
-            setWidth(300);
-            setHeight(100);
+            setWidth(350);
+            setHeight(80);
             setTitle(ClientConfig.messages.login());
             ClientUtils.unifySimpleWindowStyle(this);
 
@@ -278,8 +299,15 @@ public class WebConsole implements EntryPoint {
             ClientUtils.unifyWindowLayoutStyle(layout);
             addItem(layout);
 
+            HLayout inline = new HLayout();
+            inline.setLayoutAlign(VerticalAlignment.CENTER);
+            inline.setAlign(Alignment.CENTER);
+            inline.setMargin(5);
+            inline.setMembersMargin(5);
+            layout.addMember(inline);
+
             final DynamicForm form = new DynamicForm();
-            form.setWidth100();
+            form.setCellPadding(0);
             ComboBoxItem userNameItem = new ComboBoxItem("name");
             userNameItem.setTitle(ClientConfig.messages.user());
             userNameItem.setOptionDataSource(dataSources.get("userNameDS"));
@@ -292,11 +320,7 @@ public class WebConsole implements EntryPoint {
 
             });
             form.setFields(userNameItem);
-            layout.addMember(form);
-
-            HLayout controls = new HLayout();
-            ClientUtils.unifyControlsLayoutStyle(controls);
-            layout.addMember(controls);
+            inline.addMember(form);
 
             IButton okButton = new IButton(ClientConfig.messages.ok());
             okButton.addClickHandler(new ClickHandler() {
@@ -323,20 +347,23 @@ public class WebConsole implements EntryPoint {
                             }
 
                         });
-                        loginBtn.setTitle(ClientConfig.messages.hi() + ", " + name);
                         ClientConfig.currentUser = name;
+                        loginBtn.setTitle(ClientConfig.messages.hi() + ", " + ClientConfig.currentUser);
+                        Cookies.setCookie(ClientConfig.constants.currentUserCookie(), ClientConfig.currentUser);
                     }
                 }
 
             });
-            controls.addMember(okButton);
+            inline.addMember(okButton);
         }
     }
 
     public class SettingWindow extends Window {
 
+        private Map<String, DynamicForm> forms = new HashMap<String, DynamicForm>();
+
         public SettingWindow() {
-            setWidth(700);
+            setWidth(500);
             setHeight(300);
             setTitle(ClientConfig.messages.settings());
             ClientUtils.unifySimpleWindowStyle(this);
@@ -374,6 +401,9 @@ public class WebConsole implements EntryPoint {
                 @Override
                 public void onClick(ClickEvent event) {
                     SettingWindow.this.destroy();
+                    for (DynamicForm form : forms.values()) {
+                        form.saveData();
+                    }
                 }
 
             });
@@ -398,6 +428,8 @@ public class WebConsole implements EntryPoint {
             layout.setMembersMargin(5);
 
             DynamicForm userForm = new DynamicForm();
+            forms.put("user", userForm);
+
             userForm.setSize("90%", "33%");
             userForm.setDataSource(dataSources.get("userSettingsDS"));
             userForm.setAutoFetchData(true);
@@ -410,30 +442,39 @@ public class WebConsole implements EntryPoint {
             VLayout layout = new VLayout();
             layout.setWidth100();
             layout.setMargin(5);
-            layout.setMembersMargin(8);
+            layout.setMembersMargin(10);
 
             DynamicForm tmrForm = new DynamicForm();
+            forms.put("tmr", tmrForm);
+
             tmrForm.setGroupTitle(ClientConfig.messages.testMetricsReport());
             tmrForm.setIsGroup(true);
-            tmrForm.setSize("90%", "33%");
+            tmrForm.setSize("70%", "33%");
+            tmrForm.setLayoutAlign(Alignment.CENTER);
             tmrForm.setDataSource(dataSources.get("tmrReportSettingsDS"));
-            // tmrForm.setAutoFetchData(true);
+            tmrForm.setAutoFetchData(true);
             layout.addMember(tmrForm);
 
             DynamicForm darForm = new DynamicForm();
+            forms.put("dar", darForm);
+
             darForm.setGroupTitle(ClientConfig.messages.dataAnalyticsReport());
             darForm.setIsGroup(true);
-            darForm.setSize("90%", "33%");
+            darForm.setSize("70%", "33%");
+            darForm.setLayoutAlign(Alignment.CENTER);
             darForm.setDataSource(dataSources.get("darReportSettingsDS"));
-            // darForm.setAutoFetchData(true);
+            darForm.setAutoFetchData(true);
             layout.addMember(darForm);
 
             DynamicForm esrForm = new DynamicForm();
+            forms.put("esr", esrForm);
+
             esrForm.setGroupTitle(ClientConfig.messages.environmentStatusReport());
             esrForm.setIsGroup(true);
-            esrForm.setSize("90%", "33%");
+            esrForm.setSize("70%", "33%");
+            esrForm.setLayoutAlign(Alignment.CENTER);
             esrForm.setDataSource(dataSources.get("esrReportSettingsDS"));
-            // esrForm.setAutoFetchData(true);
+            esrForm.setAutoFetchData(true);
             layout.addMember(esrForm);
 
             return layout;
@@ -446,10 +487,12 @@ public class WebConsole implements EntryPoint {
             layout.setMembersMargin(5);
 
             DynamicForm mailboxForm = new DynamicForm();
+            forms.put("mailbox", mailboxForm);
+
             mailboxForm.setMargin(5);
             mailboxForm.setSize("90%", "33%");
             mailboxForm.setDataSource(dataSources.get("mailboxSettingsDS"));
-            // form.setAutoFetchData(true);
+            mailboxForm.setAutoFetchData(true);
             layout.addMember(mailboxForm);
 
             return layout;

@@ -42,7 +42,7 @@ import org.testmp.webconsole.model.User;
 @SuppressWarnings("serial")
 public class UserService extends HttpServlet {
 
-    private static Logger log = Logger.getLogger(ReportService.class);
+    private static Logger log = Logger.getLogger(UserService.class);
 
     private ObjectMapper mapper = new ObjectMapper();
 
@@ -103,7 +103,7 @@ public class UserService extends HttpServlet {
         String operationType = dsRequest.get("operationType").toString();
         if (operationType.equals("fetch")) {
             List<String> nameList = client.getPropertyValues("name", "User");
-            List<Map<String, Object>> dataList = new ArrayList<Map<String, Object>>();
+            List<Object> dataList = new ArrayList<Object>();
             for (String name : nameList) {
                 Map<String, Object> data = new HashMap<String, Object>();
                 data.put("name", name);
@@ -147,7 +147,7 @@ public class UserService extends HttpServlet {
                     responseBody.put("data", "");
                 }
             } else {
-                List<Map<String, Object>> dataList = getFilters(user, filterType);
+                List<Object> dataList = getFilters(user, filterType);
                 populateResponseBody(responseBody, dataList);
             }
         } else if (operationType.equals("add")) {
@@ -163,8 +163,8 @@ public class UserService extends HttpServlet {
         }
     }
 
-    private List<Map<String, Object>> getFilters(User user, String type) {
-        List<Map<String, Object>> dataList = new ArrayList<Map<String, Object>>();
+    private List<Object> getFilters(User user, String type) {
+        List<Object> dataList = new ArrayList<Object>();
         FilterSettings filterSettings = user.getFilterSettings();
         for (Map.Entry<String, String> f : filterSettings.getSavedFilters(type).entrySet()) {
             Map<String, Object> filterInfo = new HashMap<String, Object>();
@@ -223,10 +223,30 @@ public class UserService extends HttpServlet {
         client.addPropertyToData(userId, "filterSettings", filterSettings);
     }
 
+    @SuppressWarnings("unchecked")
     private void processRequestForSettings(Map<String, Object> dsRequest, ObjectNode responseBody, String settingType)
             throws Exception {
-        // TODO Auto-generated method stub
+        Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
+        String operationType = dsRequest.get("operationType").toString();
 
+        if (settingType.equalsIgnoreCase("user")) {
+            if (operationType.equals("fetch")) {
+                User user = getUser(data.get("userName").toString());
+                List<Object> dataList = new ArrayList<Object>();
+                dataList.add(user.getUserSettings());
+                populateResponseBody(responseBody, dataList);
+            } else if (operationType.equals("add")) {
+
+            }
+        } else if (settingType.equalsIgnoreCase("tmrReport")) {
+
+        } else if (settingType.equalsIgnoreCase("darReport")) {
+
+        } else if (settingType.equalsIgnoreCase("esrReport")) {
+
+        } else if (settingType.equalsIgnoreCase("mailbox")) {
+
+        }
     }
 
     private User getUser(String userName) throws DataStoreClientException {
@@ -237,7 +257,7 @@ public class UserService extends HttpServlet {
         return user;
     }
 
-    private void populateResponseBody(ObjectNode responseBody, List<Map<String, Object>> dataList) {
+    private void populateResponseBody(ObjectNode responseBody, List<Object> dataList) {
         responseBody.put("status", 0);
         responseBody.put("startRow", 0);
         responseBody.put("endRow", dataList.size());
