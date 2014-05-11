@@ -113,15 +113,27 @@ public abstract class TestSync {
             return;
         }
 
+        String automationName = getTestAutomationName();
         RunRecord record = new RunRecord();
         record.setRecordTime(Calendar.getInstance().getTimeInMillis());
         record.setPassed(passed);
-        record.setFailureTrace(failureTrace);
         record.setDuration(duration);
+        if (failureTrace != null) {
+            StringBuilder sb = new StringBuilder();
+            for (String line : failureTrace.split("\\n")) {
+                sb.append(line);
+                if (line.contains(automationName)) {
+                    break;
+                }
+                sb.append("\n");
+            }
+            record.setFailureTrace(sb.toString());
+        }
+
         TestCase testCase = null;
         try {
             Map<String, Object> query = new HashMap<String, Object>();
-            query.put("automation", getTestAutomationName());
+            query.put("automation", automationName);
             List<Integer> dataIds = client.findDataByProperty(query);
             if (dataIds.isEmpty()) {
                 return;
@@ -186,19 +198,17 @@ public abstract class TestSync {
     }
 
     private String getTestAutomationName() {
-        return getTestClass().getName() + "#" + getTestMethodName();
+        return getTestClass().getName() + "." + getTestMethodName();
     }
 
     private DataInfo<TestCase> convertTestDocToDataInfo(TestDoc testDoc) {
         DataInfo<TestCase> dataInfo = new DataInfo<TestCase>();
         TestCase tc = new TestCase();
-        String className = getTestClass().getSimpleName();
-        String methodName = getTestMethodName();
 
         if (testDoc == null) {
             dataInfo.setTags(Arrays.asList(new String[] { TAG_TEST_CASE }));
-            tc.setProject(className);
-            tc.setName(methodName);
+            tc.setProject(getTestClass().getName());
+            tc.setName(getTestMethodName());
             tc.setDescription("");
         } else {
             List<String> tags = new LinkedList<String>();
@@ -207,14 +217,14 @@ public abstract class TestSync {
             dataInfo.setTags(tags);
 
             String testProject = testDoc.project();
-            tc.setProject(testProject.isEmpty() ? className : testProject);
+            tc.setProject(testProject.isEmpty() ? getTestClass().getName() : testProject);
 
             String testName = testDoc.name();
-            tc.setName(testName.isEmpty() ? methodName : testName);
+            tc.setName(testName.isEmpty() ? getTestMethodName() : testName);
             tc.setDescription(testDoc.description());
         }
 
-        tc.setAutomation(getTestClass().getName() + "#" + methodName);
+        tc.setAutomation(this.getTestAutomationName());
         dataInfo.setData(tc);
         return dataInfo;
     }
