@@ -86,7 +86,13 @@ public class FilterWindow extends Window {
         filterBuilder.setLayoutAlign(Alignment.CENTER);
         filterBuilder.setAutoWidth();
         filterBuilder.setOverflow(Overflow.VISIBLE);
-        filterBuilder.setCriteria(ClientConfig.getCurrentFilterCriteria(filterType));
+
+        AdvancedCriteria criteria = ClientConfig.getCurrentFilterCriteria(filterType);
+        if (criteria.getCriteria() == null || criteria.getCriteria().length == 0) {
+            criteria.setOperator(OperatorId.AND);
+            criteria.addCriteria(new Criterion(listGrid.getFieldName(0), OperatorId.EQUALS, ""));
+        }
+        filterBuilder.setCriteria(criteria);
         filterLayout.addMember(filterBuilder);
 
         HLayout controls = new HLayout();

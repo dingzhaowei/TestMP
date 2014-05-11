@@ -54,6 +54,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.testmp.datastore.client.DataInfo;
 import org.testmp.datastore.client.DataStoreClient;
+import org.testmp.webconsole.model.User;
 import org.testmp.webconsole.server.Filter.Criteria;
 
 @SuppressWarnings("serial")
@@ -102,6 +103,7 @@ public class ReportService extends HttpServlet {
         PrintWriter output = resp.getWriter();
         String reportType = params.get("reportType");
         String action = params.get("action");
+        String userName = params.get("userName");
 
         try {
             if (action.equals("create")) {
@@ -122,7 +124,7 @@ public class ReportService extends HttpServlet {
             } else if (action.equals("send")) {
                 sendReport(params);
             } else if (action.equals("getCustomSetting")) {
-                Map<String, String> settings = getCustomSetting(reportType);
+                Map<String, String> settings = getCustomSetting(reportType, userName);
                 ObjectMapper mapper = new ObjectMapper();
                 output.print(mapper.writeValueAsString(settings));
                 output.flush();
@@ -173,24 +175,72 @@ public class ReportService extends HttpServlet {
         return content;
     }
 
-    private Map<String, String> getCustomSetting(String reportType) {
+    private Map<String, String> getCustomSetting(String reportType, String userName) throws Exception {
+        User user = null;
+
+        if (userName != null) {
+            DataStoreClient client = new DataStoreClient((String) getServletContext().getAttribute("testEnvStoreUrl"));
+            Map<String, Object> properties = new HashMap<String, Object>();
+            properties.put("name", userName);
+            DataInfo<User> userInfo = client.getData(User.class, new String[] { "User" }, properties).get(0);
+            user = userInfo.getData();
+        } else {
+            user = new User();
+        }
+
         Map<String, String> settings = new HashMap<String, String>();
+
         Object recipients = null, subject = null;
         if (reportType.equals(TEST_METRICS_REPORT)) {
-            recipients = getServletContext().getAttribute("testMetricsReportRecipients");
-            subject = getServletContext().getAttribute("testMetricsReportSubject");
+            recipients = user.getTmrReportSettings().getRecipients();
+            if (recipients == null) {
+                recipients = getServletContext().getAttribute("testMetricsReportRecipients");
+            }
+            subject = user.getTmrReportSettings().getSubject();
+            if (subject == null) {
+                subject = getServletContext().getAttribute("testMetricsReportSubject");
+            }
         } else if (reportType.equals(DATA_ANALYTICS_REPORT)) {
-            recipients = getServletContext().getAttribute("dataAnalyticsReportRecipients");
-            subject = getServletContext().getAttribute("dataAnalyticsReportSubject");
+            recipients = user.getDarReportSettings().getRecipients();
+            if (recipients == null) {
+                recipients = getServletContext().getAttribute("dataAnalyticsReportRecipients");
+            }
+            subject = user.getDarReportSettings().getSubject();
+            if (subject == null) {
+                subject = getServletContext().getAttribute("dataAnalyticsReportSubject");
+            }
         } else if (reportType.equals(ENVIRONMENT_STATUS_REPORT)) {
-            recipients = getServletContext().getAttribute("envStatusReportRecipients");
-            subject = getServletContext().getAttribute("envStatusReportSubject");
+            recipients = user.getEsrReportSettings().getRecipients();
+            if (recipients == null) {
+                recipients = getServletContext().getAttribute("envStatusReportRecipients");
+            }
+            subject = user.getEsrReportSettings().getSubject();
+            if (subject == null) {
+                subject = getServletContext().getAttribute("envStatusReportSubject");
+            }
         }
-        Object smtphost = getServletContext().getAttribute("smtpSettingHost");
-        Object smtpport = getServletContext().getAttribute("smtpSettingPort");
-        Object username = getServletContext().getAttribute("smtpSettingUser");
-        Object password = getServletContext().getAttribute("smtpSettingPass");
-        Object starttls = getServletContext().getAttribute("smtpSettingSTARTTLS");
+
+        Object smtphost = user.getMailboxSettings().getSmtpSettingHost();
+        if (smtphost == null) {
+            smtphost = getServletContext().getAttribute("smtpSettingHost");
+        }
+        Object smtpport = user.getMailboxSettings().getSmtpSettingPort();
+        if (smtpport == null) {
+            smtpport = getServletContext().getAttribute("smtpSettingPort");
+        }
+        Object username = user.getMailboxSettings().getSmtpSettingUser();
+        if (username == null) {
+            username = getServletContext().getAttribute("smtpSettingUser");
+        }
+        Object password = user.getMailboxSettings().getSmtpSettingPass();
+        if (password == null) {
+            password = getServletContext().getAttribute("smtpSettingPass");
+        }
+        Object starttls = user.getMailboxSettings().getSmtpSettingSTARTTLS();
+        if (starttls == null) {
+            starttls = getServletContext().getAttribute("smtpSettingSTARTTLS");
+        }
+
         settings.put("recipients", recipients == null ? "" : recipients.toString().trim());
         settings.put("subject", subject == null ? "" : subject.toString().trim());
         settings.put("smtphost", smtphost == null ? "" : smtphost.toString().trim());
