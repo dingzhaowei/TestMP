@@ -32,6 +32,7 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.RestDataSource;
 import com.smartgwt.client.data.fields.DataSourceBooleanField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
+import com.smartgwt.client.data.fields.DataSourcePasswordField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.DSDataFormat;
@@ -50,7 +51,7 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
-import com.smartgwt.client.widgets.form.validator.CustomValidator;
+import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tab.Tab;
@@ -246,7 +247,9 @@ public class WebConsole implements EntryPoint {
         DataSource personalSettingsSource = createDataSource("userSettingsDS", ClientConfig.constants.userService());
         DataSourceTextField fullNameField = new DataSourceTextField("fullName", ClientConfig.messages.fullName());
         DataSourceTextField emailField = new DataSourceTextField("email", ClientConfig.messages.email());
-        personalSettingsSource.setFields(fullNameField, emailField);
+        DataSourceTextField personnalHiddenField = new DataSourceTextField("userName");
+        personnalHiddenField.setHidden(true);
+        personalSettingsSource.setFields(personnalHiddenField, fullNameField, emailField);
         dataSources.put("userSettingsDS", personalSettingsSource);
 
         DataSource tmrReportSettingsSource = createDataSource("tmrReportSettingsDS",
@@ -254,7 +257,9 @@ public class WebConsole implements EntryPoint {
         DataSourceTextField tmrRecipientsField = new DataSourceTextField("tmrRecipients",
                 ClientConfig.messages.recipients());
         DataSourceTextField tmrSubjectField = new DataSourceTextField("tmrSubject", ClientConfig.messages.subject());
-        tmrReportSettingsSource.setFields(tmrRecipientsField, tmrSubjectField);
+        DataSourceTextField tmrHiddenField = new DataSourceTextField("userName");
+        tmrHiddenField.setHidden(true);
+        tmrReportSettingsSource.setFields(tmrHiddenField, tmrRecipientsField, tmrSubjectField);
         dataSources.put("tmrReportSettingsDS", tmrReportSettingsSource);
 
         DataSource darReportSettingsSource = createDataSource("darReportSettingsDS",
@@ -262,7 +267,9 @@ public class WebConsole implements EntryPoint {
         DataSourceTextField darRecipientsField = new DataSourceTextField("darRecipients",
                 ClientConfig.messages.recipients());
         DataSourceTextField darSubjectField = new DataSourceTextField("darSubjet", ClientConfig.messages.subject());
-        darReportSettingsSource.setFields(darRecipientsField, darSubjectField);
+        DataSourceTextField darHiddenField = new DataSourceTextField("userName");
+        darHiddenField.setHidden(true);
+        darReportSettingsSource.setFields(darHiddenField, darRecipientsField, darSubjectField);
         dataSources.put("darReportSettingsDS", darReportSettingsSource);
 
         DataSource esrReportSettingsSource = createDataSource("esrReportSettingsDS",
@@ -270,20 +277,26 @@ public class WebConsole implements EntryPoint {
         DataSourceTextField esrRecipientsField = new DataSourceTextField("esrRecipients",
                 ClientConfig.messages.recipients());
         DataSourceTextField esrSubjectField = new DataSourceTextField("esrSubject", ClientConfig.messages.subject());
-        esrReportSettingsSource.setFields(esrRecipientsField, esrSubjectField);
+        DataSourceTextField esrHiddenField = new DataSourceTextField("userName");
+        esrHiddenField.setHidden(true);
+        esrReportSettingsSource.setFields(esrHiddenField, esrRecipientsField, esrSubjectField);
         dataSources.put("esrReportSettingsDS", esrReportSettingsSource);
 
         DataSource mailboxSettingsSource = createDataSource("mailboxSettingsDS", ClientConfig.constants.userService());
         DataSourceTextField smtpSettingUserField = new DataSourceTextField("smtpSettingUser",
                 ClientConfig.messages.user());
+        DataSourcePasswordField smtpSettingPassField = new DataSourcePasswordField("smtpSettingPass",
+                ClientConfig.messages.password());
         DataSourceTextField smtpSettingHostField = new DataSourceTextField("smtpSettingHost",
                 ClientConfig.messages.smtpHost());
         DataSourceIntegerField smtpSettingPortField = new DataSourceIntegerField("smtpSettingPort",
                 ClientConfig.messages.smtpPort());
         DataSourceBooleanField smtpSettingSTARTTLSField = new DataSourceBooleanField("smtpSettingSTARTTLS",
                 ClientConfig.messages.useStarttls());
-        mailboxSettingsSource.setFields(smtpSettingUserField, smtpSettingHostField, smtpSettingPortField,
-                smtpSettingSTARTTLSField);
+        DataSourceTextField mailboxHiddenField = new DataSourceTextField("userName");
+        mailboxHiddenField.setHidden(true);
+        mailboxSettingsSource.setFields(mailboxHiddenField, smtpSettingUserField, smtpSettingPassField,
+                smtpSettingHostField, smtpSettingPortField, smtpSettingSTARTTLSField);
         dataSources.put("mailboxSettingsDS", mailboxSettingsSource);
     }
 
@@ -311,14 +324,6 @@ public class WebConsole implements EntryPoint {
             ComboBoxItem userNameItem = new ComboBoxItem("name");
             userNameItem.setTitle(ClientConfig.messages.user());
             userNameItem.setOptionDataSource(dataSources.get("userNameDS"));
-            userNameItem.setValidators(new CustomValidator() {
-
-                @Override
-                protected boolean condition(Object value) {
-                    return value != null && value.toString().trim().length() <= 50;
-                }
-
-            });
             form.setFields(userNameItem);
             inline.addMember(form);
 
@@ -400,10 +405,15 @@ public class WebConsole implements EntryPoint {
 
                 @Override
                 public void onClick(ClickEvent event) {
-                    SettingWindow.this.destroy();
-                    for (DynamicForm form : forms.values()) {
-                        form.saveData();
+                    for (String formName : forms.keySet()) {
+                        DynamicForm form = forms.get(formName);
+                        if (form.getValues().isEmpty()) {
+                            continue;
+                        }
+                        Record record = form.getValuesAsRecord();
+                        dataSources.get(formName.replace("Form", "DS")).updateData(record);
                     }
+                    SettingWindow.this.destroy();
                 }
 
             });
@@ -428,8 +438,7 @@ public class WebConsole implements EntryPoint {
             layout.setMembersMargin(5);
 
             DynamicForm userForm = new DynamicForm();
-            forms.put("user", userForm);
-
+            forms.put("userSettingsForm", userForm);
             userForm.setSize("90%", "33%");
             userForm.setDataSource(dataSources.get("userSettingsDS"));
             userForm.setAutoFetchData(true);
@@ -445,33 +454,45 @@ public class WebConsole implements EntryPoint {
             layout.setMembersMargin(10);
 
             DynamicForm tmrForm = new DynamicForm();
-            forms.put("tmr", tmrForm);
-
+            forms.put("tmrReportSettingsForm", tmrForm);
+            TextItem tmrRecipients = new TextItem("tmrRecipients", ClientConfig.messages.recipients());
+            tmrRecipients.setWidth(200);
+            TextItem tmrSubject = new TextItem("tmrSubject", ClientConfig.messages.subject());
+            tmrSubject.setWidth(200);
+            tmrForm.setFields(tmrRecipients, tmrSubject);
             tmrForm.setGroupTitle(ClientConfig.messages.testMetricsReport());
             tmrForm.setIsGroup(true);
-            tmrForm.setSize("70%", "33%");
+            tmrForm.setSize("80%", "33%");
             tmrForm.setLayoutAlign(Alignment.CENTER);
             tmrForm.setDataSource(dataSources.get("tmrReportSettingsDS"));
             tmrForm.setAutoFetchData(true);
             layout.addMember(tmrForm);
 
             DynamicForm darForm = new DynamicForm();
-            forms.put("dar", darForm);
-
+            forms.put("darReportSettingsForm", darForm);
+            TextItem darRecipients = new TextItem("darRecipients", ClientConfig.messages.recipients());
+            darRecipients.setWidth(200);
+            TextItem darSubject = new TextItem("darSubject", ClientConfig.messages.subject());
+            darSubject.setWidth(200);
+            darForm.setFields(darRecipients, darSubject);
             darForm.setGroupTitle(ClientConfig.messages.dataAnalyticsReport());
             darForm.setIsGroup(true);
-            darForm.setSize("70%", "33%");
+            darForm.setSize("80%", "33%");
             darForm.setLayoutAlign(Alignment.CENTER);
             darForm.setDataSource(dataSources.get("darReportSettingsDS"));
             darForm.setAutoFetchData(true);
             layout.addMember(darForm);
 
             DynamicForm esrForm = new DynamicForm();
-            forms.put("esr", esrForm);
-
+            forms.put("esrReportSettingsForm", esrForm);
+            TextItem esrRecipients = new TextItem("esrRecipients", ClientConfig.messages.recipients());
+            esrRecipients.setWidth(200);
+            TextItem esrSubject = new TextItem("esrSubject", ClientConfig.messages.subject());
+            esrSubject.setWidth(200);
+            esrForm.setFields(esrRecipients, esrSubject);
             esrForm.setGroupTitle(ClientConfig.messages.environmentStatusReport());
             esrForm.setIsGroup(true);
-            esrForm.setSize("70%", "33%");
+            esrForm.setSize("80%", "33%");
             esrForm.setLayoutAlign(Alignment.CENTER);
             esrForm.setDataSource(dataSources.get("esrReportSettingsDS"));
             esrForm.setAutoFetchData(true);
@@ -487,8 +508,7 @@ public class WebConsole implements EntryPoint {
             layout.setMembersMargin(5);
 
             DynamicForm mailboxForm = new DynamicForm();
-            forms.put("mailbox", mailboxForm);
-
+            forms.put("mailboxSettingsForm", mailboxForm);
             mailboxForm.setMargin(5);
             mailboxForm.setSize("90%", "33%");
             mailboxForm.setDataSource(dataSources.get("mailboxSettingsDS"));

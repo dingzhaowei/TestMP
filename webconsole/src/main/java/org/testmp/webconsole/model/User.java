@@ -30,7 +30,11 @@ public class User {
 
     private FilterSettings filterSettings = new FilterSettings();
 
-    private ReportSettings reportSettings = new ReportSettings();
+    private ReportSettings tmrReportSettings = new ReportSettings();
+
+    private ReportSettings darReportSettings = new ReportSettings();
+
+    private ReportSettings esrReportSettings = new ReportSettings();
 
     private MailboxSettings mailboxSettings = new MailboxSettings();
 
@@ -66,12 +70,28 @@ public class User {
         this.filterSettings = filterSettings;
     }
 
-    public ReportSettings getReportSettings() {
-        return reportSettings;
+    public ReportSettings getTmrReportSettings() {
+        return tmrReportSettings;
     }
 
-    public void setReportSettings(ReportSettings reportSettings) {
-        this.reportSettings = reportSettings;
+    public void setTmrReportSettings(ReportSettings reportSettings) {
+        this.tmrReportSettings = reportSettings;
+    }
+
+    public ReportSettings getDarReportSettings() {
+        return darReportSettings;
+    }
+
+    public void setDarReportSettings(ReportSettings reportSettings) {
+        this.darReportSettings = reportSettings;
+    }
+
+    public ReportSettings getEsrReportSettings() {
+        return esrReportSettings;
+    }
+
+    public void setEsrReportSettings(ReportSettings reportSettings) {
+        this.esrReportSettings = reportSettings;
     }
 
     public MailboxSettings getMailboxSettings() {

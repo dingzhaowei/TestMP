@@ -124,77 +124,38 @@ public class Settings {
 
     public static class ReportSettings {
 
-        private String testMetricsReportRecipients;
+        private String recipients;
 
-        private String testMetricsReportSubject;
+        private String subject;
 
-        private String dataAnalyticsReportRecipients;
-
-        private String dataAnalyticsReportSubjet;
-
-        private String envStatusReportRecipients;
-
-        private String envStatusReportSubject;
-
-        public String getTestMetricsReportRecipients() {
-            return testMetricsReportRecipients;
+        public String getRecipients() {
+            return recipients;
         }
 
-        public void setTestMetricsReportRecipients(String tmrRecipients) {
-            this.testMetricsReportRecipients = tmrRecipients;
+        public void setRecipients(String recipients) {
+            this.recipients = recipients;
         }
 
-        public String getTestMetricsReportSubject() {
-            return testMetricsReportSubject;
+        public String getSubject() {
+            return subject;
         }
 
-        public void setTestMetricsReportSubject(String tmrSubject) {
-            this.testMetricsReportSubject = tmrSubject;
+        public void setSubject(String subject) {
+            this.subject = subject;
         }
-
-        public String getDataAnalyticsReportRecipients() {
-            return dataAnalyticsReportRecipients;
-        }
-
-        public void setDataAnalyticsReportRecipients(String darRecipients) {
-            this.dataAnalyticsReportRecipients = darRecipients;
-        }
-
-        public String getDataAnalyticsReportSubjet() {
-            return dataAnalyticsReportSubjet;
-        }
-
-        public void setDataAnalyticsReportSubjet(String darSubjet) {
-            this.dataAnalyticsReportSubjet = darSubjet;
-        }
-
-        public String getEnvStatusReportRecipients() {
-            return envStatusReportRecipients;
-        }
-
-        public void setEnvStatusReportRecipients(String esrRecipients) {
-            this.envStatusReportRecipients = esrRecipients;
-        }
-
-        public String getEnvStatusReportSubject() {
-            return envStatusReportSubject;
-        }
-
-        public void setEnvStatusReportSubject(String esrSubject) {
-            this.envStatusReportSubject = esrSubject;
-        }
-
     }
 
     public static class MailboxSettings {
 
         private String smtpSettingUser;
 
+        private String smtpSettingPass;
+
         private String smtpSettingHost;
 
         private Integer smtpSettingPort;
 
-        private boolean smtpSettingSTARTTLS;
+        private Boolean smtpSettingSTARTTLS;
 
         public String getSmtpSettingUser() {
             return smtpSettingUser;
@@ -202,6 +163,14 @@ public class Settings {
 
         public void setSmtpSettingUser(String smtpSettingUser) {
             this.smtpSettingUser = smtpSettingUser;
+        }
+
+        public String getSmtpSettingPass() {
+            return smtpSettingPass;
+        }
+
+        public void setSmtpSettingPass(String smtpSettingPass) {
+            this.smtpSettingPass = smtpSettingPass;
         }
 
         public String getSmtpSettingHost() {
@@ -220,11 +189,11 @@ public class Settings {
             this.smtpSettingPort = smtpSettingPort;
         }
 
-        public boolean isSmtpSettingSTARTTLS() {
+        public Boolean getSmtpSettingSTARTTLS() {
             return smtpSettingSTARTTLS;
         }
 
-        public void setSmtpSettingSTARTTLS(boolean smtpSettingSTARTTLS) {
+        public void setSmtpSettingSTARTTLS(Boolean smtpSettingSTARTTLS) {
             this.smtpSettingSTARTTLS = smtpSettingSTARTTLS;
         }
 
