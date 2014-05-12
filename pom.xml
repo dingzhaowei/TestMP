@@ -51,7 +51,7 @@
     <sleepycat.je.version>3.2.76</sleepycat.je.version>
     <junit.version>4.11</junit.version>
     <testng.version>6.8</testng.version>
-    <jfreechart.version>1.0.13</jfreechart.version>
+    <jfreechart.version>1.0.15</jfreechart.version>
     <velocity.version>1.7</velocity.version>
     <javamail.version>1.4.7</javamail.version>
     <activation.version>1.1</activation.version>
@@ -132,7 +132,7 @@
         <version>${testng.version}</version>
       </dependency>
       <dependency>
-        <groupId>jfree</groupId>
+        <groupId>org.jfree</groupId>
         <artifactId>jfreechart</artifactId>
         <version>${jfreechart.version}</version>
       </dependency>

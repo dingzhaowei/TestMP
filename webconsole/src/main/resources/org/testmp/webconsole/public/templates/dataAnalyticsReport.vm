@@ -2,15 +2,13 @@
 <html>
   <head>
     <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+    <style type="text/css">
+      h1 {text-align: center; font-family: sans-serif}
+    </style>
     <title>Test Data Analytics</title>
   </head>
   <body>
-    <br>
-    <table style="border-collapse: collapse; text-align: center; font-family: Calibri,sans-serif,serif; margin: 50px; font-size: 0.9em" cellspacing="2" border="1" cellpadding="2" width="800">
-      <tbody>
-        <tr><td>$dataAnalyticsResult.totalData</td></tr>
-      </tbody>
-    </table>
-    <br>
+    <h1>$dataAnalyticsResult.totalData</h1>
+    
   </body>
 </html>

@@ -3,6 +3,69 @@
   <head>
     <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
     <title>Test Metrics</title>
+
+    <style type="text/css">
+    	.measures-level0 {
+            font-family: sans-serif;
+            text-align: center;
+            margin: 20px;
+            width: 850px;
+            border: 1px black solid;
+            border-collapse: collapse;
+        }
+        .measures-level0 td {
+            padding: 2px;
+            vertical-align: middle;
+            border: 1px black solid;
+            border-collapse: collapse;
+        }
+        .measures-level1 {
+            font-family: sans-serif;
+            font-size: 0.8em;
+            text-align: center;
+            width: 100%;
+            border: none;
+            border-collapse: collapse;
+        }
+        .measures-level1 td {
+            padding: 2px;
+            vertical-align: middle;
+            border: none;
+            border-collapse: collapse;
+        }
+        .measures-level2 {
+            background-color: #FFFFCC;
+            font-family: sans-serif;
+            font-size: 0.8em;
+            text-align: center;
+            width: 100%;
+            border: 1px black solid;
+            border-collapse: collapse;
+        }
+        .measures-level2 td {
+            padding: 2px;
+            vertical-align: top;
+            border: 1px black solid;
+            border-collapse: collapse;
+        }
+        .alwaysBad {
+            color: #CC0000;
+            font-weight:bold;
+        }
+        .degrading {
+        	color: #FF0000;
+        	font-weight: bold;
+        }
+        .upgrading {
+        	color: #33CC00;
+        	font-weight: bold;
+        }
+        .alwaysGood {
+        	color: #006600;
+        	font-weight: bold;
+        }
+    </style>
+
     <script>
         function signoff() {
             var selects = document.getElementsByTagName("select");
@@ -26,145 +89,92 @@
   <body>
   <br>
   <div id="reportBodyToUpdate">
-    <table id="testMetricsTable" style="font-family: Calibri,sans-serif,serif; text-align:
-      center; border-collapse: collapse; margin: 20px" border="1" cellpadding="2"
-      cellspacing="2" width="850">
+    <table class="measures-level0">
       <tbody>
         <tr>
-          <td valign="middle" width="250"><b><big>$messages.project<br>
-              </big></b></td>
-          <td valign="middle"><b><big>$messages.testMetrics<br>
-              </big></b></td>
-          <td valign="middle">
-            <button id="signoff" onclick="signoff()">$messages.signoff</button>
-          </td>
+          <td width="250"><b><big>$messages.project<br></big></b></td>
+          <td><b><big>$messages.testMetrics<br></big></b></td>
+          <td><button id="signoff" onclick="signoff()">$messages.signoff</button></td>
         </tr>
         #foreach($project in $testMetricsTable.keySet())
         #set($metrics = $testMetricsTable.get($project))
         <tr>
-          <td style="font-size: 0.8em;" valign="middle" width="250"><b>$project</b><br>
-          </td>
-          <td valign="middle">
-            <table style="text-align: center; font-size: 0.8em;
-              font-family: Calibri,sans-serif,serif; border-collapse:
-              collapse;" align="center" border="0" cellpadding="2"
-              cellspacing="2" width="100%">
+          <td style="font-size: 0.8em;" width="250"><b>$project</b><br></td>
+          <td>
+            <table class="measures-level1">
               <tbody>
                 <tr>
-                  <td valign="middle">$messages.totalTests<br>
-                  </td>
-                  <td valign="middle"><b>$metrics.testsTotal</b><b><br>
-                    </b></td>
+                  <td>$messages.totalTests<br></td>
+                  <td><b>$metrics.testsTotal</b><br></td>
                 </tr>
                 <tr>
-                  <td valign="middle">$messages.groups<br>
-                  </td>
-                  <td valign="top"><b>$metrics.allRelatedTags</b><br>
-                  </td>
+                  <td>$messages.groups<br></td>
+                  <td><b>$metrics.allRelatedTags</b><br></td>
                 </tr>
                 <tr>
-                  <td valign="middle">$messages.robustness<br>
-                  </td>
-                  <td valign="middle">
-                    <table style="font-size: 0.8em; text-align: center;
-                      border-collapse: collapse; font-family:
-                      Calibri,sans-serif,serif;" bgcolor="#ffffcc"
-                      border="1" cellpadding="2" cellspacing="2"
-                      width="100%">
+                  <td>$messages.robustness<br></td>
+                  <td>
+                    <table class="measures-level2">
                       <tbody>
                         <tr>
-                          <td valign="top">$messages.alwaysBad<br>
-                          </td>
-                          <td valign="top">$messages.degrading<br>
-                          </td>
-                          <td valign="top">$messages.upgrading<br>
-                          </td>
-                          <td valign="top">$messages.alwaysGood<br>
-                          </td>
+                          <td>$messages.alwaysBad<br></td>
+                          <td>$messages.degrading<br></td>
+                          <td>$messages.upgrading<br></td>
+                          <td>$messages.alwaysGood<br></td>
                         </tr>
                         <tr>
-                          <td valign="top"><b><font color="#cc0000">$metrics.alwaysBadNum</font></b><br>
-                          </td>
-                          <td valign="top"><b><font color="#ff0000">$metrics.degradingNum</font></b><br>
-                          </td>
-                          <td valign="top"><b><font color="#33cc00">$metrics.upgradingNum</font></b><br>
-                          </td>
-                          <td valign="top"><b><font color="#006600">$metrics.alwaysGoodNum</font></b><br>
-                          </td>
+                          <td class="alwaysBad">$metrics.alwaysBadNum<br></td>
+                          <td class="degrading">$metrics.degradingNum<br></td>
+                          <td class="upgrading">$metrics.upgradingNum<br></td>
+                          <td class="alwaysGood">$metrics.alwaysGoodNum<br></td>
                         </tr>
                         <tr>
-                          <td valign="top"><b><font color="#cc0000">$metrics.alwaysBadPercentage<br>
-                              </font></b></td>
-                          <td valign="top"><font color="#ff0000"><b>$metrics.degradingPercentage</b><b><br>
-                              </b></font></td>
-                          <td valign="top"><b><font color="#33cc00">$metrics.upgradingPercentage</font></b><br>
-                          </td>
-                          <td valign="top"><b><font color="#006600">$metrics.alwaysGoodPercentage</font></b><br>
-                          </td>
+                          <td class="alwaysBad">$metrics.alwaysBadPercentage<br></td>
+                          <td class="degrading">$metrics.degradingPercentage<br></td>
+                          <td class="upgrading">$metrics.upgradingPercentage<br></td>
+                          <td class="alwaysGood">$metrics.alwaysGoodPercentage<br></td>
                         </tr>
                       </tbody>
                     </table>
                   </td>
                 </tr>
                 <tr>
-                  <td valign="middle">$messages.effectiveness<br>
+                  <td>$messages.effectiveness<br>
                   </td>
-                  <td valign="middle">
-                    <table style="text-align: center; font-size: 0.8em;
-                      border-collapse: collapse; font-family:
-                      Calibri,sans-serif,serif;" bgcolor="#ffffcc"
-                      border="1" cellpadding="2" cellspacing="2"
-                      width="100%">
+                  <td>
+                    <table class="measures-level2">
                       <tbody>
                         <tr>
-                          <td valign="top">$messages.totalFailures<br>
-                          </td>
-                          <td valign="top">$messages.falseFailures<br>
-                          </td>
-                          <td valign="top">$messages.relatedBugs<br>
-                          </td>
+                          <td>$messages.totalFailures<br></td>
+                          <td>$messages.falseFailures<br></td>
+                          <td>$messages.relatedBugs<br></td>
                         </tr>
                         <tr>
-                          <td valign="top"><b>$metrics.failuresTotal</b><br>
-                          </td>
-                          <td valign="top"><b>$metrics.falseFailuresNum</b><br>
-                          </td>
-                          <td valign="top"><b>$metrics.relatedBugsNum</b><br>
-                          </td>
+                          <td><b>$metrics.failuresTotal</b><br></td>
+                          <td><b>$metrics.falseFailuresNum</b><br></td>
+                          <td><b>$metrics.relatedBugsNum</b><br></td>
                         </tr>
                       </tbody>
                     </table>
                   </td>
                 </tr>
                 <tr>
-                  <td valign="middle">$messages.efficiency<br>
-                  </td>
-                  <td valign="top">
-                    <table style="text-align: center; font-size: 0.8em;
-                      border-collapse: collapse; font-family:
-                      Calibri,sans-serif,serif;" bgcolor="#ffffcc"
-                      border="1" cellpadding="2" cellspacing="2"
-                      width="100%">
+                  <td>$messages.efficiency<br></td>
+                  <td>
+                    <table class="measures-level2">
                       <tbody>
                         <tr>
-                          <td valign="top">$messages.totalTime<br>
-                          </td>
-                          <td valign="top">$messages.avgTime<br>
-                          </td>
-                          <td valign="top">$messages.volatility<br>
-                          </td>
+                          <td>$messages.totalTime<br></td>
+                          <td>$messages.avgTime<br></td>
+                          <td>$messages.volatility<br></td>
                         </tr>
                         <tr>
-                          <td valign="top"><b>$metrics.totalTime ms</b><br>
-                          </td>
-                          <td valign="top"><b>$metrics.avgTime ms</b><br>
-                          </td>
+                          <td><b>$metrics.totalTime ms</b><br></td>
+                          <td><b>$metrics.avgTime ms</b><br></td>
                           #if($metrics.minVolatility == $metrics.maxVolatility)
-                          <td valign="top"><b>$metrics.maxVolatility</b><br>
-                          </td>
+                          <td><b>$metrics.maxVolatility</b><br></td>
                           #else
-                          <td valign="top"><b>$metrics.minVolatility ~ $metrics.maxVolatility</b><br>
-                          </td>
+                          <td><b>$metrics.minVolatility ~ $metrics.maxVolatility</b><br></td>
                           #end
                         </tr>
                       </tbody>
@@ -188,4 +198,3 @@
   <br>
   </body>
 </html>
-

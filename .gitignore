@@ -168,6 +168,7 @@ pip-log.txt
 target/
 .gwt/
 */*.log
+*/*.log.*
 */src/main/webapp/datastore
 */src/main/webapp/webconsole
 */src/main/webapp/com.*
