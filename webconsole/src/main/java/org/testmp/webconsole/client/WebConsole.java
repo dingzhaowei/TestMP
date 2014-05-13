@@ -27,17 +27,12 @@ import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
-import com.smartgwt.client.data.OperationBinding;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.RestDataSource;
 import com.smartgwt.client.data.fields.DataSourceBooleanField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourcePasswordField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.DSDataFormat;
-import com.smartgwt.client.types.DSOperationType;
-import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.util.SC;
@@ -67,56 +62,6 @@ public class WebConsole implements EntryPoint {
     private IconButton loginBtn;
 
     private IconButton settingBtn;
-
-    public static DataSource createDataSource(String dataSourceId, String servicePath) {
-        DataSource ds = new RestDataSource() {
-
-            @Override
-            protected Object transformRequest(DSRequest dsRequest) {
-                if (dsRequest.getAttributeAsString("operationType").equals("fetch")) {
-                    if (ClientConfig.currentUser != null) {
-                        Criteria criteria = dsRequest.getCriteria();
-                        if (criteria == null) {
-                            criteria = new Criteria();
-                        }
-                        criteria.setAttribute("userName", ClientConfig.currentUser);
-                        dsRequest.setCriteria(criteria);
-                    }
-                }
-                return super.transformRequest(dsRequest);
-            }
-
-        };
-        ds.setID(dataSourceId);
-        ds.setDataFormat(DSDataFormat.JSON);
-
-        String baseUrl = GWT.getModuleBaseURL();
-        String requestUrl = baseUrl + servicePath.substring(servicePath.lastIndexOf('/') + 1);
-        ds.setDataURL(requestUrl);
-
-        OperationBinding fetch = new OperationBinding();
-        fetch.setOperationType(DSOperationType.FETCH);
-        fetch.setDataProtocol(DSProtocol.POSTMESSAGE);
-        fetch.setDataFormat(DSDataFormat.JSON);
-
-        OperationBinding update = new OperationBinding();
-        update.setOperationType(DSOperationType.UPDATE);
-        update.setDataProtocol(DSProtocol.POSTMESSAGE);
-        update.setDataFormat(DSDataFormat.JSON);
-
-        OperationBinding add = new OperationBinding();
-        add.setOperationType(DSOperationType.ADD);
-        add.setDataProtocol(DSProtocol.POSTMESSAGE);
-        add.setDataFormat(DSDataFormat.JSON);
-
-        OperationBinding remove = new OperationBinding();
-        remove.setOperationType(DSOperationType.REMOVE);
-        remove.setDataProtocol(DSProtocol.POSTMESSAGE);
-        remove.setDataFormat(DSDataFormat.JSON);
-
-        ds.setOperationBindings(fetch, update, add, remove);
-        return ds;
-    }
 
     /**
      * This is called when the browser loads Application.html.
@@ -239,14 +184,15 @@ public class WebConsole implements EntryPoint {
     private void prepareDataSources() {
         dataSources = new HashMap<String, DataSource>();
 
-        DataSource userNameSource = createDataSource("userNameDS", ClientConfig.constants.userService());
+        DataSource userNameSource = ClientUtils.createDataSource("userNameDS", ClientConfig.constants.userService());
         DataSourceTextField userNameField = new DataSourceTextField("name");
         userNameField.setRequired(true);
         userNameField.setPrimaryKey(true);
         userNameSource.setFields(userNameField);
         dataSources.put("userNameDS", userNameSource);
 
-        DataSource personalSettingsSource = createDataSource("userSettingsDS", ClientConfig.constants.userService());
+        DataSource personalSettingsSource = ClientUtils.createDataSource("userSettingsDS",
+                ClientConfig.constants.userService());
         DataSourceTextField fullNameField = new DataSourceTextField("fullName", ClientConfig.messages.fullName());
         DataSourceTextField emailField = new DataSourceTextField("email", ClientConfig.messages.email());
         DataSourceTextField personnalHiddenField = new DataSourceTextField("userName");
@@ -254,7 +200,7 @@ public class WebConsole implements EntryPoint {
         personalSettingsSource.setFields(personnalHiddenField, fullNameField, emailField);
         dataSources.put("userSettingsDS", personalSettingsSource);
 
-        DataSource tmrReportSettingsSource = createDataSource("tmrReportSettingsDS",
+        DataSource tmrReportSettingsSource = ClientUtils.createDataSource("tmrReportSettingsDS",
                 ClientConfig.constants.userService());
         DataSourceTextField tmrRecipientsField = new DataSourceTextField("tmrRecipients",
                 ClientConfig.messages.recipients());
@@ -264,7 +210,7 @@ public class WebConsole implements EntryPoint {
         tmrReportSettingsSource.setFields(tmrHiddenField, tmrRecipientsField, tmrSubjectField);
         dataSources.put("tmrReportSettingsDS", tmrReportSettingsSource);
 
-        DataSource esrReportSettingsSource = createDataSource("esrReportSettingsDS",
+        DataSource esrReportSettingsSource = ClientUtils.createDataSource("esrReportSettingsDS",
                 ClientConfig.constants.userService());
         DataSourceTextField esrRecipientsField = new DataSourceTextField("esrRecipients",
                 ClientConfig.messages.recipients());
@@ -274,7 +220,8 @@ public class WebConsole implements EntryPoint {
         esrReportSettingsSource.setFields(esrHiddenField, esrRecipientsField, esrSubjectField);
         dataSources.put("esrReportSettingsDS", esrReportSettingsSource);
 
-        DataSource mailboxSettingsSource = createDataSource("mailboxSettingsDS", ClientConfig.constants.userService());
+        DataSource mailboxSettingsSource = ClientUtils.createDataSource("mailboxSettingsDS",
+                ClientConfig.constants.userService());
         DataSourceTextField smtpSettingUserField = new DataSourceTextField("smtpSettingUser",
                 ClientConfig.messages.user());
         DataSourcePasswordField smtpSettingPassField = new DataSourcePasswordField("smtpSettingPass",

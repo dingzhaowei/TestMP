@@ -88,43 +88,14 @@ public class TestDataService extends HttpServlet {
         ObjectNode dsResponse = mapper.createObjectNode();
         ObjectNode responseBody = dsResponse.putObject("response");
         String operationType = dsRequest.get("operationType").toString();
+        Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
         try {
             if (operationType.equals("fetch")) {
-                List<Map<String, Object>> dataList = loader.load();
-                Criteria criteria = Criteria.valueOf(mapper.writeValueAsString(dsRequest.get("data")));
-                if (criteria != null) {
-                    Filter filter = new Filter(criteria);
-                    dataList = filter.doFilter(dataList);
-                }
-                final List<String> sortBy = (List<String>) dsRequest.get("sortBy");
-                if (sortBy != null) {
-                    Collections.sort(dataList, new Comparator<Map<String, Object>>() {
-
-                        @Override
-                        public int compare(Map<String, Object> data1, Map<String, Object> data2) {
-                            for (String fieldName : sortBy) {
-                                boolean descending = fieldName.startsWith("-");
-                                fieldName = descending ? fieldName.substring(1) : fieldName;
-                                Object o1 = data1.get(fieldName);
-                                Object o2 = data2.get(fieldName);
-                                if (o1 == null || o2 == null || o1.equals(o2)) {
-                                    continue;
-                                }
-                                if (NumberUtils.isNumber(o1.toString())) {
-                                    Double d1 = Double.valueOf(o1.toString());
-                                    Double d2 = Double.valueOf(o2.toString());
-                                    return descending ? d2.compareTo(d1) : d1.compareTo(d2);
-                                } else {
-                                    String s1 = o1.toString();
-                                    String s2 = o2.toString();
-                                    return descending ? s2.compareTo(s1) : s1.compareTo(s2);
-                                }
-                            }
-                            return 0;
-                        }
-
-                    });
-                }
+                // TODO: filter by userName
+                data.remove("userName");
+                Criteria criteria = Criteria.valueOf(mapper.writeValueAsString(data));
+                List<String> sortBy = (List<String>) dsRequest.get("sortBy");
+                List<Map<String, Object>> dataList = getTestData(criteria, sortBy);
                 int startRow = Integer.parseInt(dsRequest.get("startRow").toString());
                 int endRow = Integer.parseInt(dsRequest.get("endRow").toString());
                 int actualEndRow = endRow > dataList.size() ? dataList.size() : endRow;
@@ -137,21 +108,18 @@ public class TestDataService extends HttpServlet {
                 JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(dataList));
                 responseBody.put("data", dataNode);
             } else if (operationType.equals("update")) {
-                Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
                 Map<String, Object> oldValues = (Map<String, Object>) dsRequest.get("oldValues");
-                Map<String, Object> updatedData = updateData(data, oldValues);
+                Map<String, Object> updatedData = updateTestData(data, oldValues);
                 responseBody.put("status", 0);
                 JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(updatedData));
                 responseBody.put("data", dataNode);
             } else if (operationType.equals("add")) {
-                Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
-                Map<String, Object> addedData = addData(data);
+                Map<String, Object> addedData = addTestData(data);
                 responseBody.put("status", 0);
                 JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(addedData));
                 responseBody.put("data", dataNode);
             } else if (operationType.equals("remove")) {
-                Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
-                Map<String, Object> removedData = removeData(data);
+                Map<String, Object> removedData = removeTestData(data);
                 responseBody.put("status", 0);
                 JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(removedData));
                 responseBody.put("data", dataNode);
@@ -168,8 +136,46 @@ public class TestDataService extends HttpServlet {
         output.flush();
     }
 
+    private List<Map<String, Object>> getTestData(Criteria criteria, final List<String> sortBy) throws Exception {
+        List<Map<String, Object>> dataList = loader.load();
+        if (criteria != null) {
+            Filter filter = new Filter(criteria);
+            dataList = filter.doFilter(dataList);
+        }
+        if (sortBy != null) {
+            Collections.sort(dataList, new Comparator<Map<String, Object>>() {
+
+                @Override
+                public int compare(Map<String, Object> data1, Map<String, Object> data2) {
+                    for (String fieldName : sortBy) {
+                        boolean descending = fieldName.startsWith("-");
+                        fieldName = descending ? fieldName.substring(1) : fieldName;
+                        Object o1 = data1.get(fieldName);
+                        Object o2 = data2.get(fieldName);
+                        if (o1 == null || o2 == null || o1.equals(o2)) {
+                            continue;
+                        }
+                        if (NumberUtils.isNumber(o1.toString())) {
+                            Double d1 = Double.valueOf(o1.toString());
+                            Double d2 = Double.valueOf(o2.toString());
+                            return descending ? d2.compareTo(d1) : d1.compareTo(d2);
+                        } else {
+                            String s1 = o1.toString();
+                            String s2 = o2.toString();
+                            return descending ? s2.compareTo(s1) : s1.compareTo(s2);
+                        }
+                    }
+                    return 0;
+                }
+
+            });
+        }
+        return dataList;
+    }
+
     @SuppressWarnings("rawtypes")
-    private Map<String, Object> updateData(Map<String, Object> data, Map<String, Object> oldValues) throws Exception {
+    private Map<String, Object> updateTestData(Map<String, Object> data, Map<String, Object> oldValues)
+            throws Exception {
         Integer id = (Integer) data.get("id");
 
         for (Object key : data.keySet()) {
@@ -224,7 +230,7 @@ public class TestDataService extends HttpServlet {
     }
 
     @SuppressWarnings("rawtypes")
-    private Map<String, Object> addData(Map<String, Object> data) throws Exception {
+    private Map<String, Object> addTestData(Map<String, Object> data) throws Exception {
         String[] tags = data.get("tags").toString().split("\\s*,\\s*");
         String props = data.get("properties").toString();
         ObjectMapper mapper = new ObjectMapper();
@@ -240,7 +246,7 @@ public class TestDataService extends HttpServlet {
         return addedData;
     }
 
-    private Map<String, Object> removeData(Map<String, Object> data) throws Exception {
+    private Map<String, Object> removeTestData(Map<String, Object> data) throws Exception {
         Integer id = (Integer) data.get("id");
         if (client.deleteData(id)) {
             Map<String, Object> m = new HashMap<String, Object>();

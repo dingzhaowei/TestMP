@@ -33,7 +33,6 @@ import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DataSource;
-import com.smartgwt.client.data.OperationBinding;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.RestDataSource;
 import com.smartgwt.client.data.fields.DataSourceBooleanField;
@@ -41,9 +40,7 @@ import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSOperationType;
-import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
@@ -68,18 +65,15 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 public class TestEnvView extends VLayout {
 
+    private Map<String, DataSource> dataSources;
+
     private ListGrid testEnvGrid;
-
-    private DataSource testEnvSource = new TestEnvSource();
-
-    private DataSource taskSource = new TaskSource();
-
-    private DataSource executionSource = new ExecutionSource();
-
-    private DataSource hostSource = new HostSource();
 
     @Override
     protected void onInit() {
+        super.onInit();
+        prepareDataSources();
+
         testEnvGrid = new ListGrid() {
             @Override
             protected Canvas createRecordComponent(final ListGridRecord record, Integer colNum) {
@@ -123,7 +117,7 @@ public class TestEnvView extends VLayout {
         testEnvGrid.setWarnOnRemoval(true);
         testEnvGrid.setCanEdit(true);
         testEnvGrid.setAutoFetchData(true);
-        testEnvGrid.setDataSource(testEnvSource);
+        testEnvGrid.setDataSource(dataSources.get("testEnvDS"));
 
         ListGridField envIdField = new ListGridField("envId");
         envIdField.setHidden(true);
@@ -211,42 +205,32 @@ public class TestEnvView extends VLayout {
         addMember(controls);
     }
 
-    private class TestEnvSource extends RestDataSource {
+    private void prepareDataSources() {
+        dataSources = new HashMap<String, DataSource>();
 
-        TestEnvSource() {
-            setID("testEnvDS");
+        DataSource testEnvSource = ClientUtils.createDataSource("testEnvDS", ClientConfig.constants.testEnvService());
+        DataSourceIntegerField envIdField = new DataSourceIntegerField("envId");
+        envIdField.setPrimaryKey(true);
+        DataSourceTextField envNameField = new DataSourceTextField("envName");
+        DataSourceTextField refUrlField = new DataSourceTextField("refUrl");
+        testEnvSource.setFields(envIdField, envNameField, refUrlField);
+        dataSources.put("testEnvDS", testEnvSource);
 
-            DataSourceIntegerField envIdField = new DataSourceIntegerField("envId");
-            envIdField.setPrimaryKey(true);
+        DataSource hostSource = ClientUtils.createDataSource("hostDS", ClientConfig.constants.testEnvService());
+        DataSourceIntegerField hostIdField = new DataSourceIntegerField("hostId");
+        hostIdField.setPrimaryKey(true);
+        DataSourceTextField hostNameField = new DataSourceTextField("hostname");
+        hostNameField.setRequired(true);
+        DataSourceTextField userNameField = new DataSourceTextField("username");
+        DataSourceTextField passwordField = new DataSourceTextField("password");
+        hostSource.setFields(hostIdField, hostNameField, userNameField, passwordField);
+        dataSources.put("hostDS", hostSource);
 
-            DataSourceTextField envNameField = new DataSourceTextField("envName");
-            DataSourceTextField refUrlField = new DataSourceTextField("refUrl");
-            setFields(envIdField, envNameField, refUrlField);
+        DataSource taskSource = new TaskSource();
+        dataSources.put("taskDS", taskSource);
 
-            setDataFormat(DSDataFormat.JSON);
-            setClientOnly(false);
-
-            String baseUrl = GWT.getModuleBaseURL();
-            String servicePath = ClientConfig.constants.testEnvService();
-            String requestUrl = baseUrl + servicePath.substring(servicePath.lastIndexOf('/') + 1);
-            setDataURL(requestUrl);
-
-            OperationBinding fetch = new OperationBinding();
-            fetch.setOperationType(DSOperationType.FETCH);
-            fetch.setDataProtocol(DSProtocol.POSTMESSAGE);
-            fetch.setDataFormat(DSDataFormat.JSON);
-            OperationBinding add = new OperationBinding();
-            add.setOperationType(DSOperationType.ADD);
-            add.setDataProtocol(DSProtocol.POSTMESSAGE);
-            OperationBinding update = new OperationBinding();
-            update.setOperationType(DSOperationType.UPDATE);
-            update.setDataProtocol(DSProtocol.POSTMESSAGE);
-            OperationBinding remove = new OperationBinding();
-            remove.setOperationType(DSOperationType.REMOVE);
-            remove.setDataProtocol(DSProtocol.POSTMESSAGE);
-            setOperationBindings(fetch, add, update, remove);
-        }
-
+        DataSource executionSource = new ExecutionSource();
+        dataSources.put("executionDS", executionSource);
     }
 
     private class TasksWindow extends Window {
@@ -333,7 +317,7 @@ public class TestEnvView extends VLayout {
             taskGrid.setCanRemoveRecords(true);
             taskGrid.setWarnOnRemoval(true);
             taskGrid.setCanEdit(true);
-            taskGrid.setDataSource(taskSource);
+            taskGrid.setDataSource(dataSources.get("taskDS"));
 
             ListGridField taskIdField = new ListGridField("taskId");
             taskIdField.setHidden(true);
@@ -397,7 +381,7 @@ public class TestEnvView extends VLayout {
             taskGrid.setFields(taskIdField, taskNameField, executionField, statusField, runField, scheduleField,
                     lastRunTimeField);
 
-            taskGrid.fetchRelatedData(envRecord, testEnvSource);
+            taskGrid.fetchRelatedData(envRecord, dataSources.get("testEnvDS"));
 
             layout.addMember(taskGrid);
 
@@ -557,65 +541,6 @@ public class TestEnvView extends VLayout {
 
     }
 
-    private class TaskSource extends RestDataSource {
-
-        String currentEditingEnv;
-
-        TaskSource() {
-            setID("taskDS");
-
-            DataSourceIntegerField taskIdField = new DataSourceIntegerField("taskId");
-            taskIdField.setPrimaryKey(true);
-
-            DataSourceTextField envNameField = new DataSourceTextField("envName");
-            envNameField.setForeignKey("testEnvDS.envName");
-
-            DataSourceTextField taskNameField = new DataSourceTextField("taskName");
-            DataSourceImageField statusField = new DataSourceImageField("status");
-            DataSourceTextField scheduleField = new DataSourceTextField("schedule");
-            DataSourceTextField lastRunTimeField = new DataSourceTextField("lastRunTime");
-
-            setFields(taskIdField, taskNameField, envNameField, statusField, scheduleField, lastRunTimeField);
-
-            setDataFormat(DSDataFormat.JSON);
-            setClientOnly(false);
-
-            String baseUrl = GWT.getModuleBaseURL();
-            String servicePath = ClientConfig.constants.testEnvService();
-            String requestUrl = baseUrl + servicePath.substring(servicePath.lastIndexOf('/') + 1);
-            setDataURL(requestUrl);
-
-            OperationBinding fetch = new OperationBinding();
-            fetch.setOperationType(DSOperationType.FETCH);
-            fetch.setDataProtocol(DSProtocol.POSTMESSAGE);
-            fetch.setDataFormat(DSDataFormat.JSON);
-            OperationBinding add = new OperationBinding();
-            add.setOperationType(DSOperationType.ADD);
-            add.setDataProtocol(DSProtocol.POSTMESSAGE);
-            OperationBinding update = new OperationBinding();
-            update.setOperationType(DSOperationType.UPDATE);
-            update.setDataProtocol(DSProtocol.POSTMESSAGE);
-            OperationBinding remove = new OperationBinding();
-            remove.setOperationType(DSOperationType.REMOVE);
-            remove.setDataProtocol(DSProtocol.POSTMESSAGE);
-            setOperationBindings(fetch, add, update, remove);
-        }
-
-        void setCurrentEditingEnv(String currentEditingEnv) {
-            this.currentEditingEnv = currentEditingEnv;
-        }
-
-        @Override
-        protected Object transformRequest(DSRequest dsRequest) {
-            if (dsRequest.getOperationType() == DSOperationType.ADD) {
-                Record record = new Record(dsRequest.getData());
-                record.setAttribute("envName", currentEditingEnv);
-                dsRequest.setData(record);
-            }
-            return super.transformRequest(dsRequest);
-        }
-    }
-
     private class ExecutionsWindow extends Window {
 
         ExecutionsWindow(final ListGridRecord taskRecord) {
@@ -674,7 +599,7 @@ public class TestEnvView extends VLayout {
             executionGrid.setCanRemoveRecords(true);
             executionGrid.setWarnOnRemoval(true);
             executionGrid.setCanEdit(true);
-            executionGrid.setDataSource(executionSource);
+            executionGrid.setDataSource(dataSources.get("executionDS"));
 
             ListGridField selectedField = new ListGridField("selected", ClientConfig.messages.onOrOff(), 40);
             selectedField.setType(ListGridFieldType.BOOLEAN);
@@ -682,7 +607,7 @@ public class TestEnvView extends VLayout {
 
             ListGridField hostField = new ListGridField("host", ClientConfig.messages.host(), 150);
             hostField.setRequired(true);
-            hostField.setOptionDataSource(hostSource);
+            hostField.setOptionDataSource(dataSources.get("hostDS"));
             hostField.setDisplayField("hostname");
             hostField.setValueField("hostname");
             hostField.setDefaultValue("localhost");
@@ -743,77 +668,6 @@ public class TestEnvView extends VLayout {
 
     }
 
-    private class ExecutionSource extends RestDataSource {
-
-        String currentEditingEnv;
-
-        String currentEditingTask;
-
-        ExecutionSource() {
-            setID("executionDS");
-
-            DataSourceIntegerField executionIdField = new DataSourceIntegerField("executionId");
-            executionIdField.setPrimaryKey(true);
-
-            DataSourceTextField envNameField = new DataSourceTextField("envName");
-            envNameField.setForeignKey("taskDS.envName");
-
-            DataSourceTextField taskNameField = new DataSourceTextField("taskName");
-            taskNameField.setForeignKey("taskDS.taskName");
-
-            DataSourceTextField hostField = new DataSourceTextField("host");
-            DataSourceTextField workingDirField = new DataSourceTextField("workingDir");
-            DataSourceTextField commandField = new DataSourceTextField("command");
-            DataSourceBooleanField selectedField = new DataSourceBooleanField("selected");
-            DataSourceIntegerField retCodeField = new DataSourceIntegerField("retCode");
-            DataSourceTextField lastRunTimeField = new DataSourceTextField("lastRunTime");
-            setFields(executionIdField, selectedField, envNameField, taskNameField, hostField, workingDirField,
-                    commandField, retCodeField, lastRunTimeField);
-
-            setDataFormat(DSDataFormat.JSON);
-            setClientOnly(false);
-
-            String baseUrl = GWT.getModuleBaseURL();
-            String servicePath = ClientConfig.constants.testEnvService();
-            String requestUrl = baseUrl + servicePath.substring(servicePath.lastIndexOf('/') + 1);
-            setDataURL(requestUrl);
-
-            OperationBinding fetch = new OperationBinding();
-            fetch.setOperationType(DSOperationType.FETCH);
-            fetch.setDataProtocol(DSProtocol.POSTMESSAGE);
-            fetch.setDataFormat(DSDataFormat.JSON);
-            OperationBinding add = new OperationBinding();
-            add.setOperationType(DSOperationType.ADD);
-            add.setDataProtocol(DSProtocol.POSTMESSAGE);
-            OperationBinding update = new OperationBinding();
-            update.setOperationType(DSOperationType.UPDATE);
-            update.setDataProtocol(DSProtocol.POSTMESSAGE);
-            OperationBinding remove = new OperationBinding();
-            remove.setOperationType(DSOperationType.REMOVE);
-            remove.setDataProtocol(DSProtocol.POSTMESSAGE);
-            setOperationBindings(fetch, add, update, remove);
-        }
-
-        void setCurrentEditingEnv(String currentEditingEnv) {
-            this.currentEditingEnv = currentEditingEnv;
-        }
-
-        void setCurrentEditingTask(String currentEditingTask) {
-            this.currentEditingTask = currentEditingTask;
-        }
-
-        @Override
-        protected Object transformRequest(DSRequest dsRequest) {
-            if (dsRequest.getOperationType() == DSOperationType.ADD) {
-                Record record = new Record(dsRequest.getData());
-                record.setAttribute("envName", currentEditingEnv);
-                record.setAttribute("taskName", currentEditingTask);
-                dsRequest.setData(record);
-            }
-            return super.transformRequest(dsRequest);
-        }
-    }
-
     private class HostsWindow extends Window {
 
         HostsWindow() {
@@ -834,7 +688,7 @@ public class TestEnvView extends VLayout {
             hostGrid.setWarnOnRemoval(true);
             hostGrid.setCanEdit(true);
             hostGrid.setAutoFetchData(true);
-            hostGrid.setDataSource(hostSource);
+            hostGrid.setDataSource(dataSources.get("hostDS"));
 
             ListGridField hostNameField = new ListGridField("hostname", ClientConfig.messages.host(), 200);
             hostNameField.setRequired(true);
@@ -879,46 +733,6 @@ public class TestEnvView extends VLayout {
 
             layout.addMember(controls);
             addItem(layout);
-        }
-    }
-
-    private class HostSource extends RestDataSource {
-
-        HostSource() {
-            setID("hostDS");
-
-            DataSourceIntegerField hostIdField = new DataSourceIntegerField("hostId");
-            hostIdField.setPrimaryKey(true);
-
-            DataSourceTextField hostNameField = new DataSourceTextField("hostname");
-            hostNameField.setRequired(true);
-
-            DataSourceTextField userNameField = new DataSourceTextField("username");
-            DataSourceTextField passwordField = new DataSourceTextField("password");
-            setFields(hostIdField, hostNameField, userNameField, passwordField);
-
-            setDataFormat(DSDataFormat.JSON);
-            setClientOnly(false);
-
-            String baseUrl = GWT.getModuleBaseURL();
-            String servicePath = ClientConfig.constants.testEnvService();
-            String requestUrl = baseUrl + servicePath.substring(servicePath.lastIndexOf('/') + 1);
-            setDataURL(requestUrl);
-
-            OperationBinding fetch = new OperationBinding();
-            fetch.setOperationType(DSOperationType.FETCH);
-            fetch.setDataProtocol(DSProtocol.POSTMESSAGE);
-            fetch.setDataFormat(DSDataFormat.JSON);
-            OperationBinding add = new OperationBinding();
-            add.setOperationType(DSOperationType.ADD);
-            add.setDataProtocol(DSProtocol.POSTMESSAGE);
-            OperationBinding update = new OperationBinding();
-            update.setOperationType(DSOperationType.UPDATE);
-            update.setDataProtocol(DSProtocol.POSTMESSAGE);
-            OperationBinding remove = new OperationBinding();
-            remove.setOperationType(DSOperationType.REMOVE);
-            remove.setDataProtocol(DSProtocol.POSTMESSAGE);
-            setOperationBindings(fetch, add, update, remove);
         }
     }
 
@@ -1013,6 +827,90 @@ public class TestEnvView extends VLayout {
 
         private String escapeHtml(Object value) {
             return value.toString().replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+        }
+    }
+
+    private class TaskSource extends RestDataSource {
+
+        String currentEditingEnv;
+
+        TaskSource() {
+            DataSourceIntegerField taskIdField = new DataSourceIntegerField("taskId");
+            taskIdField.setPrimaryKey(true);
+
+            DataSourceTextField envNameField = new DataSourceTextField("envName");
+            envNameField.setForeignKey("testEnvDS.envName");
+
+            DataSourceTextField taskNameField = new DataSourceTextField("taskName");
+            DataSourceImageField statusField = new DataSourceImageField("status");
+            DataSourceTextField scheduleField = new DataSourceTextField("schedule");
+            DataSourceTextField lastRunTimeField = new DataSourceTextField("lastRunTime");
+
+            setFields(taskIdField, taskNameField, envNameField, statusField, scheduleField, lastRunTimeField);
+
+            ClientUtils.unifyDataSourceSetting(this, "taskDS", ClientConfig.constants.testEnvService());
+        }
+
+        void setCurrentEditingEnv(String currentEditingEnv) {
+            this.currentEditingEnv = currentEditingEnv;
+        }
+
+        @Override
+        protected Object transformRequest(DSRequest dsRequest) {
+            if (dsRequest.getOperationType() == DSOperationType.ADD) {
+                Record record = new Record(dsRequest.getData());
+                record.setAttribute("envName", currentEditingEnv);
+                dsRequest.setData(record);
+            }
+            return super.transformRequest(dsRequest);
+        }
+    }
+
+    private class ExecutionSource extends RestDataSource {
+
+        String currentEditingEnv;
+
+        String currentEditingTask;
+
+        ExecutionSource() {
+            DataSourceIntegerField executionIdField = new DataSourceIntegerField("executionId");
+            executionIdField.setPrimaryKey(true);
+
+            DataSourceTextField envNameField = new DataSourceTextField("envName");
+            envNameField.setForeignKey("taskDS.envName");
+
+            DataSourceTextField taskNameField = new DataSourceTextField("taskName");
+            taskNameField.setForeignKey("taskDS.taskName");
+
+            DataSourceTextField hostField = new DataSourceTextField("host");
+            DataSourceTextField workingDirField = new DataSourceTextField("workingDir");
+            DataSourceTextField commandField = new DataSourceTextField("command");
+            DataSourceBooleanField selectedField = new DataSourceBooleanField("selected");
+            DataSourceIntegerField retCodeField = new DataSourceIntegerField("retCode");
+            DataSourceTextField lastRunTimeField = new DataSourceTextField("lastRunTime");
+            setFields(executionIdField, selectedField, envNameField, taskNameField, hostField, workingDirField,
+                    commandField, retCodeField, lastRunTimeField);
+
+            ClientUtils.unifyDataSourceSetting(this, "executionDS", ClientConfig.constants.testEnvService());
+        }
+
+        void setCurrentEditingEnv(String currentEditingEnv) {
+            this.currentEditingEnv = currentEditingEnv;
+        }
+
+        void setCurrentEditingTask(String currentEditingTask) {
+            this.currentEditingTask = currentEditingTask;
+        }
+
+        @Override
+        protected Object transformRequest(DSRequest dsRequest) {
+            if (dsRequest.getOperationType() == DSOperationType.ADD) {
+                Record record = new Record(dsRequest.getData());
+                record.setAttribute("envName", currentEditingEnv);
+                record.setAttribute("taskName", currentEditingTask);
+                dsRequest.setData(record);
+            }
+            return super.transformRequest(dsRequest);
         }
     }
 }

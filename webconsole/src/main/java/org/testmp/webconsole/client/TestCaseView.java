@@ -425,17 +425,14 @@ public class TestCaseView extends VLayout {
     private void prepareDataSources() {
         dataSources = new HashMap<String, DataSource>();
 
-        DataSource testCaseSource = WebConsole.createDataSource("testCaseDS", ClientConfig.constants.testCaseService());
+        DataSource testCaseSource = ClientUtils.createDataSource("testCaseDS", ClientConfig.constants.testCaseService());
         DataSourceIntegerField idField = new DataSourceIntegerField("id");
         idField.setHidden(true);
         idField.setPrimaryKey(true);
-
         DataSourceTextField projectField = new DataSourceTextField("project", ClientConfig.messages.project());
         projectField.setRequired(true);
-
         DataSourceTextField nameField = new DataSourceTextField("name", ClientConfig.messages.name());
         nameField.setRequired(true);
-
         DataSourceTextField tagsField = new DataSourceTextField("tags", ClientConfig.messages.groups());
         DataSourceTextField descriptionField = new DataSourceTextField("description",
                 ClientConfig.messages.description(), 500);
@@ -457,7 +454,7 @@ public class TestCaseView extends VLayout {
                 createTimeField, lastModifyTimeField);
         dataSources.put("testCaseDS", testCaseSource);
 
-        DataSource testCaseFilterSource = WebConsole.createDataSource("testCaseFilterDS",
+        DataSource testCaseFilterSource = ClientUtils.createDataSource("testCaseFilterDS",
                 ClientConfig.constants.userService());
         DataSourceTextField userNameField = new DataSourceTextField("userName");
         userNameField.setPrimaryKey(true);
@@ -468,7 +465,7 @@ public class TestCaseView extends VLayout {
         testCaseFilterSource.setFields(userNameField, filterNameField, criteriaField, isDefaultField);
         dataSources.put("testCaseFilterDS", testCaseFilterSource);
 
-        DataSource testProjectSource = WebConsole.createDataSource("testProjectDS",
+        DataSource testProjectSource = ClientUtils.createDataSource("testProjectDS",
                 ClientConfig.constants.testCaseService());
         DataSourceTextField projectNameField = new DataSourceTextField("project");
         testProjectSource.setFields(projectNameField);

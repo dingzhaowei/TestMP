@@ -13,11 +13,13 @@
 
 package org.testmp.webconsole.client;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.testmp.webconsole.client.FilterWindow.FilterType;
 import org.testmp.webconsole.shared.ClientConfig;
 import org.testmp.webconsole.shared.ClientUtils;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsonUtils;
 import com.smartgwt.client.data.AdvancedCriteria;
@@ -26,14 +28,10 @@ import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
-import com.smartgwt.client.data.OperationBinding;
-import com.smartgwt.client.data.RestDataSource;
+import com.smartgwt.client.data.fields.DataSourceBooleanField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.DSDataFormat;
-import com.smartgwt.client.types.DSOperationType;
-import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.types.FetchMode;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.IButton;
@@ -53,9 +51,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 public class TestDataView extends VLayout {
 
-    private DataSource testDataSource;
-
-    private DataSource testDataFilterSource;
+    private Map<String, DataSource> dataSources;
 
     private ListGrid testDataGrid;
 
@@ -65,7 +61,7 @@ public class TestDataView extends VLayout {
             testDataGrid.fetchData();
         } else {
             Criteria criteria = new Criteria("isDefault", "true");
-            testDataFilterSource.fetchData(criteria, new DSCallback() {
+            dataSources.get("testDataFilterDS").fetchData(criteria, new DSCallback() {
 
                 @Override
                 public void execute(DSResponse response, Object rawData, DSRequest request) {
@@ -87,15 +83,12 @@ public class TestDataView extends VLayout {
     @Override
     protected void onInit() {
         super.onInit();
-
-        testDataSource = new TestDataSource();
-
-        testDataFilterSource = ClientUtils.createFilterSource("testDataFilterDS");
+        prepareDataSources();
 
         testDataGrid = new ListGrid();
         testDataGrid.setWidth("99%");
         testDataGrid.setLayoutAlign(Alignment.CENTER);
-        testDataGrid.setDataSource(testDataSource);
+        testDataGrid.setDataSource(dataSources.get("testDataDS"));
         testDataGrid.setDataFetchMode(FetchMode.PAGED);
         testDataGrid.setFixedRecordHeights(false);
         testDataGrid.setCanRemoveRecords(true);
@@ -171,7 +164,8 @@ public class TestDataView extends VLayout {
 
             @Override
             public void onClick(ClickEvent event) {
-                FilterWindow window = new FilterWindow(FilterType.TEST_DATA, testDataGrid, testDataFilterSource);
+                DataSource ds = dataSources.get("testDataFilterDS");
+                FilterWindow window = new FilterWindow(FilterType.TEST_DATA, testDataGrid, ds);
                 window.show();
             }
 
@@ -202,6 +196,37 @@ public class TestDataView extends VLayout {
         controls.addMember(reportButton);
 
         addMember(controls);
+    }
+
+    private void prepareDataSources() {
+        dataSources = new HashMap<String, DataSource>();
+
+        DataSource testDataSource = ClientUtils.createDataSource("testDataDS", ClientConfig.constants.testDataService());
+        DataSourceIntegerField idField = new DataSourceIntegerField("id", "ID");
+        idField.setPrimaryKey(true);
+        DataSourceTextField tagsField = new DataSourceTextField("tags", ClientConfig.messages.tags());
+        tagsField.setRequired(true);
+        DataSourceTextField propertiesField = new DataSourceTextField("properties", ClientConfig.messages.properties(),
+                Integer.MAX_VALUE);
+        propertiesField.setRequired(true);
+        DataSourceTextField createTimeField = new DataSourceTextField("createTime", ClientConfig.messages.createTime());
+        createTimeField.setCanFilter(false);
+        DataSourceTextField lastModifyTimeField = new DataSourceTextField("lastModifyTime",
+                ClientConfig.messages.lastModifyTime());
+        lastModifyTimeField.setCanFilter(false);
+        testDataSource.setFields(idField, tagsField, propertiesField, createTimeField, lastModifyTimeField);
+        dataSources.put("testDataDS", testDataSource);
+
+        DataSource testDataFilterSource = ClientUtils.createDataSource("testDataFilterDS",
+                ClientConfig.constants.userService());
+        DataSourceTextField userNameField = new DataSourceTextField("userName");
+        userNameField.setPrimaryKey(true);
+        DataSourceTextField filterNameField = new DataSourceTextField("filterName");
+        filterNameField.setPrimaryKey(true);
+        DataSourceTextField criteriaField = new DataSourceTextField("criteria");
+        DataSourceBooleanField isDefaultField = new DataSourceBooleanField("isDefault");
+        testDataFilterSource.setFields(userNameField, filterNameField, criteriaField, isDefaultField);
+        dataSources.put("testDataFilterDS", testDataFilterSource);
     }
 
     private class NewDataWindow extends Window {
@@ -275,55 +300,6 @@ public class TestDataView extends VLayout {
             controls.addMember(cancelButton);
         }
 
-    }
-
-    private class TestDataSource extends RestDataSource {
-
-        TestDataSource() {
-            setID("testDataDS");
-            setDataFormat(DSDataFormat.JSON);
-            setClientOnly(false);
-
-            String baseUrl = GWT.getModuleBaseURL();
-            String servicePath = ClientConfig.constants.testDataService();
-            String requestUrl = baseUrl + servicePath.substring(servicePath.lastIndexOf('/') + 1);
-            setDataURL(requestUrl);
-
-            OperationBinding fetch = new OperationBinding();
-            fetch.setOperationType(DSOperationType.FETCH);
-            fetch.setDataProtocol(DSProtocol.POSTMESSAGE);
-            fetch.setDataFormat(DSDataFormat.JSON);
-            OperationBinding add = new OperationBinding();
-            add.setOperationType(DSOperationType.ADD);
-            add.setDataProtocol(DSProtocol.POSTMESSAGE);
-            OperationBinding update = new OperationBinding();
-            update.setOperationType(DSOperationType.UPDATE);
-            update.setDataProtocol(DSProtocol.POSTMESSAGE);
-            OperationBinding remove = new OperationBinding();
-            remove.setOperationType(DSOperationType.REMOVE);
-            remove.setDataProtocol(DSProtocol.POSTMESSAGE);
-            setOperationBindings(fetch, add, update, remove);
-
-            DataSourceIntegerField idField = new DataSourceIntegerField("id", "ID");
-            idField.setPrimaryKey(true);
-
-            DataSourceTextField tagsField = new DataSourceTextField("tags", ClientConfig.messages.tags());
-            tagsField.setRequired(true);
-
-            DataSourceTextField propertiesField = new DataSourceTextField("properties",
-                    ClientConfig.messages.properties(), Integer.MAX_VALUE);
-            propertiesField.setRequired(true);
-
-            DataSourceTextField createTimeField = new DataSourceTextField("createTime",
-                    ClientConfig.messages.createTime());
-            createTimeField.setCanFilter(false);
-
-            DataSourceTextField lastModifyTimeField = new DataSourceTextField("lastModifyTime",
-                    ClientConfig.messages.lastModifyTime());
-            lastModifyTimeField.setCanFilter(false);
-
-            setFields(idField, tagsField, propertiesField, createTimeField, lastModifyTimeField);
-        }
     }
 
     private String escapeHtml(Object value) {
