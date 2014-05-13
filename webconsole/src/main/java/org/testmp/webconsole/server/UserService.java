@@ -19,6 +19,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -107,6 +108,7 @@ public class UserService extends HttpServlet {
         String operationType = dsRequest.get("operationType").toString();
         if (operationType.equals("fetch")) {
             List<String> nameList = client.getPropertyValues("name", "User");
+            Collections.sort(nameList);
             List<Object> dataList = new ArrayList<Object>();
             for (String name : nameList) {
                 Map<String, Object> data = new HashMap<String, Object>();
@@ -251,17 +253,6 @@ public class UserService extends HttpServlet {
                 JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(data));
                 responseBody.put("data", dataNode);
             }
-        } else if (settingType.equalsIgnoreCase("darReport")) {
-            if (operationType.equals("fetch")) {
-                String userName = data.get("userName").toString();
-                List<Object> dataList = getDarReportSettings(userName);
-                populateResponseBody(responseBody, dataList);
-            } else if (operationType.equals("update")) {
-                updateDarReportSettings(data);
-                responseBody.put("status", 0);
-                JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(data));
-                responseBody.put("data", dataNode);
-            }
         } else if (settingType.equalsIgnoreCase("esrReport")) {
             if (operationType.equals("fetch")) {
                 String userName = data.get("userName").toString();
@@ -339,37 +330,6 @@ public class UserService extends HttpServlet {
         reportSettings.setRecipients(tmrRecipients);
         reportSettings.setSubject(tmrSubject);
         client.addPropertyToData(userInfo.getId(), "tmrReportSettings", reportSettings);
-    }
-
-    private List<Object> getDarReportSettings(String userName) throws DataStoreClientException {
-        User user = getUserInfo(userName).getData();
-        List<Object> dataList = new ArrayList<Object>();
-        ReportSettings reportSettings = user.getDarReportSettings();
-        String recipients = reportSettings.getRecipients();
-        if (StringUtils.isBlank(recipients)) {
-            recipients = (String) getServletContext().getAttribute("dataAnalyticsReportRecipients");
-        }
-        String subject = reportSettings.getSubject();
-        if (StringUtils.isBlank(subject)) {
-            subject = (String) getServletContext().getAttribute("dataAnalyticsReportSubject");
-        }
-        Map<String, Object> settings = new HashMap<String, Object>();
-        settings.put("darRecipients", recipients);
-        settings.put("darSubject", subject);
-        settings.put("userName", user.getName());
-        dataList.add(settings);
-        return dataList;
-    }
-
-    private void updateDarReportSettings(Map<String, Object> data) throws DataStoreClientException {
-        String userName = data.get("userName").toString();
-        String darRecipients = (String) data.get("darRecipients");
-        String darSubject = (String) data.get("darSubject");
-        DataInfo<User> userInfo = getUserInfo(userName);
-        ReportSettings reportSettings = userInfo.getData().getDarReportSettings();
-        reportSettings.setRecipients(darRecipients);
-        reportSettings.setSubject(darSubject);
-        client.addPropertyToData(userInfo.getId(), "darReportSettings", reportSettings);
     }
 
     private List<Object> getEsrReportSettings(String userName) throws DataStoreClientException {

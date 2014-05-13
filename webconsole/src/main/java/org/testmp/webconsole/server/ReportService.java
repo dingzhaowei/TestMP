@@ -55,14 +55,11 @@ import org.codehaus.jackson.type.TypeReference;
 import org.testmp.datastore.client.DataInfo;
 import org.testmp.datastore.client.DataStoreClient;
 import org.testmp.webconsole.model.User;
-import org.testmp.webconsole.server.Filter.Criteria;
 
 @SuppressWarnings("serial")
 public class ReportService extends HttpServlet {
 
     private static final String TEST_METRICS_REPORT = "Test Metrics";
-
-    private static final String DATA_ANALYTICS_REPORT = "Data Analytics";
 
     private static final String ENVIRONMENT_STATUS_REPORT = "Environment Status";
 
@@ -110,8 +107,6 @@ public class ReportService extends HttpServlet {
                 String reportFileName = null;
                 if (reportType.equals(TEST_METRICS_REPORT)) {
                     reportFileName = generateTestMetricsReport(params);
-                } else if (reportType.equals(DATA_ANALYTICS_REPORT)) {
-                    reportFileName = generateDataAnalyticsReport(params);
                 } else if (reportType.equals(ENVIRONMENT_STATUS_REPORT)) {
                     reportFileName = generateEnvStatusReport(params);
                 }
@@ -200,15 +195,6 @@ public class ReportService extends HttpServlet {
             if (subject == null) {
                 subject = getServletContext().getAttribute("testMetricsReportSubject");
             }
-        } else if (reportType.equals(DATA_ANALYTICS_REPORT)) {
-            recipients = user.getDarReportSettings().getRecipients();
-            if (recipients == null) {
-                recipients = getServletContext().getAttribute("dataAnalyticsReportRecipients");
-            }
-            subject = user.getDarReportSettings().getSubject();
-            if (subject == null) {
-                subject = getServletContext().getAttribute("dataAnalyticsReportSubject");
-            }
         } else if (reportType.equals(ENVIRONMENT_STATUS_REPORT)) {
             recipients = user.getEsrReportSettings().getRecipients();
             if (recipients == null) {
@@ -290,46 +276,6 @@ public class ReportService extends HttpServlet {
             context.put("filename", reportFile.getName());
             context.put("messages", getLocalizedMessages());
             Template template = ve.getTemplate("testMetricsReport.vm", "UTF-8");
-            template.merge(context, writer);
-            return reportFile.getName();
-        } finally {
-            if (writer != null) {
-                writer.close();
-            }
-        }
-    }
-
-    @SuppressWarnings("rawtypes")
-    private String generateDataAnalyticsReport(HashMap<String, String> params) throws Exception {
-        VelocityEngine ve = new VelocityEngine();
-        initVelocityEngine(ve);
-
-        ObjectMapper mapper = new ObjectMapper();
-        Criteria criteria = Criteria.valueOf(mapper.writeValueAsString(params.get("testDataCriteria")));
-
-        String testDataStoreUrl = (String) getServletContext().getAttribute("testDataStoreUrl");
-        DataAssemblyStrategy strategy = new TestDataAssemblyStrategy();
-        DataLoader<Map> loader = new DataLoader<Map>(testDataStoreUrl, Map.class, strategy);
-        List<Map<String, Object>> dataList = loader.load();
-
-        if (criteria != null) {
-            Filter filter = new Filter(criteria);
-            dataList = filter.doFilter(dataList);
-        }
-
-        File reportDir = new File(getRealPath(baseDir + "/reports"));
-        File reportFile = File.createTempFile("dataAnalyticsReport", ".html", reportDir);
-        Writer writer = new OutputStreamWriter(new FileOutputStream(reportFile), "UTF-8");
-
-        Map<String, Object> dataAnalyticsResult = new HashMap<String, Object>();
-        dataAnalyticsResult.put("totalData", dataList.size());
-
-        try {
-            VelocityContext context = new VelocityContext();
-            context.put("dataAnalyticsResult", dataAnalyticsResult);
-            context.put("baseUrl", baseUrl);
-            context.put("messages", getLocalizedMessages());
-            Template template = ve.getTemplate("dataAnalyticsReport.vm", "UTF-8");
             template.merge(context, writer);
             return reportFile.getName();
         } finally {

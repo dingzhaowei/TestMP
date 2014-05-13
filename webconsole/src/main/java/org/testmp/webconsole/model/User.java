@@ -32,8 +32,6 @@ public class User {
 
     private ReportSettings tmrReportSettings = new ReportSettings();
 
-    private ReportSettings darReportSettings = new ReportSettings();
-
     private ReportSettings esrReportSettings = new ReportSettings();
 
     private MailboxSettings mailboxSettings = new MailboxSettings();
@@ -76,14 +74,6 @@ public class User {
 
     public void setTmrReportSettings(ReportSettings reportSettings) {
         this.tmrReportSettings = reportSettings;
-    }
-
-    public ReportSettings getDarReportSettings() {
-        return darReportSettings;
-    }
-
-    public void setDarReportSettings(ReportSettings reportSettings) {
-        this.darReportSettings = reportSettings;
     }
 
     public ReportSettings getEsrReportSettings() {

@@ -74,12 +74,14 @@ public class WebConsole implements EntryPoint {
             @Override
             protected Object transformRequest(DSRequest dsRequest) {
                 if (dsRequest.getAttributeAsString("operationType").equals("fetch")) {
-                    Criteria criteria = dsRequest.getCriteria();
-                    if (criteria == null) {
-                        criteria = new Criteria();
+                    if (ClientConfig.currentUser != null) {
+                        Criteria criteria = dsRequest.getCriteria();
+                        if (criteria == null) {
+                            criteria = new Criteria();
+                        }
+                        criteria.setAttribute("userName", ClientConfig.currentUser);
+                        dsRequest.setCriteria(criteria);
                     }
-                    criteria.setAttribute("userName", ClientConfig.currentUser);
-                    dsRequest.setCriteria(criteria);
                 }
                 return super.transformRequest(dsRequest);
             }
@@ -261,16 +263,6 @@ public class WebConsole implements EntryPoint {
         tmrHiddenField.setHidden(true);
         tmrReportSettingsSource.setFields(tmrHiddenField, tmrRecipientsField, tmrSubjectField);
         dataSources.put("tmrReportSettingsDS", tmrReportSettingsSource);
-
-        DataSource darReportSettingsSource = createDataSource("darReportSettingsDS",
-                ClientConfig.constants.userService());
-        DataSourceTextField darRecipientsField = new DataSourceTextField("darRecipients",
-                ClientConfig.messages.recipients());
-        DataSourceTextField darSubjectField = new DataSourceTextField("darSubjet", ClientConfig.messages.subject());
-        DataSourceTextField darHiddenField = new DataSourceTextField("userName");
-        darHiddenField.setHidden(true);
-        darReportSettingsSource.setFields(darHiddenField, darRecipientsField, darSubjectField);
-        dataSources.put("darReportSettingsDS", darReportSettingsSource);
 
         DataSource esrReportSettingsSource = createDataSource("esrReportSettingsDS",
                 ClientConfig.constants.userService());
@@ -467,21 +459,6 @@ public class WebConsole implements EntryPoint {
             tmrForm.setDataSource(dataSources.get("tmrReportSettingsDS"));
             tmrForm.setAutoFetchData(true);
             layout.addMember(tmrForm);
-
-            DynamicForm darForm = new DynamicForm();
-            forms.put("darReportSettingsForm", darForm);
-            TextItem darRecipients = new TextItem("darRecipients", ClientConfig.messages.recipients());
-            darRecipients.setWidth(200);
-            TextItem darSubject = new TextItem("darSubject", ClientConfig.messages.subject());
-            darSubject.setWidth(200);
-            darForm.setFields(darRecipients, darSubject);
-            darForm.setGroupTitle(ClientConfig.messages.dataAnalyticsReport());
-            darForm.setIsGroup(true);
-            darForm.setSize("80%", "33%");
-            darForm.setLayoutAlign(Alignment.CENTER);
-            darForm.setDataSource(dataSources.get("darReportSettingsDS"));
-            darForm.setAutoFetchData(true);
-            layout.addMember(darForm);
 
             DynamicForm esrForm = new DynamicForm();
             forms.put("esrReportSettingsForm", esrForm);

@@ -13,18 +13,13 @@
 
 package org.testmp.webconsole.client;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.testmp.webconsole.client.FilterWindow.FilterType;
-import org.testmp.webconsole.client.ReportWindow.ReportType;
 import org.testmp.webconsole.shared.ClientConfig;
 import org.testmp.webconsole.shared.ClientUtils;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsonUtils;
-import com.google.gwt.json.client.JSONObject;
 import com.smartgwt.client.data.AdvancedCriteria;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
@@ -201,13 +196,6 @@ public class TestDataView extends VLayout {
 
             @Override
             public void onClick(ClickEvent event) {
-                Map<String, Object> params = new HashMap<String, Object>();
-                params.put("action", "create");
-                AdvancedCriteria criteria = ClientConfig.getCurrentFilterCriteria(FilterType.TEST_DATA);
-                String criteriaJson = new JSONObject(criteria.getJsObj()).toString();
-                params.put("testDataCriteria", criteriaJson);
-                ReportWindow reportWindow = new ReportWindow();
-                reportWindow.showReport(ReportType.DATA_ANALYTICS, params);
             }
 
         });
@@ -220,7 +208,7 @@ public class TestDataView extends VLayout {
 
         NewDataWindow() {
             setWidth(400);
-            setHeight(250);
+            setHeight(225);
             setTitle(ClientConfig.messages.newTestData());
             ClientUtils.unifySimpleWindowStyle(this);
 

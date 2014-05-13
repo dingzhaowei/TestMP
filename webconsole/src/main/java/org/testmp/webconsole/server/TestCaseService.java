@@ -17,6 +17,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,14 +83,21 @@ public class TestCaseService extends HttpServlet {
 
         ObjectNode dsResponse = mapper.createObjectNode();
         ObjectNode responseBody = dsResponse.putObject("response");
+        String dataSource = dsRequest.get("dataSource").toString();
         String operationType = dsRequest.get("operationType").toString();
+        Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
+
         try {
             if (operationType.equals("fetch")) {
-                List<Map<String, Object>> dataList = loader.load("TestCase");
-                Criteria criteria = Criteria.valueOf(mapper.writeValueAsString(dsRequest.get("data")));
-                if (criteria != null) {
-                    Filter filter = new Filter(criteria);
-                    dataList = filter.doFilter(dataList);
+                List<Map<String, Object>> dataList = null;
+                if (dataSource.equals("testCaseDS")) {
+                    // TODO: filter by userName
+                    data.remove("userName");
+                    Criteria criteria = Criteria.valueOf(mapper.writeValueAsString(data));
+                    dataList = getTestCases(criteria);
+                } else if (dataSource.equals("testProjectDS")) {
+                    Criteria criteria = Criteria.valueOf(mapper.writeValueAsString(data));
+                    dataList = getTestProjects(criteria);
                 }
                 responseBody.put("status", 0);
                 responseBody.put("startRow", 0);
@@ -96,17 +105,20 @@ public class TestCaseService extends HttpServlet {
                 responseBody.put("totalRows", dataList.size());
                 JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(dataList));
                 responseBody.put("data", dataNode);
-            } else if (operationType.equals("update")) {
-                Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
-                Map<String, Object> updatedData = updateData(data);
+            } else if (operationType.equals("add")) {
+                Map<String, Object> addedCase = addTestCase(data);
                 responseBody.put("status", 0);
-                JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(updatedData));
+                JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(addedCase));
+                responseBody.put("data", dataNode);
+            } else if (operationType.equals("update")) {
+                Map<String, Object> updatedCase = updateTestCase(data);
+                responseBody.put("status", 0);
+                JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(updatedCase));
                 responseBody.put("data", dataNode);
             } else if (operationType.equals("remove")) {
-                Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
-                Map<String, Object> removedData = removeData(data);
+                Map<String, Object> removedCase = removeTestCase(data);
                 responseBody.put("status", 0);
-                JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(removedData));
+                JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(removedCase));
                 responseBody.put("data", dataNode);
             }
         } catch (Exception e) {
@@ -121,7 +133,71 @@ public class TestCaseService extends HttpServlet {
         output.flush();
     }
 
-    private Map<String, Object> updateData(Map<String, Object> data) throws Exception {
+    private List<Map<String, Object>> getTestProjects(Criteria criteria) throws Exception {
+        List<String> projects = client.getPropertyValues("project", "TestCase");
+        Collections.sort(projects);
+        List<Map<String, Object>> dataList = new ArrayList<Map<String, Object>>();
+        for (String project : projects) {
+            Map<String, Object> data = new HashMap<String, Object>();
+            data.put("project", project);
+            dataList.add(data);
+        }
+        return dataList;
+    }
+
+    private List<Map<String, Object>> getTestCases(Criteria criteria) throws Exception {
+        List<Map<String, Object>> dataList = loader.load("TestCase");
+        if (criteria != null) {
+            Filter filter = new Filter(criteria);
+            dataList = filter.doFilter(dataList);
+        }
+        return dataList;
+    }
+
+    private Map<String, Object> addTestCase(Map<String, Object> data) throws Exception {
+        String automation = data.get("automation").toString();
+        HashMap<String, Object> queryParams = new HashMap<String, Object>();
+        queryParams.put("automation", automation);
+        if (client.findData(new String[] { "TestCase" }, queryParams).size() > 0) {
+            throw new RuntimeException("Duplicate automation");
+        }
+
+        DataInfo<TestCase> dataInfo = new DataInfo<TestCase>();
+        TestCase tc = new TestCase();
+        tc.setAutomation(automation);
+        tc.setProject((String) data.get("project"));
+        tc.setName((String) data.get("name"));
+        tc.setDescription((String) data.get("description"));
+
+        if (tc.getProject() == null) {
+            int sec = automation.lastIndexOf('.');
+            tc.setProject(automation.substring(0, sec));
+        }
+
+        if (tc.getName() == null) {
+            int sec = automation.lastIndexOf('.');
+            tc.setName(automation.substring(sec + 1));
+        }
+
+        dataInfo.setData(tc);
+
+        ArrayList<String> tags = new ArrayList<String>();
+        tags.add("TestCase");
+        if (data.get("tags") != null) {
+            for (String t : data.get("tags").toString().trim().split(",")) {
+                tags.add(t.trim());
+            }
+        }
+        dataInfo.setTags(tags);
+
+        Integer id = client.addData(dataInfo).get(0);
+        dataInfo = client.getDataById(TestCase.class, id);
+        MetaInfo metaInfo = client.getMetaInfo(id).get(0);
+        Map<String, Object> addedData = strategy.assemble(dataInfo, metaInfo);
+        return addedData;
+    }
+
+    private Map<String, Object> updateTestCase(Map<String, Object> data) throws Exception {
         Integer id = (Integer) data.get("id");
         TestCase tc = client.getDataById(TestCase.class, id).getData();
 
@@ -140,7 +216,7 @@ public class TestCaseService extends HttpServlet {
         return updatedData;
     }
 
-    private Map<String, Object> removeData(Map<String, Object> data) throws Exception {
+    private Map<String, Object> removeTestCase(Map<String, Object> data) throws Exception {
         Integer id = (Integer) data.get("id");
         if (client.deleteData(id)) {
             Map<String, Object> m = new HashMap<String, Object>();

@@ -54,7 +54,7 @@ public class ReportWindow extends Window {
     private String requestUrl;
 
     public enum ReportType {
-        TEST_METRICS("Test Metrics"), DATA_ANALYTICS("Data Analytics"), ENVIRONMENT_STATUS("Environment Status");
+        TEST_METRICS("Test Metrics"), ENVIRONMENT_STATUS("Environment Status");
 
         public String getTypeName() {
             return typeName;
@@ -86,9 +86,6 @@ public class ReportWindow extends Window {
         switch (type) {
         case TEST_METRICS:
             setTitle(ClientConfig.messages.testMetricsReport());
-            break;
-        case DATA_ANALYTICS:
-            setTitle(ClientConfig.messages.dataAnalyticsReport());
             break;
         case ENVIRONMENT_STATUS:
             setTitle(ClientConfig.messages.environmentStatusReport());
