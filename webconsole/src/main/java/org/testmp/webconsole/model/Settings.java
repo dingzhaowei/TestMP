@@ -199,4 +199,47 @@ public class Settings {
 
     }
 
+    public static class AutomationSettings {
+
+        private String automationServer;
+
+        private String runAutomationParam1;
+
+        private String runAutomationParam2;
+
+        private String runAutomationParam3;
+
+        public String getAutomationServer() {
+            return automationServer;
+        }
+
+        public void setAutomationServer(String url) {
+            this.automationServer = url;
+        }
+
+        public String getRunAutomationParam1() {
+            return runAutomationParam1;
+        }
+
+        public void setRunAutomationParam1(String value) {
+            this.runAutomationParam1 = value;
+        }
+
+        public String getRunAutomationParam2() {
+            return runAutomationParam2;
+        }
+
+        public void setRunAutomationParam2(String value) {
+            this.runAutomationParam2 = value;
+        }
+
+        public String getRunAutomationParam3() {
+            return runAutomationParam3;
+        }
+
+        public void setRunAutomationParam3(String value) {
+            this.runAutomationParam3 = value;
+        }
+
+    }
 }

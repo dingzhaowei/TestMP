@@ -103,21 +103,8 @@ public final class DataStoreManager {
      * 
      * @return
      */
-    public int countTotalData() {
-        try {
-            final List<Integer> result = new ArrayList<Integer>();
-            runner.run(new TransactionWorker() {
-
-                public void doWork() throws Exception {
-                    result.add(dataStoreView.getDataMap().size());
-                }
-
-            });
-            return result.isEmpty() ? 0 : result.get(0);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new RuntimeException(e);
-        }
+    public synchronized int countTotalData() {
+        return dataStoreView.getDataMap().size();
     }
 
     /**
@@ -127,63 +114,52 @@ public final class DataStoreManager {
      * @param propertyIds
      * @return
      */
-    public List<DataInfo> getData(final List<String> tags, final List<Integer> propertyIds) {
+    public synchronized List<DataInfo> getData(final List<String> tags, final List<Integer> propertyIds) {
         log.debug("Get data with tags " + tags + " and property IDs " + propertyIds);
-        try {
-            final List<DataInfo> result = new ArrayList<DataInfo>();
-            runner.run(new TransactionWorker() {
+        List<DataInfo> result = new ArrayList<DataInfo>();
+        StoredMap tagMap = dataStoreView.getTagMap();
+        StoredMap propertyMap = dataStoreView.getPropertyMap();
+        HashSet<Integer> retainedIds = new HashSet<Integer>();
 
-                public void doWork() throws Exception {
-                    StoredMap tagMap = dataStoreView.getTagMap();
-                    StoredMap propertyMap = dataStoreView.getPropertyMap();
-                    HashSet<Integer> retainedIds = new HashSet<Integer>();
+        for (int i = 0; i < tags.size(); i++) {
+            Tag tag = (Tag) tagMap.get(tags.get(i));
+            log.debug("Filter by tag: " + tag);
 
-                    for (int i = 0; i < tags.size(); i++) {
-                        Tag tag = (Tag) tagMap.get(tags.get(i));
-                        log.debug("Filter by tag: " + tag);
-
-                        // If any tag is missing, no data will match
-                        if (tag == null) {
-                            retainedIds.clear();
-                            break;
-                        }
-                        if (i == 0 && retainedIds.isEmpty()) {
-                            retainedIds.addAll(tag.getRelatedDataIds());
-                        } else {
-                            retainedIds.retainAll(tag.getRelatedDataIds());
-                        }
-                    }
-
-                    if (tags.isEmpty() || !retainedIds.isEmpty()) {
-                        for (int i = 0; i < propertyIds.size(); i++) {
-                            Property property = (Property) propertyMap.get(propertyIds.get(i));
-                            log.debug("Filter by property: " + property);
-
-                            // If any property is missing, no data will match
-                            if (property == null) {
-                                retainedIds.clear();
-                                break;
-                            }
-                            if (i == 0 && retainedIds.isEmpty()) {
-                                retainedIds.addAll(property.getRelatedDataIds());
-                            } else {
-                                retainedIds.retainAll(property.getRelatedDataIds());
-                            }
-                        }
-                    }
-
-                    log.debug("Retained IDs: " + retainedIds);
-                    for (int id : retainedIds) {
-                        result.add(Utils.convertDataToDataInfo(id));
-                    }
-                }
-
-            });
-            return result;
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new RuntimeException(e);
+            // If any tag is missing, no data will match
+            if (tag == null) {
+                retainedIds.clear();
+                break;
+            }
+            if (i == 0 && retainedIds.isEmpty()) {
+                retainedIds.addAll(tag.getRelatedDataIds());
+            } else {
+                retainedIds.retainAll(tag.getRelatedDataIds());
+            }
         }
+
+        if (tags.isEmpty() || !retainedIds.isEmpty()) {
+            for (int i = 0; i < propertyIds.size(); i++) {
+                Property property = (Property) propertyMap.get(propertyIds.get(i));
+                log.debug("Filter by property: " + property);
+
+                // If any property is missing, no data will match
+                if (property == null) {
+                    retainedIds.clear();
+                    break;
+                }
+                if (i == 0 && retainedIds.isEmpty()) {
+                    retainedIds.addAll(property.getRelatedDataIds());
+                } else {
+                    retainedIds.retainAll(property.getRelatedDataIds());
+                }
+            }
+        }
+
+        log.debug("Retained IDs: " + retainedIds);
+        for (int id : retainedIds) {
+            result.add(Utils.convertDataToDataInfo(id));
+        }
+        return result;
     }
 
     /**
@@ -192,25 +168,14 @@ public final class DataStoreManager {
      * @param id
      * @return
      */
-    public List<DataInfo> getDataById(final int id) {
+    public synchronized List<DataInfo> getDataById(final int id) {
         log.debug("Get data with id " + id);
-        try {
-            final List<DataInfo> result = new ArrayList<DataInfo>();
-            runner.run(new TransactionWorker() {
-
-                public void doWork() throws Exception {
-                    StoredMap dataMap = dataStoreView.getDataMap();
-                    if (dataMap.containsKey(id)) {
-                        result.add(Utils.convertDataToDataInfo(id));
-                    }
-                }
-
-            });
-            return result;
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new RuntimeException(e);
+        List<DataInfo> result = new ArrayList<DataInfo>();
+        StoredMap dataMap = dataStoreView.getDataMap();
+        if (dataMap.containsKey(id)) {
+            result.add(Utils.convertDataToDataInfo(id));
         }
+        return result;
     }
 
     /**
@@ -220,34 +185,23 @@ public final class DataStoreManager {
      * @param endId
      * @return
      */
-    public List<DataInfo> getDataByRange(final int startId, final int endId) {
+    public synchronized List<DataInfo> getDataByRange(final int startId, final int endId) {
         log.debug("Get data between range [" + startId + ", " + endId + "]");
-        try {
-            final List<DataInfo> result = new ArrayList<DataInfo>();
-            runner.run(new TransactionWorker() {
+        List<DataInfo> result = new ArrayList<DataInfo>();
+        StoredSortedMap dataMap = (StoredSortedMap) dataStoreView.getDataMap();
 
-                public void doWork() throws Exception {
-                    StoredSortedMap dataMap = (StoredSortedMap) dataStoreView.getDataMap();
+        @SuppressWarnings("unchecked")
+        List<Integer> idList = new ArrayList<Integer>(dataMap.keySet());
+        Collections.sort(idList);
 
-                    @SuppressWarnings("unchecked")
-                    List<Integer> idList = new ArrayList<Integer>(dataMap.keySet());
-                    Collections.sort(idList);
-
-                    for (int id : idList) {
-                        if (id >= startId && id <= endId) {
-                            result.add(Utils.convertDataToDataInfo(id));
-                        } else {
-                            break;
-                        }
-                    }
-                }
-
-            });
-            return result;
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new RuntimeException(e);
+        for (int id : idList) {
+            if (id >= startId && id <= endId) {
+                result.add(Utils.convertDataToDataInfo(id));
+            } else {
+                break;
+            }
         }
+        return result;
     }
 
     /**
@@ -256,13 +210,13 @@ public final class DataStoreManager {
      * @param dataInfoList
      * @return
      */
-    public List<Integer> addData(final List<DataInfo> dataInfoList) {
+    public synchronized List<Integer> addData(final List<DataInfo> dataInfoList) {
         log.debug("Add " + dataInfoList.size() + " data");
         try {
             final HashSet<Integer> result = new HashSet<Integer>();
             runner.run(new TransactionWorker() {
 
-                public void doWork() throws Exception {
+                public void doWork() {
                     StoredMap tagMap = dataStoreView.getTagMap();
                     StoredMap dataMap = dataStoreView.getDataMap();
                     StoredMap propertyMap = dataStoreView.getPropertyMap();
@@ -307,12 +261,12 @@ public final class DataStoreManager {
      * 
      * @param idList
      */
-    public void deleteData(final List<Integer> idList) {
+    public synchronized void deleteData(final List<Integer> idList) {
         log.debug("Delete data of id: " + idList);
         try {
             runner.run(new TransactionWorker() {
 
-                public void doWork() throws Exception {
+                public void doWork() {
                     StoredMap tagMap = dataStoreView.getTagMap();
                     StoredMap dataMap = dataStoreView.getDataMap();
                     StoredMap propertyMap = dataStoreView.getPropertyMap();
@@ -357,23 +311,12 @@ public final class DataStoreManager {
      * 
      * @return
      */
-    public List<Tag> getTags() {
+    @SuppressWarnings("unchecked")
+    public synchronized List<Tag> getTags() {
         log.debug("Get all tags");
-        try {
-            final List<Tag> result = new ArrayList<Tag>();
-            runner.run(new TransactionWorker() {
-
-                @SuppressWarnings("unchecked")
-                public void doWork() throws Exception {
-                    result.addAll(dataStoreView.getTagMap().values());
-                }
-
-            });
-            return result;
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new RuntimeException(e);
-        }
+        List<Tag> result = new ArrayList<Tag>();
+        result.addAll(dataStoreView.getTagMap().values());
+        return result;
     }
 
     /**
@@ -382,12 +325,12 @@ public final class DataStoreManager {
      * @param dataId
      * @param tag
      */
-    public void addTagToData(final int dataId, final String tag) {
+    public synchronized void addTagToData(final int dataId, final String tag) {
         log.debug("Add tag " + tag + " to data of id " + dataId);
         try {
             runner.run(new TransactionWorker() {
 
-                public void doWork() throws Exception {
+                public void doWork() {
                     StoredMap dataMap = dataStoreView.getDataMap();
                     if (!dataMap.containsKey(dataId)) {
                         throw new IllegalArgumentException("non-existent data id");
@@ -415,12 +358,12 @@ public final class DataStoreManager {
      * @param dataId
      * @param tag
      */
-    public void deleteTagFromData(final int dataId, final String tag) {
+    public synchronized void deleteTagFromData(final int dataId, final String tag) {
         log.debug("Delete tag " + tag + " from data of id " + dataId);
         try {
             runner.run(new TransactionWorker() {
 
-                public void doWork() throws Exception {
+                public void doWork() {
                     StoredMap dataMap = dataStoreView.getDataMap();
                     if (!dataMap.containsKey(dataId)) {
                         throw new IllegalArgumentException("non-existent data id");
@@ -456,40 +399,29 @@ public final class DataStoreManager {
      * @param tags
      * @return
      */
-    List<Object> getPropertyValues(final String key, final List<String> tags) {
+    @SuppressWarnings("rawtypes")
+    public synchronized List<Object> getPropertyValues(final String key, final List<String> tags) {
         log.debug("Get property values mapping to key (" + key + ") filtered by tags " + tags);
-        try {
-            final HashSet<Object> result = new HashSet<Object>();
-            runner.run(new TransactionWorker() {
-
-                @SuppressWarnings("rawtypes")
-                public void doWork() throws Exception {
-                    StoredMap propertyMapIndexedByKey = dataStoreView.getPropertyMapIndexedByKey();
-                    StoredMap dataMap = dataStoreView.getDataMap();
-                    Collection c = propertyMapIndexedByKey.duplicates(key);
-                    Iterator iter = c.iterator();
-                    while (iter.hasNext()) {
-                        Property property = (Property) iter.next();
-                        if (tags != null && !tags.isEmpty()) {
-                            for (int dataId : property.getRelatedDataIds()) {
-                                Data relatedData = (Data) dataMap.get(dataId);
-                                if (relatedData.getRelatedTags().containsAll(tags)) {
-                                    result.add(property.getValue());
-                                    break;
-                                }
-                            }
-                        } else {
-                            result.add(property.getValue());
-                        }
+        HashSet<Object> result = new HashSet<Object>();
+        StoredMap propertyMapIndexedByKey = dataStoreView.getPropertyMapIndexedByKey();
+        StoredMap dataMap = dataStoreView.getDataMap();
+        Collection c = propertyMapIndexedByKey.duplicates(key);
+        Iterator iter = c.iterator();
+        while (iter.hasNext()) {
+            Property property = (Property) iter.next();
+            if (tags != null && !tags.isEmpty()) {
+                for (int dataId : property.getRelatedDataIds()) {
+                    Data relatedData = (Data) dataMap.get(dataId);
+                    if (relatedData.getRelatedTags().containsAll(tags)) {
+                        result.add(property.getValue());
+                        break;
                     }
                 }
-
-            });
-            return new ArrayList<Object>(result);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new RuntimeException(e);
+            } else {
+                result.add(property.getValue());
+            }
         }
+        return new ArrayList<Object>(result);
     }
 
     /**
@@ -499,12 +431,12 @@ public final class DataStoreManager {
      * @param key
      * @param value
      */
-    public void addPropertyToData(final int dataId, final String key, final Object value) {
+    public synchronized void addPropertyToData(final int dataId, final String key, final Object value) {
         log.debug("Add property (" + key + ", " + value + ") to data of id " + dataId);
         try {
             runner.run(new TransactionWorker() {
 
-                public void doWork() throws Exception {
+                public void doWork() {
                     StoredMap dataMap = dataStoreView.getDataMap();
                     if (!dataMap.containsKey(dataId)) {
                         throw new IllegalArgumentException("non-existent data id");
@@ -550,12 +482,12 @@ public final class DataStoreManager {
      * @param dataId
      * @param key
      */
-    public void deletePropertyFromData(final int dataId, final String key) {
+    public synchronized void deletePropertyFromData(final int dataId, final String key) {
         log.debug("Delete property " + key + " from data of id " + dataId);
         try {
             runner.run(new TransactionWorker() {
 
-                public void doWork() throws Exception {
+                public void doWork() {
                     StoredMap dataMap = dataStoreView.getDataMap();
                     if (!dataMap.containsKey(dataId)) {
                         return;
@@ -592,28 +524,17 @@ public final class DataStoreManager {
      * @param dataIdList
      * @return
      */
-    public List<MetaInfo> getMetaInfo(final List<Integer> dataIdList) {
+    public synchronized List<MetaInfo> getMetaInfo(final List<Integer> dataIdList) {
         log.debug("Get the meta info of data: " + dataIdList);
-        try {
-            final List<MetaInfo> result = new ArrayList<MetaInfo>();
-            runner.run(new TransactionWorker() {
-
-                public void doWork() throws Exception {
-                    StoredMap metaInfoMap = dataStoreView.getMetaInfoMap();
-                    for (Integer dataId : dataIdList) {
-                        MetaInfo metaInfo = (MetaInfo) metaInfoMap.get(dataId);
-                        if (metaInfo != null) {
-                            result.add(metaInfo);
-                        }
-                    }
-                }
-
-            });
-            return result;
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new RuntimeException(e);
+        List<MetaInfo> result = new ArrayList<MetaInfo>();
+        StoredMap metaInfoMap = dataStoreView.getMetaInfoMap();
+        for (Integer dataId : dataIdList) {
+            MetaInfo metaInfo = (MetaInfo) metaInfoMap.get(dataId);
+            if (metaInfo != null) {
+                result.add(metaInfo);
+            }
         }
+        return result;
     }
 
     /**
@@ -623,7 +544,7 @@ public final class DataStoreManager {
      * @param key
      * @param value
      */
-    private void addMetaInfoToData(final int dataId, final String key, final Object value) {
+    private synchronized void addMetaInfoToData(final int dataId, final String key, final Object value) {
         log.debug("Add meta info to data of specified id");
         StoredMap metaInfoMap = dataStoreView.getMetaInfoMap();
         if (metaInfoMap.containsKey(dataId)) {
@@ -648,7 +569,7 @@ public final class DataStoreManager {
      * @param key
      */
     @SuppressWarnings("unused")
-    private void deleteMetaInfoFromData(final int dataId, final String key) {
+    private synchronized void deleteMetaInfoFromData(final int dataId, final String key) {
         log.debug("Delete meta info from data of specified id");
         StoredMap metaInfoMap = dataStoreView.getMetaInfoMap();
         if (metaInfoMap.containsKey(dataId)) {

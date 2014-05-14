@@ -237,6 +237,15 @@ public class WebConsole implements EntryPoint {
         mailboxSettingsSource.setFields(mailboxHiddenField, smtpSettingUserField, smtpSettingPassField,
                 smtpSettingHostField, smtpSettingPortField, smtpSettingSTARTTLSField);
         dataSources.put("mailboxSettingsDS", mailboxSettingsSource);
+
+        DataSource automationSettingsSource = ClientUtils.createDataSource("automationSettingsDS",
+                ClientConfig.constants.userService());
+        DataSourceTextField serverField = new DataSourceTextField("server", ClientConfig.messages.server());
+        DataSourceTextField param1Field = new DataSourceTextField("param1", ClientConfig.messages.param() + "1");
+        DataSourceTextField param2Field = new DataSourceTextField("param2", ClientConfig.messages.param() + "2");
+        DataSourceTextField param3Field = new DataSourceTextField("param3", ClientConfig.messages.param() + "3");
+        automationSettingsSource.setFields(serverField, param1Field, param2Field, param3Field);
+        dataSources.put("automationSettingsDS", automationSettingsSource);
     }
 
     public class LoginWindow extends Window {
@@ -334,6 +343,11 @@ public class WebConsole implements EntryPoint {
             mailboxSettingsTab.setTitle(ClientConfig.messages.mailbox());
             mailboxSettingsTab.setPane(createMailboxSettingsForm());
             settingsTabSet.addTab(mailboxSettingsTab);
+
+            Tab automationSettingsTab = new Tab();
+            automationSettingsTab.setTitle(ClientConfig.messages.automation());
+            automationSettingsTab.setPane(createAutomationSettingsForm());
+            settingsTabSet.addTab(automationSettingsTab);
 
             HLayout controls = new HLayout();
             ClientUtils.unifyControlsLayoutStyle(controls);
@@ -438,6 +452,23 @@ public class WebConsole implements EntryPoint {
             mailboxForm.setDataSource(dataSources.get("mailboxSettingsDS"));
             mailboxForm.setAutoFetchData(true);
             layout.addMember(mailboxForm);
+
+            return layout;
+        }
+
+        private Canvas createAutomationSettingsForm() {
+            VLayout layout = new VLayout();
+            layout.setWidth100();
+            layout.setMargin(5);
+            layout.setMembersMargin(5);
+
+            DynamicForm automationForm = new DynamicForm();
+            forms.put("automationSettingsForm", automationForm);
+            automationForm.setMargin(5);
+            automationForm.setSize("90%", "33%");
+            automationForm.setDataSource(dataSources.get("automationSettingsDS"));
+            automationForm.setAutoFetchData(true);
+            layout.addMember(automationForm);
 
             return layout;
         }

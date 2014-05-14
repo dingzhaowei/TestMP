@@ -160,7 +160,7 @@ public class Utils {
     }
 
     @SuppressWarnings("rawtypes")
-    public static Integer calculateDataId(Map<String, Object> data) throws Exception {
+    public static Integer calculateDataId(Map<String, Object> data) {
         DataStoreView view = DataStoreManager.getInstance().getDataStoreView();
         StoredSortedMap dataMap = (StoredSortedMap) view.getDataMap();
         if (dataMap.isEmpty()) {
@@ -186,7 +186,7 @@ public class Utils {
     }
 
     @SuppressWarnings("rawtypes")
-    public static Integer calculatePropertyId(String key, Object value) throws Exception {
+    public static Integer calculatePropertyId(String key, Object value) {
         DataStoreView view = DataStoreManager.getInstance().getDataStoreView();
         StoredSortedMap propertyMap = (StoredSortedMap) view.getPropertyMap();
         if (propertyMap.isEmpty()) {
@@ -194,12 +194,16 @@ public class Utils {
         }
         StoredMap propMapIndexedByKeyValue = view.getPropMapIndexedByKeyValue();
         ObjectMapper mapper = new ObjectMapper();
-        String index = key + mapper.writeValueAsString(value);
-        Collection c = propMapIndexedByKeyValue.duplicates(index);
-        if (c.isEmpty()) {
-            return (Integer) propertyMap.lastKey() + 1;
-        } else {
-            return ((Property) c.iterator().next()).getId();
+        try {
+            String index = key + mapper.writeValueAsString(value);
+            Collection c = propMapIndexedByKeyValue.duplicates(index);
+            if (c.isEmpty()) {
+                return (Integer) propertyMap.lastKey() + 1;
+            } else {
+                return ((Property) c.iterator().next()).getId();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 

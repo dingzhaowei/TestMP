@@ -54,6 +54,7 @@ import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.FetchMode;
 import com.smartgwt.client.types.GroupStartOpen;
 import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.ImgButton;
@@ -136,18 +137,26 @@ public class TestCaseView extends VLayout {
 
                 String fieldName = this.getFieldName(colNum);
 
-                if (fieldName.equals("runHistory") && record.getAttribute("runHistory") != null) {
-                    HLayout recordCanvas = new HLayout();
-                    recordCanvas.setHeight(22);
-                    recordCanvas.setAlign(Alignment.CENTER);
+                if (!fieldName.equals("runHistory") && !fieldName.equals("robustnessTrend")) {
+                    return super.createRecordComponent(record, colNum);
+                }
+
+                HLayout recordCanvas = new HLayout();
+                recordCanvas.setWidth100();
+                recordCanvas.setHeight(22);
+                recordCanvas.setAlign(Alignment.CENTER);
+
+                if (fieldName.equals("runHistory")) {
+                    if (record.getAttribute("runHistory") == null) {
+                        return super.createRecordComponent(record, colNum);
+                    }
                     ImgButton runHistoryImg = new ImgButton();
                     runHistoryImg.setShowDown(false);
                     runHistoryImg.setShowRollOver(false);
+                    runHistoryImg.setSize("16", "16");
+                    runHistoryImg.setLayoutAlign(VerticalAlignment.CENTER);
                     runHistoryImg.setSrc("history.png");
                     runHistoryImg.setPrompt(ClientConfig.messages.viewRunHistory());
-                    runHistoryImg.setHeight(16);
-                    runHistoryImg.setWidth(16);
-                    runHistoryImg.setLayoutAlign(Alignment.CENTER);
                     runHistoryImg.addClickHandler(new ClickHandler() {
                         public void onClick(ClickEvent event) {
                             RunHistoryWindow window = new RunHistoryWindow(record);
@@ -155,11 +164,27 @@ public class TestCaseView extends VLayout {
                         }
                     });
                     recordCanvas.addMember(runHistoryImg);
-                    return recordCanvas;
-                } else {
-                    return super.createRecordComponent(record, colNum);
+                } else if (fieldName.equals("robustnessTrend")) {
+                    if (record.getAttribute("robustnessTrend") == null) {
+                        return super.createRecordComponent(record, colNum);
+                    }
+                    ImgButton robustnessTrendImg = new ImgButton();
+                    robustnessTrendImg.setShowDown(false);
+                    robustnessTrendImg.setShowRollOver(false);
+                    robustnessTrendImg.setSize("16", "16");
+                    robustnessTrendImg.setLayoutAlign(VerticalAlignment.CENTER);
+                    robustnessTrendImg.setSrc(record.getAttribute("robustnessTrend"));
+                    robustnessTrendImg.addClickHandler(new ClickHandler() {
+                        @Override
+                        public void onClick(ClickEvent event) {
+                            // TODO Auto-generated method stub
+
+                        }
+                    });
+                    recordCanvas.addMember(robustnessTrendImg);
                 }
 
+                return recordCanvas;
             }
 
         };
@@ -225,7 +250,7 @@ public class TestCaseView extends VLayout {
         automationField.setShowHover(true);
         automationField.setHoverCustomizer(hoverCustomizer);
 
-        runHistoryField.setWidth(70);
+        runHistoryField.setWidth(80);
         runHistoryField.setShowGridSummary(false);
         runHistoryField.setShowGroupSummary(false);
         runHistoryField.setCellFormatter(new CellFormatter() {
@@ -425,7 +450,8 @@ public class TestCaseView extends VLayout {
     private void prepareDataSources() {
         dataSources = new HashMap<String, DataSource>();
 
-        DataSource testCaseSource = ClientUtils.createDataSource("testCaseDS", ClientConfig.constants.testCaseService());
+        DataSource testCaseSource = ClientUtils
+                .createDataSource("testCaseDS", ClientConfig.constants.testCaseService());
         DataSourceIntegerField idField = new DataSourceIntegerField("id");
         idField.setHidden(true);
         idField.setPrimaryKey(true);

@@ -17,6 +17,7 @@ import java.util.Map;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
+import org.testmp.webconsole.model.Settings.AutomationSettings;
 import org.testmp.webconsole.model.Settings.FilterSettings;
 import org.testmp.webconsole.model.Settings.MailboxSettings;
 import org.testmp.webconsole.model.Settings.ReportSettings;
@@ -35,6 +36,8 @@ public class User {
     private ReportSettings esrReportSettings = new ReportSettings();
 
     private MailboxSettings mailboxSettings = new MailboxSettings();
+
+    private AutomationSettings automationSettings = new AutomationSettings();
 
     public User() {
 
@@ -90,6 +93,14 @@ public class User {
 
     public void setMailboxSettings(MailboxSettings mailboxSettings) {
         this.mailboxSettings = mailboxSettings;
+    }
+
+    public AutomationSettings getAutomationSettings() {
+        return automationSettings;
+    }
+
+    public void setAutomationSettings(AutomationSettings automationSettings) {
+        this.automationSettings = automationSettings;
     }
 
     public Map<String, Object> toMap() {
