@@ -240,11 +240,9 @@ public class WebConsole implements EntryPoint {
 
         DataSource automationSettingsSource = ClientUtils.createDataSource("automationSettingsDS",
                 ClientConfig.constants.userService());
-        DataSourceTextField serverField = new DataSourceTextField("server", ClientConfig.messages.server());
-        DataSourceTextField param1Field = new DataSourceTextField("param1", ClientConfig.messages.param() + "1");
-        DataSourceTextField param2Field = new DataSourceTextField("param2", ClientConfig.messages.param() + "2");
-        DataSourceTextField param3Field = new DataSourceTextField("param3", ClientConfig.messages.param() + "3");
-        automationSettingsSource.setFields(serverField, param1Field, param2Field, param3Field);
+        DataSourceTextField automationServiceUrlField = new DataSourceTextField("automationServiceUrl",
+                ClientConfig.messages.serviceUrl());
+        automationSettingsSource.setFields(automationServiceUrlField);
         dataSources.put("automationSettingsDS", automationSettingsSource);
     }
 
@@ -392,7 +390,7 @@ public class WebConsole implements EntryPoint {
 
             DynamicForm userForm = new DynamicForm();
             forms.put("userSettingsForm", userForm);
-            userForm.setSize("90%", "33%");
+            userForm.setWidth("90%");
             userForm.setDataSource(dataSources.get("userSettingsDS"));
             userForm.setAutoFetchData(true);
             layout.addMember(userForm);
@@ -448,7 +446,7 @@ public class WebConsole implements EntryPoint {
             DynamicForm mailboxForm = new DynamicForm();
             forms.put("mailboxSettingsForm", mailboxForm);
             mailboxForm.setMargin(5);
-            mailboxForm.setSize("90%", "33%");
+            mailboxForm.setWidth("90%");
             mailboxForm.setDataSource(dataSources.get("mailboxSettingsDS"));
             mailboxForm.setAutoFetchData(true);
             layout.addMember(mailboxForm);
@@ -464,8 +462,11 @@ public class WebConsole implements EntryPoint {
 
             DynamicForm automationForm = new DynamicForm();
             forms.put("automationSettingsForm", automationForm);
+            TextItem automationServiceUrl = new TextItem("automationServiceUrl", ClientConfig.messages.serviceUrl());
+            automationServiceUrl.setWidth(300);
+            automationForm.setFields(automationServiceUrl);
             automationForm.setMargin(5);
-            automationForm.setSize("90%", "33%");
+            automationForm.setWidth("90%");
             automationForm.setDataSource(dataSources.get("automationSettingsDS"));
             automationForm.setAutoFetchData(true);
             layout.addMember(automationForm);

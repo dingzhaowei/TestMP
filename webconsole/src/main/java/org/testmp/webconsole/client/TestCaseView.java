@@ -56,6 +56,7 @@ import com.smartgwt.client.types.GroupStartOpen;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLPane;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.ImgButton;
 import com.smartgwt.client.widgets.Window;
@@ -177,8 +178,12 @@ public class TestCaseView extends VLayout {
                     robustnessTrendImg.addClickHandler(new ClickHandler() {
                         @Override
                         public void onClick(ClickEvent event) {
-                            // TODO Auto-generated method stub
-
+                            String automation = record.getAttribute("automation");
+                            String robustnessTrend = record.getAttribute("robustnessTrend");
+                            if (robustnessTrend.startsWith("null")) {
+                                AutomationCodeWindow window = new AutomationCodeWindow(record);
+                                window.show();
+                            }
                         }
                     });
                     recordCanvas.addMember(robustnessTrendImg);
@@ -678,7 +683,7 @@ public class TestCaseView extends VLayout {
         RunHistoryWindow(final ListGridRecord record) {
             setWidth(900);
             setHeight(300);
-            setTitle("Run History");
+            setTitle(ClientConfig.messages.runHistory());
             ClientUtils.unifySimpleWindowStyle(this);
 
             final ListGrid runHistoryGrid = new ListGrid();
@@ -822,6 +827,123 @@ public class TestCaseView extends VLayout {
             layout.addMember(controls);
 
             addItem(layout);
+        }
+    }
+
+    private class AutomationCodeWindow extends Window {
+
+        AutomationCodeWindow(ListGridRecord record) {
+            setWidth(750);
+            setHeight(300);
+            setTitle(ClientConfig.messages.automation());
+            ClientUtils.unifySimpleWindowStyle(this);
+
+            HTMLPane codePaneForJUnit = new HTMLPane();
+            codePaneForJUnit.setWidth("50%");
+            codePaneForJUnit.setContents(generateCode(record, "JUnit"));
+
+            HTMLPane codePaneForTestNG = new HTMLPane();
+            codePaneForTestNG.setWidth("50%");
+            codePaneForTestNG.setContents(generateCode(record, "TestNG"));
+
+            HLayout layout = new HLayout();
+            ClientUtils.unifyWindowLayoutStyle(layout);
+            layout.addMember(codePaneForJUnit);
+            layout.addMember(codePaneForTestNG);
+            addItem(layout);
+        }
+
+        private String getTemplateForJUnit() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("<p><b>JUnit:</b></p>");
+            sb.append("<pre>\n");
+            sb.append("    package ${packageName}\n");
+            sb.append("\n");
+            sb.append("    public class ${className} {\n");
+            sb.append("\n");
+            sb.append("        @Test\n");
+            sb.append("        @TestDoc(\n");
+            sb.append("            project = \"${project}\",\n");
+            sb.append("            name = \"${name}\",\n");
+            sb.append("            description = \"${description}\",\n");
+            sb.append("            groups = { ${tags} })\n");
+            sb.append("        public void ${methodName}() throws Exception {\n");
+            sb.append("            // TODO: add the test logic\n");
+            sb.append("        }\n");
+            sb.append("\n");
+            sb.append("    }\n");
+            sb.append("</pre>\n");
+            return sb.toString();
+        }
+
+        private String getTemplateForTestNG() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("<p><b>TestNG:</b></p>");
+            sb.append("<pre>\n");
+            sb.append("    package ${packageName}\n");
+            sb.append("\n");
+            sb.append("    public class ${className} {\n");
+            sb.append("\n");
+            sb.append("        @Test(groups = { ${tags} })\n");
+            sb.append("        @TestDoc(\n");
+            sb.append("            project = \"${project}\",\n");
+            sb.append("            name = \"${name}\",\n");
+            sb.append("            description = \"${description}\",\n");
+            sb.append("        )\n");
+            sb.append("        public void ${methodName}() throws Exception {\n");
+            sb.append("            // TODO: add the test logic\n");
+            sb.append("        }\n");
+            sb.append("\n");
+            sb.append("    }\n");
+            sb.append("</pre>\n");
+            return sb.toString();
+        }
+
+        private String generateCode(ListGridRecord record, String type) {
+            String project = record.getAttribute("project");
+            String name = record.getAttribute("name");
+            String description = record.getAttribute("description");
+            description = description == null ? "" : description;
+
+            String tags = "";
+            for (String tag : record.getAttribute("tags").split("\\s*,\\s*")) {
+                if (tag.isEmpty()) {
+                    continue;
+                }
+                tags += "\"" + tag + "\",";
+            }
+            if (!tags.isEmpty()) {
+                tags = tags.substring(0, tags.length() - 1);
+            }
+
+            String packageName = null, className = null, methodName = null;
+            String automation = record.getAttribute("automation");
+            int sec = automation.lastIndexOf('.');
+            if (sec != -1) {
+                className = automation.substring(0, sec);
+                methodName = automation.substring(sec + 1);
+                sec = className.lastIndexOf('.');
+                if (sec != -1) {
+                    packageName = className.substring(0, sec);
+                    className = className.substring(sec + 1);
+                }
+            }
+
+            String code = null;
+            if (type.equals("JUnit")) {
+                code = getTemplateForJUnit();
+            } else {
+                code = getTemplateForTestNG();
+            }
+            code = code.replace("${project}", project);
+            code = code.replace("${name}", name);
+            code = code.replace("${description}", description);
+            code = code.replace("${tags}", tags);
+            code = code.replace("${packageName}", packageName);
+            code = code.replace("${className}", className);
+            code = code.replace("${methodName}", methodName);
+
+            return code;
         }
     }
 }

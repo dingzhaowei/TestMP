@@ -38,6 +38,7 @@ import org.codehaus.jackson.type.TypeReference;
 import org.testmp.datastore.client.DataInfo;
 import org.testmp.datastore.client.DataStoreClient;
 import org.testmp.datastore.client.DataStoreClientException;
+import org.testmp.webconsole.model.Settings.AutomationSettings;
 import org.testmp.webconsole.model.Settings.FilterSettings;
 import org.testmp.webconsole.model.Settings.MailboxSettings;
 import org.testmp.webconsole.model.Settings.ReportSettings;
@@ -275,6 +276,17 @@ public class UserService extends HttpServlet {
                 JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(data));
                 responseBody.put("data", dataNode);
             }
+        } else if (settingType.equalsIgnoreCase("automation")) {
+            if (operationType.equals("fetch")) {
+                String userName = data.get("userName").toString();
+                List<Object> dataList = getAutomationSettings(userName);
+                populateResponseBody(responseBody, dataList);
+            } else if (operationType.equals("update")) {
+                updateAutomationSettings(data);
+                responseBody.put("status", 0);
+                JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(data));
+                responseBody.put("data", dataNode);
+            }
         }
     }
 
@@ -420,6 +432,29 @@ public class UserService extends HttpServlet {
             // ignore
         }
         client.addPropertyToData(userInfo.getId(), "mailboxSettings", mailboxSettings);
+    }
+
+    private List<Object> getAutomationSettings(String userName) throws DataStoreClientException {
+        User user = getUserInfo(userName).getData();
+        List<Object> dataList = new ArrayList<Object>();
+        AutomationSettings automationSettings = user.getAutomationSettings();
+        String automationServiceUrl = automationSettings.getAutomationServiceUrl();
+        if (StringUtils.isBlank(automationServiceUrl)) {
+            automationServiceUrl = (String) getServletContext().getAttribute("automationServiceUrl");
+        }
+        Map<String, Object> settings = new HashMap<String, Object>();
+        settings.put("automationServiceUrl", automationServiceUrl);
+        settings.put("userName", user.getName());
+        dataList.add(settings);
+        return dataList;
+    }
+
+    private void updateAutomationSettings(Map<String, Object> data) throws DataStoreClientException {
+        String userName = data.get("userName").toString();
+        DataInfo<User> userInfo = getUserInfo(userName);
+        AutomationSettings automationSettings = userInfo.getData().getAutomationSettings();
+        automationSettings.setAutomationServiceUrl((String) data.get("automationServiceUrl"));
+        client.addPropertyToData(userInfo.getId(), "automationSettings", automationSettings);
     }
 
     private DataInfo<User> getUserInfo(String userName) throws DataStoreClientException {

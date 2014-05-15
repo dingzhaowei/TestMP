@@ -171,12 +171,20 @@ public class TestCaseService extends HttpServlet {
 
         if (tc.getProject() == null) {
             int sec = automation.lastIndexOf('.');
-            tc.setProject(automation.substring(0, sec));
+            if (sec == -1) {
+                tc.setProject(automation);
+            } else {
+                tc.setProject(automation.substring(0, sec));
+            }
         }
 
         if (tc.getName() == null) {
             int sec = automation.lastIndexOf('.');
-            tc.setName(automation.substring(sec + 1));
+            if (sec == -1) {
+                tc.setName(automation);
+            } else {
+                tc.setName(automation.substring(sec + 1));
+            }
         }
 
         dataInfo.setData(tc);
