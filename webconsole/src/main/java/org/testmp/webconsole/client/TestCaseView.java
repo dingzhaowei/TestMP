@@ -38,12 +38,14 @@ import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.data.AdvancedCriteria;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
+import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceBooleanField;
 import com.smartgwt.client.data.fields.DataSourceFloatField;
@@ -55,6 +57,7 @@ import com.smartgwt.client.types.FetchMode;
 import com.smartgwt.client.types.GroupStartOpen;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.VerticalAlignment;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLPane;
 import com.smartgwt.client.widgets.IButton;
@@ -83,6 +86,8 @@ public class TestCaseView extends VLayout {
     private Map<String, DataSource> dataSources;
 
     private ListGrid testCaseGrid;
+
+    private AutomationScheduler automationScheduler;
 
     private HoverCustomizer hoverCustomizer = new HoverCustomizer() {
 
@@ -178,11 +183,15 @@ public class TestCaseView extends VLayout {
                     robustnessTrendImg.addClickHandler(new ClickHandler() {
                         @Override
                         public void onClick(ClickEvent event) {
-                            String automation = record.getAttribute("automation");
                             String robustnessTrend = record.getAttribute("robustnessTrend");
                             if (robustnessTrend.startsWith("null")) {
                                 AutomationCodeWindow window = new AutomationCodeWindow(record);
                                 window.show();
+                            } else if (robustnessTrend.startsWith("running")) {
+                                String automation = record.getAttribute("automation");
+                                automationScheduler.finish(automation);
+                            } else {
+                                automationScheduler.launch(record);
                             }
                         }
                     });
@@ -399,6 +408,10 @@ public class TestCaseView extends VLayout {
 
             @Override
             public void onClick(ClickEvent event) {
+                if (!automationScheduler.isIdle()) {
+                    SC.say(ClientConfig.messages.automationIsRunning());
+                    return;
+                }
                 DataSource ds = dataSources.get("testCaseFilterDS");
                 FilterWindow window = new FilterWindow(FilterType.TEST_CASE, testCaseGrid, ds);
                 window.show();
@@ -413,6 +426,9 @@ public class TestCaseView extends VLayout {
 
             @Override
             public void onClick(ClickEvent event) {
+                if (!automationScheduler.isIdle()) {
+                    SC.say(ClientConfig.messages.automationIsRunning());
+                }
                 testCaseGrid.invalidateCache();
             }
 
@@ -425,6 +441,11 @@ public class TestCaseView extends VLayout {
 
             @Override
             public void onClick(ClickEvent event) {
+                if (!automationScheduler.isIdle()) {
+                    SC.say(ClientConfig.messages.automationIsRunning());
+                    return;
+                }
+
                 Map<String, List<ListGridRecord>> recordsByProject = new LinkedHashMap<String, List<ListGridRecord>>();
 
                 for (ListGridRecord record : testCaseGrid.getRecords()) {
@@ -457,6 +478,39 @@ public class TestCaseView extends VLayout {
 
         DataSource testCaseSource = ClientUtils
                 .createDataSource("testCaseDS", ClientConfig.constants.testCaseService());
+        testCaseSource.setFields(getTestCaseFields());
+        dataSources.put("testCaseDS", testCaseSource);
+
+        DataSource testCaseFilterSource = ClientUtils.createDataSource("testCaseFilterDS",
+                ClientConfig.constants.userService());
+        DataSourceTextField userNameField = new DataSourceTextField("userName");
+        userNameField.setPrimaryKey(true);
+        DataSourceTextField filterNameField = new DataSourceTextField("filterName");
+        filterNameField.setPrimaryKey(true);
+        DataSourceTextField criteriaField = new DataSourceTextField("criteria");
+        DataSourceBooleanField isDefaultField = new DataSourceBooleanField("isDefault");
+        testCaseFilterSource.setFields(userNameField, filterNameField, criteriaField, isDefaultField);
+        dataSources.put("testCaseFilterDS", testCaseFilterSource);
+
+        DataSource testProjectSource = ClientUtils.createDataSource("testProjectDS",
+                ClientConfig.constants.testCaseService());
+        DataSourceTextField projectNameField = new DataSourceTextField("project");
+        testProjectSource.setFields(projectNameField);
+        dataSources.put("testProjectDS", testProjectSource);
+
+        DataSource testResultSource = ClientUtils.createDataSource("testResultDS",
+                ClientConfig.constants.testCaseService());
+        testResultSource.setFields(getTestCaseFields());
+        dataSources.put("testResultDS", testResultSource);
+
+        DataSource testRunSource = ClientUtils.createDataSource("testRunDS", ClientConfig.constants.testCaseService());
+        DataSourceTextField automationField = new DataSourceTextField("automation");
+        DataSourceBooleanField isRunningField = new DataSourceBooleanField("isRunning");
+        testRunSource.setFields(automationField, isRunningField);
+        dataSources.put("testRunDS", testRunSource);
+    }
+
+    private DataSourceField[] getTestCaseFields() {
         DataSourceIntegerField idField = new DataSourceIntegerField("id");
         idField.setHidden(true);
         idField.setPrimaryKey(true);
@@ -480,27 +534,92 @@ public class TestCaseView extends VLayout {
         DataSourceTextField createTimeField = new DataSourceTextField("createTime", ClientConfig.messages.createTime());
         DataSourceTextField lastModifyTimeField = new DataSourceTextField("lastModifyTime",
                 ClientConfig.messages.lastModifyTime());
-        testCaseSource.setFields(idField, projectField, nameField, tagsField, descriptionField, automationField,
+        return new DataSourceField[] { idField, projectField, nameField, tagsField, descriptionField, automationField,
                 runHistoryField, robustnessField, robustnessTrendField, avgTestTimeField, timeVolatilityField,
-                createTimeField, lastModifyTimeField);
-        dataSources.put("testCaseDS", testCaseSource);
+                createTimeField, lastModifyTimeField };
+    }
 
-        DataSource testCaseFilterSource = ClientUtils.createDataSource("testCaseFilterDS",
-                ClientConfig.constants.userService());
-        DataSourceTextField userNameField = new DataSourceTextField("userName");
-        userNameField.setPrimaryKey(true);
-        DataSourceTextField filterNameField = new DataSourceTextField("filterName");
-        filterNameField.setPrimaryKey(true);
-        DataSourceTextField criteriaField = new DataSourceTextField("criteria");
-        DataSourceBooleanField isDefaultField = new DataSourceBooleanField("isDefault");
-        testCaseFilterSource.setFields(userNameField, filterNameField, criteriaField, isDefaultField);
-        dataSources.put("testCaseFilterDS", testCaseFilterSource);
+    private class AutomationScheduler extends Timer {
 
-        DataSource testProjectSource = ClientUtils.createDataSource("testProjectDS",
-                ClientConfig.constants.testCaseService());
-        DataSourceTextField projectNameField = new DataSourceTextField("project");
-        testProjectSource.setFields(projectNameField);
-        dataSources.put("testProjectDS", testProjectSource);
+        private Map<String, Record> testCases = new HashMap<String, Record>();
+
+        @Override
+        public void run() {
+            StringBuilder sb = new StringBuilder();
+            for (String automation : automations()) {
+                sb.append(automation).append(",");
+            }
+
+            if (sb.length() > 0) {
+                sb.deleteCharAt(sb.length() - 1);
+                schedule(sb.toString());
+            } else {
+                AutomationScheduler.this.schedule(1000);
+                return;
+            }
+        }
+
+        public void schedule(String automations) {
+            Criteria criteria = new Criteria();
+            criteria.setAttribute("automations", automations);
+            dataSources.get("testRunDS").fetchData(criteria, new DSCallback() {
+
+                @Override
+                public void execute(DSResponse dsResponse, Object data, DSRequest dsRequest) {
+                    if (dsResponse.getStatus() != 0) {
+                        return;
+                    }
+                    Record[] results = Record.convertToRecordArray(JsonUtils.safeEval(data.toString()));
+                    for (Record result : results) {
+                        String automation = result.getAttribute("automation");
+                        Boolean isRunning = result.getAttributeAsBoolean("isRunning");
+                        if (!isRunning) {
+                            finish(automation);
+                        }
+                    }
+                    AutomationScheduler.this.schedule(1000);
+                }
+
+            });
+        }
+
+        public synchronized boolean isIdle() {
+            return testCases.isEmpty();
+        }
+
+        public synchronized void launch(Record testCase) {
+            String automation = testCase.getAttribute("automation");
+            if (!testCases.containsKey(automation)) {
+                testCases.put(automation, testCase);
+                testCase.setAttribute("robustnessTrend", "running.gif");
+            }
+        }
+
+        public void finish(final String automation) {
+            Criteria criteria = new Criteria();
+            criteria.setAttribute("automation", automation);
+            dataSources.get("testResultDS").fetchData(criteria, new DSCallback() {
+
+                @Override
+                public void execute(DSResponse dsResponse, Object data, DSRequest dsRequest) {
+                    if (dsResponse.getStatus() != 0) {
+                        return;
+                    }
+                    synchronized (AutomationScheduler.this) {
+                        Record testCase = testCases.get(automation);
+                        if (testCase != null) {
+                            testCases.remove(testCase.getAttribute("automation"));
+                            testCase.setJsObj(JsonUtils.safeEval(data.toString()));
+                        }
+                    }
+                }
+
+            });
+        }
+
+        private synchronized String[] automations() {
+            return testCases.keySet().toArray(new String[0]);
+        }
     }
 
     private class NewCaseWindow extends Window {
@@ -839,10 +958,12 @@ public class TestCaseView extends VLayout {
             ClientUtils.unifySimpleWindowStyle(this);
 
             HTMLPane codePaneForJUnit = new HTMLPane();
+            codePaneForJUnit.setBorder("1px solid black");
             codePaneForJUnit.setWidth("50%");
             codePaneForJUnit.setContents(generateCode(record, "JUnit"));
 
             HTMLPane codePaneForTestNG = new HTMLPane();
+            codePaneForTestNG.setBorder("1px solid black");
             codePaneForTestNG.setWidth("50%");
             codePaneForTestNG.setContents(generateCode(record, "TestNG"));
 

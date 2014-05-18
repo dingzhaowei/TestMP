@@ -17,7 +17,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.URLDecoder;
 import java.util.HashMap;
@@ -26,7 +25,6 @@ import java.util.Map;
 import java.util.concurrent.Future;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -38,7 +36,7 @@ import org.testmp.webconsole.model.Host;
 import org.testmp.webconsole.model.Task;
 
 @SuppressWarnings("serial")
-public class TaskService extends HttpServlet {
+public class TaskService extends ServiceBase {
 
     private static Logger log = Logger.getLogger(TaskService.class);
 
@@ -145,17 +143,7 @@ public class TaskService extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        BufferedReader input = new BufferedReader(new InputStreamReader(req.getInputStream(), "ISO-8859-1"));
-        StringBuilder sb = new StringBuilder();
-        while (true) {
-            String line = input.readLine();
-            if (line == null) {
-                break;
-            }
-            sb.append(line).append('\n');
-        }
-        String requestBody = new String(sb.toString().getBytes("ISO-8859-1"), "UTF-8");
-
+        String requestBody = getRequestBody(req);
         HashMap<String, String> params = new HashMap<String, String>();
         for (String param : requestBody.split("&")) {
             String[] keyValue = param.split("=");

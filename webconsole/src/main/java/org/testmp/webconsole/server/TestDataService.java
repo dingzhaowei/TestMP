@@ -13,9 +13,7 @@
 
 package org.testmp.webconsole.server;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Collections;
@@ -27,7 +25,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -43,7 +40,7 @@ import org.testmp.datastore.client.MetaInfo;
 import org.testmp.webconsole.server.Filter.Criteria;
 
 @SuppressWarnings("serial")
-public class TestDataService extends HttpServlet {
+public class TestDataService extends ServiceBase {
 
     private static Logger log = Logger.getLogger(TestDataService.class);
 
@@ -67,20 +64,7 @@ public class TestDataService extends HttpServlet {
     @SuppressWarnings("unchecked")
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        BufferedReader input = new BufferedReader(new InputStreamReader(req.getInputStream(), "ISO-8859-1"));
-
-        StringBuilder sb = new StringBuilder();
-        while (true) {
-            String line = input.readLine();
-            if (line == null) {
-                break;
-            }
-            sb.append(line).append('\n');
-        }
-
-        String requestBody = new String(sb.toString().getBytes("ISO-8859-1"), "UTF-8");
-        log("Received POST request: " + requestBody);
-
+        String requestBody = getRequestBody(req);
         ObjectMapper mapper = new ObjectMapper();
         Map<String, Object> dsRequest = mapper.readValue(requestBody, new TypeReference<Map<String, Object>>() {
         });

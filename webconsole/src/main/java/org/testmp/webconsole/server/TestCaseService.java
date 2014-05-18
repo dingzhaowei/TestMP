@@ -13,9 +13,7 @@
 
 package org.testmp.webconsole.server;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,10 +22,18 @@ import java.util.List;
 import java.util.Map;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -41,7 +47,7 @@ import org.testmp.sync.TestCase.RunRecord;
 import org.testmp.webconsole.server.Filter.Criteria;
 
 @SuppressWarnings("serial")
-public class TestCaseService extends HttpServlet {
+public class TestCaseService extends ServiceBase {
 
     private static Logger log = Logger.getLogger(TestCaseService.class);
 
@@ -63,20 +69,7 @@ public class TestCaseService extends HttpServlet {
     @SuppressWarnings("unchecked")
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        BufferedReader input = new BufferedReader(new InputStreamReader(req.getInputStream(), "ISO-8859-1"));
-
-        StringBuilder sb = new StringBuilder();
-        while (true) {
-            String line = input.readLine();
-            if (line == null) {
-                break;
-            }
-            sb.append(line).append('\n');
-        }
-
-        String requestBody = new String(sb.toString().getBytes("ISO-8859-1"), "UTF-8");
-        log("Received POST request: " + requestBody);
-
+        String requestBody = getRequestBody(req);
         ObjectMapper mapper = new ObjectMapper();
         Map<String, Object> dsRequest = mapper.readValue(requestBody, new TypeReference<Map<String, Object>>() {
         });
@@ -89,21 +82,26 @@ public class TestCaseService extends HttpServlet {
 
         try {
             if (operationType.equals("fetch")) {
-                List<Map<String, Object>> dataList = null;
+                JsonNode dataNode = null;
                 if (dataSource.equals("testCaseDS")) {
-                    // TODO: filter by userName
-                    data.remove("userName");
+                    data.remove("userName"); // TODO: filter by userName
                     Criteria criteria = Criteria.valueOf(mapper.writeValueAsString(data));
-                    dataList = getTestCases(criteria);
+                    List<Map<String, Object>> dataList = getTestCases(criteria);
+                    dataNode = mapper.readTree(mapper.writeValueAsString(dataList));
                 } else if (dataSource.equals("testProjectDS")) {
-                    Criteria criteria = Criteria.valueOf(mapper.writeValueAsString(data));
-                    dataList = getTestProjects(criteria);
+                    List<Map<String, Object>> dataList = getTestProjects();
+                    dataNode = mapper.readTree(mapper.writeValueAsString(dataList));
+                } else if (dataSource.equals("testResultDS")) {
+                    String automation = (String) data.get("automation");
+                    Map<String, Object> testResult = getTestResult(automation);
+                    dataNode = mapper.readTree(mapper.writeValueAsString(testResult));
+                } else if (dataSource.equals("testRunDS")) {
+                    String userName = (String) data.get("userName");
+                    String automations = (String) data.get("automations");
+                    List<Map<String, Object>> dataList = getTestRunsStatus(automations, userName);
+                    dataNode = mapper.readTree(mapper.writeValueAsString(dataList));
                 }
                 responseBody.put("status", 0);
-                responseBody.put("startRow", 0);
-                responseBody.put("endRow", dataList.size());
-                responseBody.put("totalRows", dataList.size());
-                JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(dataList));
                 responseBody.put("data", dataNode);
             } else if (operationType.equals("add")) {
                 Map<String, Object> addedCase = addTestCase(data);
@@ -133,7 +131,7 @@ public class TestCaseService extends HttpServlet {
         output.flush();
     }
 
-    private List<Map<String, Object>> getTestProjects(Criteria criteria) throws Exception {
+    private List<Map<String, Object>> getTestProjects() throws Exception {
         List<String> projects = client.getPropertyValues("project", "TestCase");
         Collections.sort(projects);
         List<Map<String, Object>> dataList = new ArrayList<Map<String, Object>>();
@@ -141,6 +139,47 @@ public class TestCaseService extends HttpServlet {
             Map<String, Object> data = new HashMap<String, Object>();
             data.put("project", project);
             dataList.add(data);
+        }
+        return dataList;
+    }
+
+    private Map<String, Object> getTestResult(String automation) throws Exception {
+        Map<String, Object> properties = new HashMap<String, Object>();
+        properties.put("automation", automation);
+        DataInfo<TestCase> dataInfo = client.getDataByProperty(TestCase.class, properties).get(0);
+        MetaInfo metaInfo = client.getMetaInfo(dataInfo.getId()).get(0);
+        TestCaseAssemblyStrategy as = new TestCaseAssemblyStrategy();
+        return as.assemble(dataInfo, metaInfo);
+    }
+
+    private List<Map<String, Object>> getTestRunsStatus(String automations, String userName) throws Exception {
+        List<Map<String, Object>> dataList = new ArrayList<Map<String, Object>>();
+        String automationServiceUrl = (String) getSetting("automationSettings", "automationServiceUrl", userName);
+        HttpClient httpClient = new DefaultHttpClient();
+        HttpPost httpPost = new HttpPost(automationServiceUrl);
+        try {
+            List<NameValuePair> params = new ArrayList<NameValuePair>();
+            params.add(new BasicNameValuePair("automations", automations));
+            UrlEncodedFormEntity entity = new UrlEncodedFormEntity(params, "UTF-8");
+            httpPost.setEntity(entity);
+            HttpResponse resp = httpClient.execute(httpPost);
+            if (resp.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                String r = EntityUtils.toString(resp.getEntity(), "UTF-8");
+                String[] a = automations.split(",");
+                if (a.length != r.length()) {
+                    throw new RuntimeException("Doesn't match. Automations: " + a.length + ", Results: " + r.length());
+                }
+                for (int i = 0; i < a.length; i++) {
+                    Map<String, Object> m = new HashMap<String, Object>();
+                    m.put("automation", a[i]);
+                    m.put("isRunning", r.charAt(i) == '0' ? false : true);
+                    dataList.add(m);
+                }
+            } else {
+                throw new RuntimeException(resp.getStatusLine().getReasonPhrase());
+            }
+        } finally {
+            httpPost.releaseConnection();
         }
         return dataList;
     }

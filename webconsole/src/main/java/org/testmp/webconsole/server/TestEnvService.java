@@ -13,9 +13,7 @@
 
 package org.testmp.webconsole.server;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -43,7 +40,7 @@ import org.testmp.webconsole.model.TestEnvironment;
 import org.testmp.webconsole.util.CronExpression;
 
 @SuppressWarnings("serial")
-public class TestEnvService extends HttpServlet {
+public class TestEnvService extends ServiceBase {
 
     private static Logger log = Logger.getLogger(TestEnvService.class);
 
@@ -57,20 +54,7 @@ public class TestEnvService extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        BufferedReader input = new BufferedReader(new InputStreamReader(req.getInputStream(), "ISO-8859-1"));
-
-        StringBuilder sb = new StringBuilder();
-        while (true) {
-            String line = input.readLine();
-            if (line == null) {
-                break;
-            }
-            sb.append(line).append('\n');
-        }
-
-        String requestBody = new String(sb.toString().getBytes("ISO-8859-1"), "UTF-8");
-        log("Received POST request: " + requestBody);
-
+        String requestBody = getRequestBody(req);
         ObjectMapper mapper = new ObjectMapper();
         Map<String, Object> dsRequest = mapper.readValue(requestBody, new TypeReference<Map<String, Object>>() {
         });

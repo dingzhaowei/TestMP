@@ -42,7 +42,6 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -57,7 +56,7 @@ import org.testmp.datastore.client.DataStoreClient;
 import org.testmp.webconsole.model.User;
 
 @SuppressWarnings("serial")
-public class ReportService extends HttpServlet {
+public class ReportService extends ServiceBase {
 
     private static final String TEST_METRICS_REPORT = "Test Metrics";
 
@@ -75,17 +74,7 @@ public class ReportService extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         initServiceInfo(req);
 
-        BufferedReader input = new BufferedReader(new InputStreamReader(req.getInputStream(), "ISO-8859-1"));
-        StringBuilder sb = new StringBuilder();
-        while (true) {
-            String line = input.readLine();
-            if (line == null) {
-                break;
-            }
-            sb.append(line).append('\n');
-        }
-        String requestBody = new String(sb.toString().getBytes("ISO-8859-1"), "UTF-8");
-
+        String requestBody = getRequestBody(req);
         HashMap<String, String> params = new HashMap<String, String>();
         for (String param : requestBody.split("&")) {
             String[] keyValue = param.split("=");
