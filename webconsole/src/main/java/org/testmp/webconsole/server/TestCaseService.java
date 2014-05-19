@@ -81,8 +81,8 @@ public class TestCaseService extends ServiceBase {
         Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
 
         try {
+            JsonNode dataNode = null;
             if (operationType.equals("fetch")) {
-                JsonNode dataNode = null;
                 if (dataSource.equals("testCaseDS")) {
                     data.remove("userName"); // TODO: filter by userName
                     Criteria criteria = Criteria.valueOf(mapper.writeValueAsString(data));
@@ -97,26 +97,42 @@ public class TestCaseService extends ServiceBase {
                     dataNode = mapper.readTree(mapper.writeValueAsString(testResult));
                 } else if (dataSource.equals("testRunDS")) {
                     String userName = (String) data.get("userName");
-                    String automations = (String) data.get("automations");
-                    List<Map<String, Object>> dataList = getTestRunsStatus(automations, userName);
+                    String automations = (String) data.get("automation");
+                    List<Map<String, Object>> dataList = getTestRuns(automations, userName);
                     dataNode = mapper.readTree(mapper.writeValueAsString(dataList));
                 }
                 responseBody.put("status", 0);
                 responseBody.put("data", dataNode);
             } else if (operationType.equals("add")) {
-                Map<String, Object> addedCase = addTestCase(data);
+                if (dataSource.equals("testCaseDS")) {
+                    Map<String, Object> addedCase = addTestCase(data);
+                    dataNode = mapper.readTree(mapper.writeValueAsString(addedCase));
+                } else if (dataSource.endsWith("testRunDS")) {
+                    String userName = (String) data.get("userName");
+                    String automation = (String) data.get("automation");
+                    Map<String, Object> addedRun = addTestRun(automation, userName);
+                    dataNode = mapper.readTree(mapper.writeValueAsString(addedRun));
+                }
                 responseBody.put("status", 0);
-                JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(addedCase));
                 responseBody.put("data", dataNode);
             } else if (operationType.equals("update")) {
-                Map<String, Object> updatedCase = updateTestCase(data);
+                if (dataSource.equals("testCaseDS")) {
+                    Map<String, Object> updatedCase = updateTestCase(data);
+                    dataNode = mapper.readTree(mapper.writeValueAsString(updatedCase));
+                }
                 responseBody.put("status", 0);
-                JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(updatedCase));
                 responseBody.put("data", dataNode);
             } else if (operationType.equals("remove")) {
-                Map<String, Object> removedCase = removeTestCase(data);
+                if (dataSource.equals("testCaseDS")) {
+                    Map<String, Object> removedCase = removeTestCase(data);
+                    dataNode = mapper.readTree(mapper.writeValueAsString(removedCase));
+                } else if (dataSource.endsWith("testRunDS")) {
+                    String userName = (String) data.get("userName");
+                    String automation = (String) data.get("automation");
+                    Map<String, Object> removedRun = removeTestRun(automation, userName);
+                    dataNode = mapper.readTree(mapper.writeValueAsString(removedRun));
+                }
                 responseBody.put("status", 0);
-                JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(removedCase));
                 responseBody.put("data", dataNode);
             }
         } catch (Exception e) {
@@ -152,14 +168,15 @@ public class TestCaseService extends ServiceBase {
         return as.assemble(dataInfo, metaInfo);
     }
 
-    private List<Map<String, Object>> getTestRunsStatus(String automations, String userName) throws Exception {
+    private List<Map<String, Object>> getTestRuns(String automations, String userName) throws Exception {
         List<Map<String, Object>> dataList = new ArrayList<Map<String, Object>>();
         String automationServiceUrl = (String) getSetting("automationSettings", "automationServiceUrl", userName);
         HttpClient httpClient = new DefaultHttpClient();
         HttpPost httpPost = new HttpPost(automationServiceUrl);
         try {
             List<NameValuePair> params = new ArrayList<NameValuePair>();
-            params.add(new BasicNameValuePair("automations", automations));
+            params.add(new BasicNameValuePair("automation", automations));
+            params.add(new BasicNameValuePair("action", "query"));
             UrlEncodedFormEntity entity = new UrlEncodedFormEntity(params, "UTF-8");
             httpPost.setEntity(entity);
             HttpResponse resp = httpClient.execute(httpPost);
@@ -182,6 +199,56 @@ public class TestCaseService extends ServiceBase {
             httpPost.releaseConnection();
         }
         return dataList;
+    }
+
+    private Map<String, Object> addTestRun(String automation, String userName) throws Exception {
+        String automationServiceUrl = (String) getSetting("automationSettings", "automationServiceUrl", userName);
+        HttpClient httpClient = new DefaultHttpClient();
+        HttpPost httpPost = new HttpPost(automationServiceUrl);
+        try {
+            List<NameValuePair> params = new ArrayList<NameValuePair>();
+            params.add(new BasicNameValuePair("automation", automation));
+            params.add(new BasicNameValuePair("action", "run"));
+            UrlEncodedFormEntity entity = new UrlEncodedFormEntity(params, "UTF-8");
+            httpPost.setEntity(entity);
+            HttpResponse resp = httpClient.execute(httpPost);
+            if (resp.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                String r = EntityUtils.toString(resp.getEntity(), "UTF-8");
+                Map<String, Object> m = new HashMap<String, Object>();
+                m.put("automation", automation);
+                m.put("isRunning", r.equals("1"));
+                return m;
+            } else {
+                throw new RuntimeException(resp.getStatusLine().getReasonPhrase());
+            }
+        } finally {
+            httpPost.releaseConnection();
+        }
+    }
+
+    private Map<String, Object> removeTestRun(String automation, String userName) throws Exception {
+        String automationServiceUrl = (String) getSetting("automationSettings", "automationServiceUrl", userName);
+        HttpClient httpClient = new DefaultHttpClient();
+        HttpPost httpPost = new HttpPost(automationServiceUrl);
+        try {
+            List<NameValuePair> params = new ArrayList<NameValuePair>();
+            params.add(new BasicNameValuePair("automation", automation));
+            params.add(new BasicNameValuePair("action", "cancel"));
+            UrlEncodedFormEntity entity = new UrlEncodedFormEntity(params, "UTF-8");
+            httpPost.setEntity(entity);
+            HttpResponse resp = httpClient.execute(httpPost);
+            if (resp.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                String r = EntityUtils.toString(resp.getEntity(), "UTF-8");
+                Map<String, Object> m = new HashMap<String, Object>();
+                m.put("automation", automation);
+                m.put("isRunning", r.equals("1"));
+                return m;
+            } else {
+                throw new RuntimeException(resp.getStatusLine().getReasonPhrase());
+            }
+        } finally {
+            httpPost.releaseConnection();
+        }
     }
 
     private List<Map<String, Object>> getTestCases(Criteria criteria) throws Exception {

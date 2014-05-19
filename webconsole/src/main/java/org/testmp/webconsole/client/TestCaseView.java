@@ -188,8 +188,7 @@ public class TestCaseView extends VLayout {
                                 AutomationCodeWindow window = new AutomationCodeWindow(record);
                                 window.show();
                             } else if (robustnessTrend.startsWith("running")) {
-                                String automation = record.getAttribute("automation");
-                                automationScheduler.finish(automation);
+                                automationScheduler.cancel(record);
                             } else {
                                 automationScheduler.launch(record);
                             }
@@ -561,7 +560,7 @@ public class TestCaseView extends VLayout {
 
         public void schedule(String automations) {
             Criteria criteria = new Criteria();
-            criteria.setAttribute("automations", automations);
+            criteria.setAttribute("automation", automations);
             dataSources.get("testRunDS").fetchData(criteria, new DSCallback() {
 
                 @Override
@@ -574,7 +573,8 @@ public class TestCaseView extends VLayout {
                         String automation = result.getAttribute("automation");
                         Boolean isRunning = result.getAttributeAsBoolean("isRunning");
                         if (!isRunning) {
-                            finish(automation);
+                            Record testCase = testCases.get(automation);
+                            finish(testCase);
                         }
                     }
                     AutomationScheduler.this.schedule(1000);
@@ -587,17 +587,58 @@ public class TestCaseView extends VLayout {
             return testCases.isEmpty();
         }
 
-        public synchronized void launch(Record testCase) {
-            String automation = testCase.getAttribute("automation");
+        public synchronized void launch(final Record testCase) {
+            final String automation = testCase.getAttribute("automation");
             if (!testCases.containsKey(automation)) {
-                testCases.put(automation, testCase);
-                testCase.setAttribute("robustnessTrend", "running.gif");
+                Record data = new Record();
+                data.setAttribute("automation", automation);
+                dataSources.get("testRunDS").addData(data, new DSCallback() {
+
+                    @Override
+                    public void execute(DSResponse dsResponse, Object data, DSRequest dsRequest) {
+                        if (dsResponse.getStatus() != 0) {
+                            return;
+                        }
+                        Record result = new Record(JsonUtils.safeEval(data.toString()));
+                        if (!result.getAttributeAsBoolean("isRunning")) {
+                            return;
+                        }
+                        synchronized (AutomationScheduler.this) {
+                            testCases.put(automation, testCase);
+                            testCase.setAttribute("robustnessTrend", "running.gif");
+                        }
+                    }
+
+                });
             }
         }
 
-        public void finish(final String automation) {
+        public synchronized void cancel(final Record testCase) {
+            final String automation = testCase.getAttribute("automation");
+            if (testCases.containsKey(automation)) {
+                Record data = new Record();
+                data.setAttribute("automation", automation);
+                dataSources.get("testRunDS").removeData(data, new DSCallback() {
+
+                    @Override
+                    public void execute(DSResponse dsResponse, Object data, DSRequest dsRequest) {
+                        if (dsResponse.getStatus() != 0) {
+                            return;
+                        }
+                        Record result = new Record(JsonUtils.safeEval(data.toString()));
+                        if (result.getAttributeAsBoolean("isRunning")) {
+                            return;
+                        }
+                        finish(testCase);
+                    }
+
+                });
+            }
+        }
+
+        private synchronized void finish(final Record testCase) {
             Criteria criteria = new Criteria();
-            criteria.setAttribute("automation", automation);
+            criteria.setAttribute("automation", testCase.getAttribute("automation"));
             dataSources.get("testResultDS").fetchData(criteria, new DSCallback() {
 
                 @Override
@@ -606,11 +647,8 @@ public class TestCaseView extends VLayout {
                         return;
                     }
                     synchronized (AutomationScheduler.this) {
-                        Record testCase = testCases.get(automation);
-                        if (testCase != null) {
-                            testCases.remove(testCase.getAttribute("automation"));
-                            testCase.setJsObj(JsonUtils.safeEval(data.toString()));
-                        }
+                        testCases.remove(testCase.getAttribute("automation"));
+                        testCase.setJsObj(JsonUtils.safeEval(data.toString()));
                     }
                 }
 
