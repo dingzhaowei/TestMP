@@ -73,7 +73,7 @@ public class ServiceBase extends HttpServlet {
             }
         }
         if (value == null) {
-            value = getServletContext().getAttribute("settingName");
+            value = getServletContext().getAttribute(settingName);
         }
         return value;
     }

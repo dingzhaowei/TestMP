@@ -110,8 +110,9 @@ public class ClientUtils {
 
             @Override
             protected Object transformRequest(DSRequest dsRequest) {
-                if (dsRequest.getAttributeAsString("operationType").equals("fetch")) {
-                    if (ClientConfig.currentUser != null) {
+                if (ClientConfig.currentUser != null) {
+                    String operationType = dsRequest.getAttributeAsString("operationType");
+                    if (operationType.equals("fetch")) {
                         Criteria criteria = dsRequest.getCriteria();
                         if (criteria == null) {
                             criteria = new Criteria();

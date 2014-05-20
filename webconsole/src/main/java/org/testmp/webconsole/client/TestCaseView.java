@@ -77,6 +77,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.SummaryFunction;
 import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeNode;
@@ -107,6 +108,8 @@ public class TestCaseView extends VLayout {
 
     };
 
+    private int heartBeat = Integer.parseInt(ClientConfig.constants.heartBeatPerSecond());
+
     @Override
     protected void onDraw() {
         if (ClientConfig.currentUser == null) {
@@ -135,7 +138,11 @@ public class TestCaseView extends VLayout {
     @Override
     protected void onInit() {
         super.onInit();
+
         prepareDataSources();
+
+        automationScheduler = new AutomationScheduler();
+        automationScheduler.schedule(heartBeat);
 
         testCaseGrid = new ListGrid() {
             @Override
@@ -309,6 +316,14 @@ public class TestCaseView extends VLayout {
 
         robustnessTrendField.setWidth(40);
         robustnessTrendField.setAlign(Alignment.CENTER);
+        robustnessTrendField.setCellFormatter(new CellFormatter() {
+
+            @Override
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                return "";
+            }
+
+        });
 
         avgTestTimeField.setWidth(100);
         avgTestTimeField.setType(ListGridFieldType.FLOAT);
@@ -503,9 +518,12 @@ public class TestCaseView extends VLayout {
         dataSources.put("testResultDS", testResultSource);
 
         DataSource testRunSource = ClientUtils.createDataSource("testRunDS", ClientConfig.constants.testCaseService());
+        DataSourceTextField userNameField1 = new DataSourceTextField("userName");
+        userNameField1.setPrimaryKey(true);
         DataSourceTextField automationField = new DataSourceTextField("automation");
+        automationField.setPrimaryKey(true);
         DataSourceBooleanField isRunningField = new DataSourceBooleanField("isRunning");
-        testRunSource.setFields(automationField, isRunningField);
+        testRunSource.setFields(userNameField1, automationField, isRunningField);
         dataSources.put("testRunDS", testRunSource);
     }
 
@@ -553,7 +571,7 @@ public class TestCaseView extends VLayout {
                 sb.deleteCharAt(sb.length() - 1);
                 schedule(sb.toString());
             } else {
-                AutomationScheduler.this.schedule(1000);
+                AutomationScheduler.this.schedule(heartBeat);
                 return;
             }
         }
@@ -568,16 +586,23 @@ public class TestCaseView extends VLayout {
                     if (dsResponse.getStatus() != 0) {
                         return;
                     }
-                    Record[] results = Record.convertToRecordArray(JsonUtils.safeEval(data.toString()));
+
+                    Record[] results = dsResponse.getData();
                     for (Record result : results) {
                         String automation = result.getAttribute("automation");
                         Boolean isRunning = result.getAttributeAsBoolean("isRunning");
                         if (!isRunning) {
-                            Record testCase = testCases.get(automation);
-                            finish(testCase);
+                            Record testCase = null;
+                            synchronized (AutomationScheduler.this) {
+                                testCase = testCases.get(automation);
+                            }
+                            if (testCase != null) {
+                                finish(testCase);
+                            }
                         }
                     }
-                    AutomationScheduler.this.schedule(1000);
+
+                    AutomationScheduler.this.schedule(heartBeat);
                 }
 
             });
@@ -591,6 +616,7 @@ public class TestCaseView extends VLayout {
             final String automation = testCase.getAttribute("automation");
             if (!testCases.containsKey(automation)) {
                 Record data = new Record();
+                data.setAttribute("userName", ClientConfig.currentUser);
                 data.setAttribute("automation", automation);
                 dataSources.get("testRunDS").addData(data, new DSCallback() {
 
@@ -599,13 +625,21 @@ public class TestCaseView extends VLayout {
                         if (dsResponse.getStatus() != 0) {
                             return;
                         }
-                        Record result = new Record(JsonUtils.safeEval(data.toString()));
+
+                        Record result = dsResponse.getData()[0];
                         if (!result.getAttributeAsBoolean("isRunning")) {
                             return;
                         }
+
                         synchronized (AutomationScheduler.this) {
                             testCases.put(automation, testCase);
+                            int rowNum = testCaseGrid.getRecordIndex(testCase);
+                            int colNum = testCaseGrid.getFieldNum("robustnessTrend");
+                            Layout recordComp = (Layout) testCaseGrid.getRecordComponent(rowNum, colNum);
+                            ImgButton robustnessTrendImg = (ImgButton) recordComp.getMember(0);
                             testCase.setAttribute("robustnessTrend", "running.gif");
+                            robustnessTrendImg.setSrc(testCase.getAttribute("robustnessTrend"));
+                            testCaseGrid.refreshRow(rowNum);
                         }
                     }
 
@@ -617,6 +651,7 @@ public class TestCaseView extends VLayout {
             final String automation = testCase.getAttribute("automation");
             if (testCases.containsKey(automation)) {
                 Record data = new Record();
+                data.setAttribute("userName", ClientConfig.currentUser);
                 data.setAttribute("automation", automation);
                 dataSources.get("testRunDS").removeData(data, new DSCallback() {
 
@@ -625,10 +660,12 @@ public class TestCaseView extends VLayout {
                         if (dsResponse.getStatus() != 0) {
                             return;
                         }
-                        Record result = new Record(JsonUtils.safeEval(data.toString()));
+
+                        Record result = dsResponse.getData()[0];
                         if (result.getAttributeAsBoolean("isRunning")) {
                             return;
                         }
+
                         finish(testCase);
                     }
 
@@ -646,9 +683,17 @@ public class TestCaseView extends VLayout {
                     if (dsResponse.getStatus() != 0) {
                         return;
                     }
+
                     synchronized (AutomationScheduler.this) {
                         testCases.remove(testCase.getAttribute("automation"));
-                        testCase.setJsObj(JsonUtils.safeEval(data.toString()));
+                        Record result = dsResponse.getData()[0];
+                        int rowNum = testCaseGrid.getRecordIndex(testCase);
+                        int colNum = testCaseGrid.getFieldNum("robustnessTrend");
+                        Layout recordComp = (Layout) testCaseGrid.getRecordComponent(rowNum, colNum);
+                        ImgButton robustnessTrendImg = (ImgButton) recordComp.getMember(0);
+                        testCase.setJsObj(result.getJsObj());
+                        robustnessTrendImg.setSrc(testCase.getAttribute("robustnessTrend"));
+                        testCaseGrid.refreshRow(rowNum);
                     }
                 }
 

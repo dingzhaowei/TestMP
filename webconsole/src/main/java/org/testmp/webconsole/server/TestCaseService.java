@@ -208,7 +208,7 @@ public class TestCaseService extends ServiceBase {
         try {
             List<NameValuePair> params = new ArrayList<NameValuePair>();
             params.add(new BasicNameValuePair("automation", automation));
-            params.add(new BasicNameValuePair("action", "run"));
+            params.add(new BasicNameValuePair("action", "launch"));
             UrlEncodedFormEntity entity = new UrlEncodedFormEntity(params, "UTF-8");
             httpPost.setEntity(entity);
             HttpResponse resp = httpClient.execute(httpPost);
