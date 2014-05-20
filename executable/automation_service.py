@@ -1,5 +1,6 @@
 import argparse
 import cgi
+import logging
 import shlex
 import subprocess
 import sys
@@ -24,6 +25,15 @@ waitings = []
 runnings = {}
 condition = threading.Condition(threading.Lock())
 
+logger = logging.getLogger('automation_service')
+logger.setLevel(logging.DEBUG)
+
+fmt = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+fh = logging.FileHandler('automation_service.log')
+fh.setLevel(logging.DEBUG)
+fh.setFormatter(fmt)
+logger.addHandler(fh)
+
 class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
@@ -35,11 +45,13 @@ class Handler(BaseHTTPRequestHandler):
             resp = globals()[action](automation)
             self.send_response(200)
             self.end_headers()
-            self.wfile.write(resp)
+            self.wfile.write(resp.encode('UTF-8'))
         except Exception as e:
             self.send_error(502, str(e))
+            traceback.print_exc(file=sys.stderr)
 
 def query(automations):
+    logger.debug('query automation: ' + automations)
     automations, resp = automations.split(','), ''
     condition.acquire()
     try:
@@ -55,10 +67,11 @@ def query(automations):
 def launch(automation):
     condition.acquire()
     try:
-        if automation in waitings or automation in runnings:
-            return '1'
-        waitings.add(automation)
-        condition.notify_all()
+        if automation not in waitings and automation not in runnings:
+            logger.debug('launch automation: ' + automation)
+            waitings.append(automation)
+            condition.notify_all()
+        return '1'
     finally:
         condition.release()
 
@@ -66,10 +79,12 @@ def cancel(automation):
     condition.acquire()
     try:
         if automation in runnings:
+            logger.debug('cancel automation: ' + automation + ' [terminated]')
             runnings[automation].terminate()
             del runnings[automation]
             condition.notify_all()
         elif automation in waitings:
+            logger.debug('cancel automation: ' + automation + '[unregistered]')
             waitings.remove(automation)
             condition.notify_all()
         return '0'
@@ -87,10 +102,12 @@ class AutomationRunner(threading.Thread):
             condition.acquire()
             try:
                 if len(runnings) >= args.numproc or not waitings:
+                    logger.debug('waiting for tests ready to run')
                     condition.wait()
                     continue
                 automation = waitings.pop(0)
-                command = args.command.format(automation)
+                command = args.command.format(a=automation)
+                logger.debug('run: ' + command)
                 p = subprocess.Popen(shlex.split(command))
                 runnings[automation] = p
                 condition.notify_all()
@@ -106,13 +123,15 @@ class AutomationChecker(threading.Thread):
             condition.acquire()
             try:
                 if not runnings:
+                    logger.debug('no running test to check')
                     condition.wait()
                     continue
-                for automation in runnings.keys():
+                for automation in list(runnings.keys()):
                     retcode = runnings[automation].poll()
                     if retcode != None:
                         del runnings[automation]
-                        print(automation, retcode)
+                        logger.debug('done: ' + automation + ', retcode=' + str(retcode))
+                        condition.notify_all()
             finally:
                 condition.release()
 
@@ -120,7 +139,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Handle requests of running test automation')
     parser.add_argument('-p', '--port', type=int, default=10085, help='listening port of the service')
     parser.add_argument('-n', '--numproc', type=int, default=1, help='max number of automation runs at the same time')
-    parser.add_argument('-c', '--command', required=True, help='command to run a test parameterized ${automation}')
+    parser.add_argument('-c', '--command', required=True, help='command to run a test parameterized as {a}')
     args = parser.parse_args()
 
     runner = AutomationRunner()
