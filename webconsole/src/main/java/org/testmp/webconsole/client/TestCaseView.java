@@ -88,6 +88,8 @@ public class TestCaseView extends VLayout {
 
     private ListGrid testCaseGrid;
 
+    private IButton runAutomationButton;
+
     private AutomationScheduler automationScheduler;
 
     private HoverCustomizer hoverCustomizer = new HoverCustomizer() {
@@ -406,6 +408,40 @@ public class TestCaseView extends VLayout {
         });
         additionalControls.addMember(foldOrUnfoldButton);
 
+        runAutomationButton = new IButton(ClientConfig.messages.run());
+        runAutomationButton.addClickHandler(new ClickHandler() {
+
+            @Override
+            public void onClick(ClickEvent event) {
+                synchronized (automationScheduler) {
+                    runOrCancelAutomations();
+                }
+            }
+
+            private void runOrCancelAutomations() {
+                String title = runAutomationButton.getTitle();
+                if (title.equals(ClientConfig.messages.run())) {
+                    for (Record testCase : testCaseGrid.getRecords()) {
+                        String automation = testCase.getAttribute("automation");
+                        String robustnessTrend = testCase.getAttribute("robustnessTrend");
+                        if (!robustnessTrend.startsWith("null") && !automationScheduler.contains(automation)) {
+                            automationScheduler.launch(testCase);
+                        }
+                    }
+                } else {
+                    for (Record testCase : testCaseGrid.getRecords()) {
+                        String automation = testCase.getAttribute("automation");
+                        String robustnessTrend = testCase.getAttribute("robustnessTrend");
+                        if (!robustnessTrend.startsWith("null") && automationScheduler.contains(automation)) {
+                            automationScheduler.cancel(testCase);
+                        }
+                    }
+                }
+            }
+
+        });
+        additionalControls.addMember(runAutomationButton);
+
         IButton newCaseButton = new IButton(ClientConfig.messages.new_());
         newCaseButton.setIcon("newcase.png");
         newCaseButton.addClickHandler(new ClickHandler() {
@@ -615,6 +651,10 @@ public class TestCaseView extends VLayout {
                             ImgButton robustnessTrendImg = (ImgButton) recordComp.getMember(0);
                             robustnessTrendImg.setSrc("running.gif");
                             testCaseGrid.refreshRow(rowNum);
+
+                            if (runAutomationButton.getTitle().equals(ClientConfig.messages.run())) {
+                                runAutomationButton.setTitle(ClientConfig.messages.cancel());
+                            }
                         }
                     }
 
@@ -673,6 +713,11 @@ public class TestCaseView extends VLayout {
                         testCase.setJsObj(result.getJsObj());
                         robustnessTrendImg.setSrc(testCase.getAttribute("robustnessTrend"));
                         testCaseGrid.refreshRow(rowNum);
+
+                        String title = runAutomationButton.getTitle();
+                        if (testCases.isEmpty() && title.equals(ClientConfig.messages.cancel())) {
+                            runAutomationButton.setTitle(ClientConfig.messages.run());
+                        }
                     }
                 }
 
