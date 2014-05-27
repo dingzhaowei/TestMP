@@ -15,6 +15,7 @@ package org.testmp.webconsole.server;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -37,6 +38,7 @@ import org.codehaus.jackson.type.TypeReference;
 import org.testmp.datastore.client.DataInfo;
 import org.testmp.datastore.client.DataStoreClient;
 import org.testmp.datastore.client.MetaInfo;
+import org.testmp.sync.TestData;
 import org.testmp.webconsole.server.Filter.Criteria;
 
 @SuppressWarnings("serial")
@@ -48,16 +50,14 @@ public class TestDataService extends ServiceBase {
 
     private DataAssemblyStrategy strategy;
 
-    @SuppressWarnings("rawtypes")
-    private DataLoader<Map> loader;
+    private DataLoader<TestData> loader;
 
-    @SuppressWarnings("rawtypes")
     @Override
     public void init() throws ServletException {
         String testDataStoreUrl = (String) getServletContext().getAttribute("testDataStoreUrl");
         client = new DataStoreClient(testDataStoreUrl);
         strategy = new TestDataAssemblyStrategy();
-        loader = new DataLoader<Map>(testDataStoreUrl, Map.class, strategy);
+        loader = new DataLoader<TestData>(testDataStoreUrl, TestData.class, strategy);
         super.init();
     }
 
@@ -71,26 +71,33 @@ public class TestDataService extends ServiceBase {
 
         ObjectNode dsResponse = mapper.createObjectNode();
         ObjectNode responseBody = dsResponse.putObject("response");
+        String dataSource = dsRequest.get("dataSource").toString();
         String operationType = dsRequest.get("operationType").toString();
         Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
         try {
             if (operationType.equals("fetch")) {
-                // TODO: filter by userName
-                data.remove("userName");
-                Criteria criteria = Criteria.valueOf(mapper.writeValueAsString(data));
-                List<String> sortBy = (List<String>) dsRequest.get("sortBy");
-                List<Map<String, Object>> dataList = getTestData(criteria, sortBy);
-                int startRow = Integer.parseInt(dsRequest.get("startRow").toString());
-                int endRow = Integer.parseInt(dsRequest.get("endRow").toString());
-                int actualEndRow = endRow > dataList.size() ? dataList.size() : endRow;
-                int totalRows = dataList.size();
-                dataList = dataList.subList(startRow, actualEndRow);
-                responseBody.put("status", 0);
-                responseBody.put("startRow", startRow);
-                responseBody.put("endRow", actualEndRow);
-                responseBody.put("totalRows", totalRows);
-                JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(dataList));
-                responseBody.put("data", dataNode);
+                if (dataSource.equals("testDataNameDS")) {
+                    List<Map<String, Object>> dataList = getTestDataNames();
+                    JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(dataList));
+                    responseBody.put("data", dataNode);
+                } else {
+                    // TODO: filter by userName
+                    data.remove("userName");
+                    Criteria criteria = Criteria.valueOf(mapper.writeValueAsString(data));
+                    List<String> sortBy = (List<String>) dsRequest.get("sortBy");
+                    List<Map<String, Object>> dataList = getTestData(criteria, sortBy);
+                    int startRow = Integer.parseInt(dsRequest.get("startRow").toString());
+                    int endRow = Integer.parseInt(dsRequest.get("endRow").toString());
+                    int actualEndRow = endRow > dataList.size() ? dataList.size() : endRow;
+                    int totalRows = dataList.size();
+                    dataList = dataList.subList(startRow, actualEndRow);
+                    responseBody.put("status", 0);
+                    responseBody.put("startRow", startRow);
+                    responseBody.put("endRow", actualEndRow);
+                    responseBody.put("totalRows", totalRows);
+                    JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(dataList));
+                    responseBody.put("data", dataNode);
+                }
             } else if (operationType.equals("update")) {
                 Map<String, Object> oldValues = (Map<String, Object>) dsRequest.get("oldValues");
                 Map<String, Object> updatedData = updateTestData(data, oldValues);
@@ -120,8 +127,20 @@ public class TestDataService extends ServiceBase {
         output.flush();
     }
 
+    private List<Map<String, Object>> getTestDataNames() throws Exception {
+        List<String> names = client.getPropertyValues("name", "TestData");
+        Collections.sort(names);
+        List<Map<String, Object>> dataList = new ArrayList<Map<String, Object>>();
+        for (String name : names) {
+            Map<String, Object> data = new HashMap<String, Object>();
+            data.put("name", name);
+            dataList.add(data);
+        }
+        return dataList;
+    }
+
     private List<Map<String, Object>> getTestData(Criteria criteria, final List<String> sortBy) throws Exception {
-        List<Map<String, Object>> dataList = loader.load();
+        List<Map<String, Object>> dataList = loader.load("TestData");
         if (criteria != null) {
             Filter filter = new Filter(criteria);
             dataList = filter.doFilter(dataList);
@@ -157,7 +176,6 @@ public class TestDataService extends ServiceBase {
         return dataList;
     }
 
-    @SuppressWarnings("rawtypes")
     private Map<String, Object> updateTestData(Map<String, Object> data, Map<String, Object> oldValues)
             throws Exception {
         Integer id = (Integer) data.get("id");
@@ -185,46 +203,70 @@ public class TestDataService extends ServiceBase {
                 }
             } else if (key.equals("properties")) {
                 ObjectMapper mapper = new ObjectMapper();
-                Map<String, Object> oldProps = mapper.readValue(oldValues.get("properties").toString(),
+                Map<String, Object> properties = mapper.readValue(data.get(key).toString(),
                         new TypeReference<Map<String, Object>>() {
                         });
-                Map<String, Object> newProps = mapper.readValue(data.get("properties").toString(),
-                        new TypeReference<Map<String, Object>>() {
-                        });
-
-                Set<String> propsToDelete = new HashSet<String>(oldProps.keySet());
-                propsToDelete.removeAll(newProps.keySet());
-
-                for (String propName : propsToDelete) {
-                    client.deletePropertyFromData(id, propName);
+                client.addPropertyToData(id, "properties", properties);
+            } else if (key.equals("parent")) {
+                String parent = (String) data.get("parent");
+                if (parent != null) {
+                    HashMap<String, Object> queryParams = new HashMap<String, Object>();
+                    queryParams.put("name", parent);
+                    if (client.findData(new String[] { "TestData" }, queryParams).size() == 0) {
+                        throw new RuntimeException("No such parent named: " + parent);
+                    }
                 }
-
-                for (Map.Entry<String, Object> entry : newProps.entrySet()) {
-                    String propName = entry.getKey();
-                    Object propValue = entry.getValue();
-                    client.addPropertyToData(id, propName, propValue);
-                }
+                client.addPropertyToData(id, "parent", parent);
             }
         }
 
-        DataInfo<Map> dataInfo = client.getDataById(Map.class, id);
+        DataInfo<TestData> dataInfo = client.getDataById(TestData.class, id);
         MetaInfo metaInfo = client.getMetaInfo(id).get(0);
         Map<String, Object> updatedData = strategy.assemble(dataInfo, metaInfo);
         return updatedData;
     }
 
-    @SuppressWarnings("rawtypes")
     private Map<String, Object> addTestData(Map<String, Object> data) throws Exception {
-        String[] tags = data.get("tags").toString().split("\\s*,\\s*");
-        String props = data.get("properties").toString();
-        ObjectMapper mapper = new ObjectMapper();
-        DataInfo<Object> dataInfoToAdd = new DataInfo<Object>();
-        dataInfoToAdd.setTags(Arrays.asList(tags));
-        dataInfoToAdd.setData(mapper.readValue(props, new TypeReference<Map<String, Object>>() {
-        }));
-        Integer id = client.addData(dataInfoToAdd).get(0);
+        String name = data.get("name").toString().trim();
+        HashMap<String, Object> queryParams = new HashMap<String, Object>();
+        queryParams.put("name", name);
+        if (client.findData(new String[] { "TestData" }, queryParams).size() > 0) {
+            throw new RuntimeException("Duplicate data name: " + name);
+        }
 
-        DataInfo<Map> dataInfo = client.getDataById(Map.class, id);
+        String parent = (String) data.get("parent");
+        if (parent != null) {
+            parent = parent.trim();
+            queryParams = new HashMap<String, Object>();
+            queryParams.put("name", parent);
+            if (client.findData(new String[] { "TestData" }, queryParams).size() == 0) {
+                throw new RuntimeException("No such parent named: " + parent);
+            }
+        }
+
+        DataInfo<TestData> dataInfo = new DataInfo<TestData>();
+        TestData td = new TestData();
+        td.setName(name);
+        td.setParent(parent);
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, Object> properties = mapper.readValue(data.get("properties").toString(),
+                new TypeReference<Map<String, Object>>() {
+                });
+        td.setProperties(properties);
+        dataInfo.setData(td);
+
+        ArrayList<String> tags = new ArrayList<String>();
+        tags.add("TestData");
+        String s = (String) data.get("tags");
+        if (s != null && !s.isEmpty()) {
+            for (String t : s.trim().split(",")) {
+                tags.add(t.trim());
+            }
+        }
+        dataInfo.setTags(tags);
+
+        Integer id = client.addData(dataInfo).get(0);
+        dataInfo = client.getDataById(TestData.class, id);
         MetaInfo metaInfo = client.getMetaInfo(id).get(0);
         Map<String, Object> addedData = strategy.assemble(dataInfo, metaInfo);
         return addedData;

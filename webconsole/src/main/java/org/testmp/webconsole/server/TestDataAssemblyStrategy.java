@@ -9,22 +9,27 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.ObjectWriter;
 import org.testmp.datastore.client.DataInfo;
 import org.testmp.datastore.client.MetaInfo;
+import org.testmp.sync.TestData;
 
 public class TestDataAssemblyStrategy implements DataAssemblyStrategy {
 
     @Override
     public Map<String, Object> assemble(DataInfo<? extends Object> dataInfo, MetaInfo metaInfo) {
-        @SuppressWarnings("rawtypes")
-        Map data = (Map) dataInfo.getData();
+        TestData td = (TestData) dataInfo.getData();
         Map<String, Object> m = new HashMap<String, Object>();
         ObjectMapper mapper = new ObjectMapper();
         ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();
 
         m.put("id", dataInfo.getId().toString());
+        m.put("name", td.getName());
+        m.put("parent", td.getParent());
         List<String> tags = dataInfo.getTags();
         Collections.sort(tags);
         StringBuilder sb = new StringBuilder();
         for (String tag : tags) {
+            if (tag.equals("TestData")) {
+                continue;
+            }
             if (sb.length() > 0) {
                 sb.append(',');
             }
@@ -32,7 +37,7 @@ public class TestDataAssemblyStrategy implements DataAssemblyStrategy {
         }
         m.put("tags", sb.toString());
         try {
-            m.put("properties", writer.writeValueAsString(data));
+            m.put("properties", writer.writeValueAsString(td.getProperties()));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

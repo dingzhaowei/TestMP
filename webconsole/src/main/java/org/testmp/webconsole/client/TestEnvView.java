@@ -96,7 +96,6 @@ public class TestEnvView extends VLayout {
                         public void onClick(ClickEvent event) {
                             TasksWindow window = new TasksWindow(record);
                             window.show();
-                            window.scheduleTaskRefreshing();
                         }
                     });
                     recordCanvas.addMember(taskImg);
@@ -238,6 +237,12 @@ public class TestEnvView extends VLayout {
         ListGrid taskGrid;
 
         Timer taskRefreshing;
+
+        @Override
+        protected void onDraw() {
+            super.onDraw();
+            scheduleTaskRefreshing();
+        }
 
         TasksWindow(final ListGridRecord envRecord) {
             setWidth(750);

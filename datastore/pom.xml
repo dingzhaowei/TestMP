@@ -6,7 +6,7 @@
   <parent>
     <artifactId>testmp</artifactId>
     <groupId>org.testmp</groupId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
   </parent>
   <artifactId>datastore</artifactId>
   <version>${datastore.version}</version>

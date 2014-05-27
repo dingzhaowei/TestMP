@@ -11,7 +11,7 @@
   <groupId>org.testmp</groupId>
   <artifactId>testmp</artifactId>
   <name>testmp</name>
-  <version>1.0.2</version>
+  <version>1.0.3</version>
   <packaging>pom</packaging>
   <description>Automation-centric Test Management Platform</description>
   <url>http://testmp.org</url>
@@ -41,9 +41,9 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <testsync.version>1.0.1</testsync.version>
+    <testsync.version>1.0.2</testsync.version>
     <datastore-client.version>1.0.0</datastore-client.version>
-    <datastore.version>1.0.1</datastore.version>
+    <datastore.version>1.0.2</datastore.version>
 
     <servlet.version>2.5</servlet.version>
     <httpclient.version>4.2.3</httpclient.version>
