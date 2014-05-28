@@ -137,7 +137,7 @@ class AutomationChecker(threading.Thread):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Handle requests of running test automation')
-    parser.add_argument('-p', '--port', type=int, default=10085, help='listening port of the service')
+    parser.add_argument('-p', '--port', type=int, default=8888, help='listening port of the service')
     parser.add_argument('-n', '--numproc', type=int, default=1, help='max number of automation runs at the same time')
     parser.add_argument('-c', '--command', required=True, help='command to run a test parameterized as {a}')
     args = parser.parse_args()

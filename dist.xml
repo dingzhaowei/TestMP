@@ -1,120 +1,121 @@
 <project name="TestMP" default="dist" basedir=".">
-	<description>
-		Genreate testmp distribution
+  <description>
+    Genreate testmp distribution
   </description>
 
-	<property name="script" location="executable" />
-	<property name="dist" location="distribution" />
-	<property name="testmp" location="${dist}/testmp" />
+  <property name="script" location="executable" />
+  <property name="dist" location="distribution" />
+  <property name="testmp" location="${dist}/testmp" />
 
-	<target name="dist" depends="clean" description="generate the distribution">
-		<mkdir dir="${dist}" />
-		<mkdir dir="${testmp}" />
-		<mkdir dir="${testmp}/bin" />
-		<mkdir dir="${testmp}/conf" />
-		<mkdir dir="${testmp}/log" />
-		<mkdir dir="${testmp}/lib" />
-		<mkdir dir="${testmp}/webapp" />
-		<mkdir dir="${testmp}/data" />
-		<mkdir dir="${testmp}/data/testCaseStore" />
-		<mkdir dir="${testmp}/data/testDataStore" />
-		<mkdir dir="${testmp}/data/testEnvStore" />
+  <target name="dist" depends="clean" description="generate the distribution">
+    <mkdir dir="${dist}" />
+    <mkdir dir="${testmp}" />
+    <mkdir dir="${testmp}/bin" />
+    <mkdir dir="${testmp}/conf" />
+    <mkdir dir="${testmp}/log" />
+    <mkdir dir="${testmp}/lib" />
+    <mkdir dir="${testmp}/webapp" />
+    <mkdir dir="${testmp}/data" />
+    <mkdir dir="${testmp}/data/testCaseStore" />
+    <mkdir dir="${testmp}/data/testDataStore" />
+    <mkdir dir="${testmp}/data/testEnvStore" />
 
-		<copy file="datastore/target/datastore.war" todir="${testmp}/webapp" />
-		<copy file="webconsole/target/testmp.war" todir="${testmp}/webapp" />
+    <copy file="datastore/target/datastore.war" todir="${testmp}/webapp" />
+    <copy file="webconsole/target/testmp.war" todir="${testmp}/webapp" />
 
-		<copy todir="${testmp}/lib">
-			<fileset dir="testsync/target">
-				<include name="*.jar" />
-			</fileset>
-			<fileset dir="testsync/target/lib">
-				<include name="*.jar" />
-			</fileset>
-			<fileset dir="datastore-client/target">
-				<include name="*.jar" />
-			</fileset>
-			<fileset dir="datastore-client/target/lib">
-				<include name="*.jar" />
-			</fileset>
-		</copy>
+    <copy todir="${testmp}/lib">
+      <fileset dir="testsync/target">
+        <include name="*.jar" />
+      </fileset>
+      <fileset dir="testsync/target/lib">
+        <include name="*.jar" />
+      </fileset>
+      <fileset dir="datastore-client/target">
+        <include name="*.jar" />
+      </fileset>
+      <fileset dir="datastore-client/target/lib">
+        <include name="*.jar" />
+      </fileset>
+    </copy>
 
-		<move todir="${testmp}/lib">
-			<fileset dir="${testmp}/lib">
-				<include name="*-SNAPSHOT.jar" />
-			</fileset>
-			<mapper type="glob" from="*-SNAPSHOT.jar" to="*.jar" />
-		</move>
+    <move todir="${testmp}/lib">
+      <fileset dir="${testmp}/lib">
+        <include name="*-SNAPSHOT.jar" />
+      </fileset>
+      <mapper type="glob" from="*-SNAPSHOT.jar" to="*.jar" />
+    </move>
 
-		<path id="testmp-lib">
-			<fileset dir="${testmp}/lib">
-				<include name="*.jar" />
-			</fileset>
-		</path>
+    <path id="testmp-lib">
+      <fileset dir="${testmp}/lib">
+        <include name="*.jar" />
+      </fileset>
+    </path>
 
-		<copy todir="${testmp}/bin">
-			<fileset dir="${script}">
-				<include name="*.bat" />
-				<include name="*.sh" />
-				<include name="*.py" />
-			</fileset>
-		</copy>
+    <copy todir="${testmp}/bin">
+      <fileset dir="${script}">
+        <include name="*.bat" />
+        <include name="*.sh" />
+        <include name="*.py" />
+      </fileset>
+    </copy>
 
-		<copy file="README.md" todir="${testmp}" />
+    <copy file="README.md" todir="${testmp}" />
 
-		<chmod perm="ugo+x" type="file">
-			<fileset dir="${testmp}/bin">
-				<include name="*.sh" />
-			</fileset>
-		</chmod>
+    <chmod perm="ugo+x" type="file">
+      <fileset dir="${testmp}/bin">
+        <include name="*.sh" />
+      </fileset>
+    </chmod>
 
-		<javac srcdir="${script}" destdir="${testmp}/bin"
-			includeantruntime="false">
-			<classpath refid="testmp-lib" />
-			<include name="*.java" />
-		</javac>
+    <javac srcdir="${script}" destdir="${testmp}/bin"
+      includeantruntime="false">
+      <classpath refid="testmp-lib" />
+      <include name="*.java" />
+    </javac>
 
-		<propertyfile file="${testmp}/conf/testmp.properties"
-			comment="TestMP setting">
-			<entry key="locale" value="en_US"/>
+    <propertyfile file="${testmp}/conf/testmp.properties"
+      comment="TestMP setting">
+      <entry key="locale" value="en_US" />
 
-			<entry key="testCaseStoreUrl" value="http://localhost:10081/DataStore.do" />
-			<entry key="testDataStoreUrl" value="http://localhost:10082/DataStore.do" />
-			<entry key="testEnvStoreUrl" value="http://localhost:10083/DataStore.do" />
+      <entry key="testCaseStoreUrl" value="http://localhost:10081/DataStore.do" />
+      <entry key="testDataStoreUrl" value="http://localhost:10082/DataStore.do" />
+      <entry key="testEnvStoreUrl" value="http://localhost:10083/DataStore.do" />
+      <entry key="automationServiceUrl" value="http://localhost:8888" />
 
-			<entry key="executionThreadNum" value="10" />
-			<entry key="executionTimeout" value="0" />
-			<entry key="scheduleRefreshingTimeGap" value="600" />
-			<entry key="taskTriggerMaxLatency" value="60" />
+      <entry key="executionThreadNum" value="10" />
+      <entry key="executionTimeout" value="0" />
+      <entry key="scheduleRefreshingTimeGap" value="600" />
+      <entry key="taskTriggerMaxLatency" value="60" />
 
-			<entry key="testMetricsReportRecipients" value="" />
-			<entry key="testMetricsReportSubject" value="" />
-			<entry key="dataAnalyticsReportRecipients" value="" />
-			<entry key="dataAnalyticsReportSubject" value="" />
-			<entry key="envStatusReportRecipients" value="" />
-			<entry key="envStatusReportSubject" value="" />
+      <entry key="testMetricsReportRecipients" value="" />
+      <entry key="testMetricsReportSubject" value="" />
+      <entry key="dataAnalyticsReportRecipients" value="" />
+      <entry key="dataAnalyticsReportSubject" value="" />
+      <entry key="envStatusReportRecipients" value="" />
+      <entry key="envStatusReportSubject" value="" />
 
-			<entry key="smtpSettingHost" value="" />
-			<entry key="smtpSettingPort" value="25" />
-			<entry key="smtpSettingUser" value="" />
-			<entry key="smtpSettingPass" value="" />
-			<entry key="smtpSettingSTARTTLS" value="true" />
-		</propertyfile>
+      <entry key="smtpSettingHost" value="" />
+      <entry key="smtpSettingPort" value="25" />
+      <entry key="smtpSettingUser" value="" />
+      <entry key="smtpSettingPass" value="" />
+      <entry key="smtpSettingSTARTTLS" value="true" />
+    </propertyfile>
 
-		<tar destfile="testmp.tar.gz" longfile="gnu" compression="gzip">
-			<tarfileset dir="${dist}" filemode="755">
-				<include name="**/bin/*.sh" />
-				<include name="**/bin/*.py" />
-			</tarfileset>
-			<tarfileset dir="${dist}">
-				<include name="**/*" />
-				<exclude name="**/bin/*.sh" />
-				<exclude name="**/bin/*.py" />
-			</tarfileset>
-		</tar>
-	</target>
+    <tar destfile="testmp.tar.gz" longfile="gnu" compression="gzip">
+      <tarfileset dir="${dist}" filemode="755">
+        <include name="**/bin/*.sh" />
+        <include name="**/bin/*.py" />
+      </tarfileset>
+      <tarfileset dir="${dist}">
+        <include name="**/*" />
+        <exclude name="**/bin/*.sh" />
+        <exclude name="**/bin/*.py" />
+      </tarfileset>
+    </tar>
+  </target>
 
-	<target name="clean" description="clean up">
-		<delete dir="${dist}" />
-		<delete file="testmp.tar.gz" />
-	</target>
+  <target name="clean" description="clean up">
+    <delete dir="${dist}" />
+    <delete file="testmp.tar.gz" />
+  </target>
 </project>
