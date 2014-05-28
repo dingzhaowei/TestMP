@@ -92,23 +92,7 @@ public class TestCaseView extends VLayout {
 
     private AutomationScheduler automationScheduler;
 
-    private HoverCustomizer hoverCustomizer = new HoverCustomizer() {
-
-        @Override
-        public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-            Boolean isFolder = record.getAttributeAsBoolean("isFolder");
-            Boolean isGridSummary = record.getIsGridSummary();
-            Boolean isGroupSummary = record.getIsGroupSummary();
-            if (value == null || (isFolder != null && isFolder.booleanValue())
-                    || (isGridSummary != null && isGridSummary.booleanValue())
-                    || (isGroupSummary != null && isGroupSummary.booleanValue())) {
-                return null;
-            }
-            String v = value.toString().replace("&nbsp;", "");
-            return v.isEmpty() ? null : v;
-        }
-
-    };
+    private HoverCustomizer hoverCustomizer = ClientUtils.createHoverCustomizer();
 
     private int heartBeat = Integer.parseInt(ClientConfig.constants.heartBeatPerSecond());
 

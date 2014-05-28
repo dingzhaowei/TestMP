@@ -485,7 +485,14 @@ public class TestEnvView extends VLayout {
                                 statusMap.put(Integer.parseInt(keyValue[0]), keyValue[1]);
                             }
 
-                            for (ListGridRecord record : taskGrid.getRecords()) {
+                            ListGridRecord[] records = null;
+                            try {
+                                records = taskGrid.getRecords();
+                            } catch (IllegalStateException e) {
+                                return;
+                            }
+
+                            for (ListGridRecord record : records) {
                                 Integer taskId = record.getAttributeAsInt("taskId");
                                 String lastStatus = record.getAttribute("status");
                                 String lastLastRunTime = record.getAttribute("lastRunTime");

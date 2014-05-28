@@ -34,6 +34,8 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -103,6 +105,27 @@ public class ClientUtils {
         loading.setIcon("loading.gif");
         loading.setIconSize(16);
         return loading;
+    }
+
+    public static HoverCustomizer createHoverCustomizer() {
+        HoverCustomizer hoverCustomizer = new HoverCustomizer() {
+
+            @Override
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                Boolean isFolder = record.getAttributeAsBoolean("isFolder");
+                Boolean isGridSummary = record.getIsGridSummary();
+                Boolean isGroupSummary = record.getIsGroupSummary();
+                if (value == null || (isFolder != null && isFolder.booleanValue())
+                        || (isGridSummary != null && isGridSummary.booleanValue())
+                        || (isGroupSummary != null && isGroupSummary.booleanValue())) {
+                    return null;
+                }
+                String v = value.toString().replace("&nbsp;", "");
+                return v.isEmpty() ? null : v;
+            }
+
+        };
+        return hoverCustomizer;
     }
 
     public static DataSource createDataSource(String dsName, String servicePath) {

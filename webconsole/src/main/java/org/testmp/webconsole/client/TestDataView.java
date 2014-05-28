@@ -67,6 +67,8 @@ public class TestDataView extends VLayout {
 
     private LinkedList<Criteria> criteriaStack = new LinkedList<Criteria>();
 
+    private HoverCustomizer hoverCustomizer = ClientUtils.createHoverCustomizer();
+
     @Override
     protected void onDraw() {
         if (ClientConfig.currentUser == null) {
@@ -107,13 +109,17 @@ public class TestDataView extends VLayout {
         testDataGrid.setWarnOnRemoval(true);
         testDataGrid.setCanEdit(true);
         testDataGrid.setShowRollOver(false);
+        testDataGrid.setShowRecordComponents(true);
+        testDataGrid.setShowRecordComponentsByCell(true);
 
         ListGridField nameField = new ListGridField("name", ClientConfig.messages.name(), 120);
         nameField.setCanEdit(false);
         nameField.setShowHover(true);
+        nameField.setHoverCustomizer(hoverCustomizer);
 
         ListGridField parentField = new ListGridField("parent", ClientConfig.messages.parent(), 120);
         parentField.setShowHover(true);
+        parentField.setHoverCustomizer(hoverCustomizer);
         parentField.addRecordClickHandler(new RecordClickHandler() {
 
             @Override
@@ -132,6 +138,8 @@ public class TestDataView extends VLayout {
                         AdvancedCriteria criteria = ClientConfig.getCurrentFilterCriteria(FilterType.TEST_DATA);
                         if (criteria.getCriteria() != null && criteria.getCriteria().length != 0) {
                             criteriaStack.addFirst(criteria);
+                        } else {
+                            criteriaStack.addFirst(new AdvancedCriteria());
                         }
                         criteria = new AdvancedCriteria();
                         criteria.setOperator(OperatorId.AND);
@@ -149,6 +157,7 @@ public class TestDataView extends VLayout {
 
         ListGridField tagsField = new ListGridField("tags", ClientConfig.messages.tags(), 150);
         tagsField.setShowHover(true);
+        tagsField.setHoverCustomizer(hoverCustomizer);
 
         ListGridField propertiesField = new ListGridField("properties", ClientConfig.messages.properties());
         propertiesField.setShowHover(true);
@@ -205,16 +214,12 @@ public class TestDataView extends VLayout {
 
         goBackButton = new IButton(ClientConfig.messages.back());
         goBackButton.setIcon("back.png");
-        goBackButton.setShowDisabledIcon(false);
         goBackButton.setDisabled(true);
         goBackButton.addClickHandler(new ClickHandler() {
 
             @Override
             public void onClick(ClickEvent event) {
                 AdvancedCriteria criteria = (AdvancedCriteria) criteriaStack.poll();
-                if (criteria == null) {
-                    criteria = new AdvancedCriteria();
-                }
                 testDataGrid.filterData(criteria);
                 ClientConfig.setCurrentFilterCriteria(criteria, FilterType.TEST_DATA);
                 if (criteriaStack.isEmpty()) {
