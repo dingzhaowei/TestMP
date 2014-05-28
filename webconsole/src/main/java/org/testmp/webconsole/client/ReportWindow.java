@@ -29,6 +29,7 @@ import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.AnimationEffect;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.AnimationCallback;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -126,14 +127,19 @@ public class ReportWindow extends Window {
                         reportPane.setEvalScriptBlocks(true);
                         final String filename = response.getText();
                         reportPane.setContentsURL(baseUrl + "reports/" + filename);
+
                         HLayout wrapperLayout = new HLayout();
+                        wrapperLayout.setOverflow(Overflow.AUTO);
                         wrapperLayout.addMember(reportPane);
                         windowLayout.addMember(wrapperLayout);
+
                         HLayout controls = new HLayout();
                         controls.setSize("99%", "20");
                         controls.setMargin(5);
                         controls.setMembersMargin(5);
                         controls.setAlign(Alignment.CENTER);
+                        windowLayout.addMember(controls);
+
                         IButton sendButton = new IButton(ClientConfig.messages.send());
                         sendButton.addClickHandler(new ClickHandler() {
 
@@ -145,7 +151,17 @@ public class ReportWindow extends Window {
 
                         });
                         controls.addMember(sendButton);
-                        windowLayout.addMember(controls);
+
+                        IButton cancelButton = new IButton(ClientConfig.messages.cancel());
+                        cancelButton.addClickHandler(new ClickHandler() {
+
+                            @Override
+                            public void onClick(ClickEvent event) {
+                                ReportWindow.this.destroy();
+                            }
+
+                        });
+                        controls.addMember(cancelButton);
                     } else {
                         SC.warn(response.getStatusCode() + " - " + response.getStatusText());
                     }

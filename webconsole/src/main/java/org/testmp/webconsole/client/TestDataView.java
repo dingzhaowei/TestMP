@@ -319,10 +319,7 @@ public class TestDataView extends VLayout {
             ClientUtils.unifySimpleWindowStyle(this);
 
             VLayout layout = new VLayout();
-            layout.setSize("100%", "100%");
-            layout.setMargin(5);
-            layout.setMembersMargin(5);
-            layout.setAlign(Alignment.CENTER);
+            ClientUtils.unifyWindowLayoutStyle(layout);
             addItem(layout);
 
             final DynamicForm form = new DynamicForm();
@@ -349,11 +346,7 @@ public class TestDataView extends VLayout {
             layout.addMember(form);
 
             HLayout controls = new HLayout();
-            controls.setSize("99%", "20");
-            controls.setMargin(5);
-            controls.setMembersMargin(5);
-            controls.setLayoutAlign(Alignment.CENTER);
-            controls.setAlign(Alignment.CENTER);
+            ClientUtils.unifyControlsLayoutStyle(controls);
             layout.addMember(controls);
 
             IButton okButton = new IButton(ClientConfig.messages.ok());

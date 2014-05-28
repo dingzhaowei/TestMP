@@ -398,14 +398,28 @@ public class TestEnvView extends VLayout {
 
             IButton newTaskButton = new IButton(ClientConfig.messages.new_());
             newTaskButton.addClickHandler(new ClickHandler() {
+
+                @Override
                 public void onClick(ClickEvent event) {
                     String currentEditingEnv = envRecord.getAttribute("envName");
                     TaskSource taskSource = (TaskSource) taskGrid.getDataSource();
                     taskSource.setCurrentEditingEnv(currentEditingEnv);
                     taskGrid.startEditingNew();
                 }
+
             });
             controls.addMember(newTaskButton);
+
+            IButton cancelButton = new IButton(ClientConfig.messages.cancel());
+            cancelButton.addClickHandler(new ClickHandler() {
+
+                @Override
+                public void onClick(ClickEvent event) {
+                    TasksWindow.this.destroy();
+                }
+
+            });
+            controls.addMember(cancelButton);
 
             layout.addMember(controls);
             addItem(layout);
@@ -447,7 +461,13 @@ public class TestEnvView extends VLayout {
             dataBuilder.append("action=queryTaskStatus");
             dataBuilder.append("&taskIds=");
 
-            ListGridRecord[] records = taskGrid.getRecords();
+            ListGridRecord[] records = null;
+            try {
+                records = taskGrid.getRecords();
+            } catch (IllegalStateException e) {
+                return;
+            }
+
             if (records.length == 0) {
                 scheduleTaskRefreshing();
                 return;
@@ -623,7 +643,7 @@ public class TestEnvView extends VLayout {
             hostField.setDisplayField("hostname");
             hostField.setValueField("hostname");
             hostField.setDefaultValue("localhost");
-            hostField.setEditorType(new ComboBoxItem());
+            hostField.setEditorProperties(new ComboBoxItem());
             hostField.setShowHover(true);
 
             ListGridField workingDirField = new ListGridField("workingDir", ClientConfig.messages.workingDir(), 100);
@@ -666,6 +686,17 @@ public class TestEnvView extends VLayout {
                 }
             });
             controls.addMember(newExecutionButton);
+
+            IButton cancelButton = new IButton(ClientConfig.messages.cancel());
+            cancelButton.addClickHandler(new ClickHandler() {
+
+                @Override
+                public void onClick(ClickEvent event) {
+                    ExecutionsWindow.this.destroy();
+                }
+
+            });
+            controls.addMember(cancelButton);
 
             VLayout layout = new VLayout();
             layout.setWidth100();
@@ -723,7 +754,7 @@ public class TestEnvView extends VLayout {
                 }
 
             });
-            passwordField.setEditorType(new PasswordItem());
+            passwordField.setEditorProperties(new PasswordItem());
 
             hostGrid.setFields(hostNameField, userNameField, passwordField);
             layout.addMember(hostGrid);
@@ -737,11 +768,25 @@ public class TestEnvView extends VLayout {
 
             IButton newHostButton = new IButton(ClientConfig.messages.new_());
             newHostButton.addClickHandler(new ClickHandler() {
+
+                @Override
                 public void onClick(ClickEvent event) {
                     hostGrid.startEditingNew();
                 }
+
             });
             controls.addMember(newHostButton);
+
+            IButton cancelButton = new IButton(ClientConfig.messages.cancel());
+            cancelButton.addClickHandler(new ClickHandler() {
+
+                @Override
+                public void onClick(ClickEvent event) {
+                    HostsWindow.this.destroy();
+                }
+
+            });
+            controls.addMember(cancelButton);
 
             layout.addMember(controls);
             addItem(layout);

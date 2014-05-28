@@ -249,8 +249,8 @@ public class WebConsole implements EntryPoint {
     public class LoginWindow extends Window {
 
         public LoginWindow() {
-            setWidth(350);
-            setHeight(80);
+            setWidth(320);
+            setHeight(120);
             setTitle(ClientConfig.messages.login());
             ClientUtils.unifySimpleWindowStyle(this);
 
@@ -258,20 +258,17 @@ public class WebConsole implements EntryPoint {
             ClientUtils.unifyWindowLayoutStyle(layout);
             addItem(layout);
 
-            HLayout inline = new HLayout();
-            inline.setLayoutAlign(VerticalAlignment.CENTER);
-            inline.setAlign(Alignment.CENTER);
-            inline.setMargin(5);
-            inline.setMembersMargin(5);
-            layout.addMember(inline);
-
             final DynamicForm form = new DynamicForm();
-            form.setCellPadding(0);
             ComboBoxItem userNameItem = new ComboBoxItem("name");
             userNameItem.setTitle(ClientConfig.messages.user());
             userNameItem.setOptionDataSource(dataSources.get("userNameDS"));
             form.setFields(userNameItem);
-            inline.addMember(form);
+            form.setWidth("99%");
+            layout.addMember(form);
+
+            HLayout controls = new HLayout();
+            ClientUtils.unifyControlsLayoutStyle(controls);
+            layout.addMember(controls);
 
             IButton okButton = new IButton(ClientConfig.messages.ok());
             okButton.addClickHandler(new ClickHandler() {
@@ -305,7 +302,18 @@ public class WebConsole implements EntryPoint {
                 }
 
             });
-            inline.addMember(okButton);
+            controls.addMember(okButton);
+
+            IButton cancelButton = new IButton(ClientConfig.messages.cancel());
+            cancelButton.addClickHandler(new ClickHandler() {
+
+                @Override
+                public void onClick(ClickEvent event) {
+                    LoginWindow.this.destroy();
+                }
+
+            });
+            controls.addMember(cancelButton);
         }
     }
 

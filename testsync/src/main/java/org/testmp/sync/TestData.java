@@ -32,7 +32,7 @@ public class TestData {
     private Map<String, Object> properties;
 
     public static TestData get(String name) {
-        DataStoreClient client = new DataStoreClient(System.getProperty("testDataStoreUrl"));
+        DataStoreClient client = new DataStoreClient(TestConfig.getProperty("testDataStoreUrl"));
 
         HashMap<String, Object> queryParams = new HashMap<String, Object>();
         queryParams.put("name", name);
@@ -48,7 +48,7 @@ public class TestData {
     }
 
     public static List<TestData> get(String[] includedTags) {
-        DataStoreClient client = new DataStoreClient(System.getProperty("testDataStoreUrl"));
+        DataStoreClient client = new DataStoreClient(TestConfig.getProperty("testDataStoreUrl"));
 
         List<String> tagList = new ArrayList<String>();
         tagList.add("TestData");
@@ -71,7 +71,7 @@ public class TestData {
     }
 
     public static List<TestData> get(String[] includedTags, String[] excludedTags) {
-        DataStoreClient client = new DataStoreClient(System.getProperty("testDataStoreUrl"));
+        DataStoreClient client = new DataStoreClient(TestConfig.getProperty("testDataStoreUrl"));
 
         List<String> tagList = new ArrayList<String>();
         tagList.add("TestData");
