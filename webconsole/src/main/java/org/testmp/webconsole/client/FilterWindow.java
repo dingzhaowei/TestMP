@@ -23,6 +23,7 @@ import com.google.gwt.core.client.JsonUtils;
 import com.google.gwt.json.client.JSONObject;
 import com.smartgwt.client.data.AdvancedCriteria;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.Criterion;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -85,7 +86,13 @@ public class FilterWindow extends Window {
         filterBuilder.setLayoutAlign(Alignment.CENTER);
         filterBuilder.setAutoWidth();
         filterBuilder.setOverflow(Overflow.VISIBLE);
-        filterBuilder.setCriteria(ClientConfig.getCurrentFilterCriteria(filterType));
+
+        AdvancedCriteria criteria = ClientConfig.getCurrentFilterCriteria(filterType);
+        if (criteria.getCriteria() == null || criteria.getCriteria().length == 0) {
+            criteria.setOperator(OperatorId.AND);
+            criteria.addCriteria(new Criterion(listGrid.getFieldName(0), OperatorId.EQUALS, ""));
+        }
+        filterBuilder.setCriteria(criteria);
         filterLayout.addMember(filterBuilder);
 
         HLayout controls = new HLayout();
@@ -145,7 +152,10 @@ public class FilterWindow extends Window {
 
             @Override
             public void onClick(ClickEvent event) {
-                filterBuilder.setCriteria(new AdvancedCriteria());
+                AdvancedCriteria criteria = new AdvancedCriteria();
+                criteria.setOperator(OperatorId.AND);
+                criteria.addCriteria(new Criterion(listGrid.getFieldName(0), OperatorId.EQUALS, ""));
+                filterBuilder.setCriteria(criteria);
             }
 
         });

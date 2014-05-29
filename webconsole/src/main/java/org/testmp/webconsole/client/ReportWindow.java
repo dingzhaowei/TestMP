@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.testmp.webconsole.shared.ClientConfig;
+import org.testmp.webconsole.shared.ClientUtils;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.Request;
@@ -28,6 +29,7 @@ import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.AnimationEffect;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.AnimationCallback;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -36,8 +38,6 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.events.CloseClickEvent;
-import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.IntegerItem;
@@ -71,16 +71,8 @@ public class ReportWindow extends Window {
     public ReportWindow() {
         setWidth(950);
         setHeight("85%");
-        setShowMaximizeButton(true);
         setCanDragResize(true);
-        setIsModal(true);
-        setShowModalMask(true);
-        centerInPage();
-        addCloseClickHandler(new CloseClickHandler() {
-            public void onCloseClick(CloseClickEvent event) {
-                ReportWindow.this.destroy();
-            }
-        });
+        ClientUtils.unifySimpleWindowStyle(this);
 
         windowLayout = new VLayout();
         windowLayout.setSize("100%", "100%");
@@ -135,14 +127,19 @@ public class ReportWindow extends Window {
                         reportPane.setEvalScriptBlocks(true);
                         final String filename = response.getText();
                         reportPane.setContentsURL(baseUrl + "reports/" + filename);
+
                         HLayout wrapperLayout = new HLayout();
+                        wrapperLayout.setOverflow(Overflow.AUTO);
                         wrapperLayout.addMember(reportPane);
                         windowLayout.addMember(wrapperLayout);
+
                         HLayout controls = new HLayout();
                         controls.setSize("99%", "20");
                         controls.setMargin(5);
                         controls.setMembersMargin(5);
                         controls.setAlign(Alignment.CENTER);
+                        windowLayout.addMember(controls);
+
                         IButton sendButton = new IButton(ClientConfig.messages.send());
                         sendButton.addClickHandler(new ClickHandler() {
 
@@ -154,7 +151,17 @@ public class ReportWindow extends Window {
 
                         });
                         controls.addMember(sendButton);
-                        windowLayout.addMember(controls);
+
+                        IButton cancelButton = new IButton(ClientConfig.messages.cancel());
+                        cancelButton.addClickHandler(new ClickHandler() {
+
+                            @Override
+                            public void onClick(ClickEvent event) {
+                                ReportWindow.this.destroy();
+                            }
+
+                        });
+                        controls.addMember(cancelButton);
                     } else {
                         SC.warn(response.getStatusCode() + " - " + response.getStatusText());
                     }
@@ -177,15 +184,7 @@ public class ReportWindow extends Window {
             setWidth(600);
             setHeight(450);
             setTitle(ClientConfig.messages.sendReport());
-            setShowMinimizeButton(false);
-            setIsModal(true);
-            setShowModalMask(true);
-            centerInPage();
-            addCloseClickHandler(new CloseClickHandler() {
-                public void onCloseClick(CloseClickEvent event) {
-                    SendWindow.this.destroy();
-                }
-            });
+            ClientUtils.unifySimpleWindowStyle(this);
 
             final VLayout layout = new VLayout();
             layout.setSize("100%", "100%");
@@ -221,7 +220,7 @@ public class ReportWindow extends Window {
             commentItem.setWidth(400);
 
             SectionItem emailInfoItem = new SectionItem();
-            emailInfoItem.setDefaultValue(ClientConfig.messages.email());
+            emailInfoItem.setDefaultValue(ClientConfig.messages.mailbox());
             emailInfoItem.setSectionExpanded(true);
             emailInfoItem.setItemIds("recipients", "subject", "comment");
 
@@ -251,7 +250,7 @@ public class ReportWindow extends Window {
             passwordItem.setRequired(true);
 
             SectionItem smtpInfoItem = new SectionItem();
-            smtpInfoItem.setDefaultValue(ClientConfig.messages.setting());
+            smtpInfoItem.setDefaultValue(ClientConfig.messages.settings());
             smtpInfoItem.setSectionExpanded(true);
             smtpInfoItem.setItemIds("smtphost", "smtpport", "starttls", "username", "password");
 
@@ -262,6 +261,9 @@ public class ReportWindow extends Window {
             StringBuilder dataBuilder = new StringBuilder();
             dataBuilder.append("reportType=").append(URL.encode(type.getTypeName()));
             dataBuilder.append("&&action=getCustomSetting");
+            if (ClientConfig.currentUser != null) {
+                dataBuilder.append("&&userName=").append(URL.encode(ClientConfig.currentUser));
+            }
 
             RequestBuilder builder = new RequestBuilder(RequestBuilder.POST, requestUrl);
             try {
@@ -300,11 +302,7 @@ public class ReportWindow extends Window {
             }
 
             HLayout controls = new HLayout();
-            controls.setSize("99%", "20");
-            controls.setMargin(5);
-            controls.setMembersMargin(5);
-            controls.setLayoutAlign(Alignment.CENTER);
-            controls.setAlign(Alignment.CENTER);
+            ClientUtils.unifyControlsLayoutStyle(controls);
             layout.addMember(controls);
 
             IButton okButton = new IButton(ClientConfig.messages.ok());

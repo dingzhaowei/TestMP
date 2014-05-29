@@ -23,8 +23,6 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.OperationBinding;
 import com.smartgwt.client.data.RestDataSource;
-import com.smartgwt.client.data.fields.DataSourceBooleanField;
-import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.types.DSDataFormat;
@@ -36,6 +34,8 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -53,7 +53,6 @@ public class ClientUtils {
     public static void unifySimpleWindowStyle(final Window window) {
         window.setShowMinimizeButton(false);
         window.setIsModal(true);
-        window.setShowModalMask(true);
         window.centerInPage();
         window.addCloseClickHandler(new CloseClickHandler() {
             public void onCloseClick(CloseClickEvent event) {
@@ -69,12 +68,88 @@ public class ClientUtils {
         layout.setAlign(Alignment.CENTER);
     }
 
+    public static void unifyDataSourceSetting(DataSource ds, String dsName, String servicePath) {
+        ds.setID(dsName);
+        ds.setDataFormat(DSDataFormat.JSON);
+
+        String baseUrl = GWT.getModuleBaseURL();
+        String requestUrl = baseUrl + servicePath.substring(servicePath.lastIndexOf('/') + 1);
+        ds.setDataURL(requestUrl);
+
+        OperationBinding fetch = new OperationBinding();
+        fetch.setOperationType(DSOperationType.FETCH);
+        fetch.setDataProtocol(DSProtocol.POSTMESSAGE);
+        fetch.setDataFormat(DSDataFormat.JSON);
+
+        OperationBinding update = new OperationBinding();
+        update.setOperationType(DSOperationType.UPDATE);
+        update.setDataProtocol(DSProtocol.POSTMESSAGE);
+        update.setDataFormat(DSDataFormat.JSON);
+
+        OperationBinding add = new OperationBinding();
+        add.setOperationType(DSOperationType.ADD);
+        add.setDataProtocol(DSProtocol.POSTMESSAGE);
+        add.setDataFormat(DSDataFormat.JSON);
+
+        OperationBinding remove = new OperationBinding();
+        remove.setOperationType(DSOperationType.REMOVE);
+        remove.setDataProtocol(DSProtocol.POSTMESSAGE);
+        remove.setDataFormat(DSDataFormat.JSON);
+
+        ds.setOperationBindings(fetch, update, add, remove);
+    }
+
     public static Label createLoadingLabel() {
         Label loading = new Label(ClientConfig.messages.sending() + "...");
         loading.setAlign(Alignment.CENTER);
         loading.setIcon("loading.gif");
         loading.setIconSize(16);
         return loading;
+    }
+
+    public static HoverCustomizer createHoverCustomizer() {
+        HoverCustomizer hoverCustomizer = new HoverCustomizer() {
+
+            @Override
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                Boolean isFolder = record.getAttributeAsBoolean("isFolder");
+                Boolean isGridSummary = record.getIsGridSummary();
+                Boolean isGroupSummary = record.getIsGroupSummary();
+                if (value == null || (isFolder != null && isFolder.booleanValue())
+                        || (isGridSummary != null && isGridSummary.booleanValue())
+                        || (isGroupSummary != null && isGroupSummary.booleanValue())) {
+                    return null;
+                }
+                String v = value.toString().replace("&nbsp;", "");
+                return v.isEmpty() ? null : v;
+            }
+
+        };
+        return hoverCustomizer;
+    }
+
+    public static DataSource createDataSource(String dsName, String servicePath) {
+        DataSource ds = new RestDataSource() {
+
+            @Override
+            protected Object transformRequest(DSRequest dsRequest) {
+                if (ClientConfig.currentUser != null) {
+                    String operationType = dsRequest.getAttributeAsString("operationType");
+                    if (operationType.equals("fetch")) {
+                        Criteria criteria = dsRequest.getCriteria();
+                        if (criteria == null) {
+                            criteria = new Criteria();
+                        }
+                        criteria.setAttribute("userName", ClientConfig.currentUser);
+                        dsRequest.setCriteria(criteria);
+                    }
+                }
+                return super.transformRequest(dsRequest);
+            }
+
+        };
+        unifyDataSourceSetting(ds, dsName, servicePath);
+        return ds;
     }
 
     public static void sendDataFromWindow(final VLayout windowLayout, final Window window, final Label loadingLabel,
@@ -116,56 +191,5 @@ public class ClientUtils {
             window.removeItem(loadingLabel);
             window.addItem(windowLayout);
         }
-    }
-
-    public static DataSource createFilterSource(final String dsName) {
-        return new RestDataSource() {
-
-            {
-                setID(dsName);
-                setDataFormat(DSDataFormat.JSON);
-                setClientOnly(false);
-
-                String baseUrl = GWT.getModuleBaseURL();
-                String servicePath = ClientConfig.constants.userService();
-                String requestUrl = baseUrl + servicePath.substring(servicePath.lastIndexOf('/') + 1);
-                setDataURL(requestUrl);
-
-                OperationBinding fetch = new OperationBinding();
-                fetch.setOperationType(DSOperationType.FETCH);
-                fetch.setDataProtocol(DSProtocol.POSTMESSAGE);
-                fetch.setDataFormat(DSDataFormat.JSON);
-                OperationBinding add = new OperationBinding();
-                add.setOperationType(DSOperationType.ADD);
-                add.setDataProtocol(DSProtocol.POSTMESSAGE);
-                OperationBinding remove = new OperationBinding();
-                remove.setOperationType(DSOperationType.REMOVE);
-                remove.setDataProtocol(DSProtocol.POSTMESSAGE);
-                setOperationBindings(fetch, add, remove);
-
-                DataSourceTextField userNameField = new DataSourceTextField("userName");
-                userNameField.setPrimaryKey(true);
-                DataSourceTextField filterNameField = new DataSourceTextField("filterName");
-                filterNameField.setPrimaryKey(true);
-                DataSourceTextField criteriaField = new DataSourceTextField("criteria");
-                DataSourceBooleanField isDefaultField = new DataSourceBooleanField("isDefault");
-
-                setFields(userNameField, filterNameField, criteriaField, isDefaultField);
-            }
-
-            @Override
-            protected Object transformRequest(DSRequest dsRequest) {
-                if (dsRequest.getAttributeAsString("operationType").equals("fetch")) {
-                    Criteria criteria = dsRequest.getCriteria();
-                    if (criteria == null) {
-                        criteria = new Criteria();
-                    }
-                    criteria.setAttribute("userName", ClientConfig.currentUser);
-                    dsRequest.setCriteria(criteria);
-                }
-                return super.transformRequest(dsRequest);
-            }
-
-        };
     }
 }

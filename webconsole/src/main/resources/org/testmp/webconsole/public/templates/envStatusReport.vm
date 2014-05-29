@@ -3,16 +3,43 @@
   <head>
     <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
     <title>Test Environment Status</title>
+    <style type="text/css">
+        .env-status-table {
+            font-family: sans-serif;
+            font-size: 0.9em;
+            text-align: center;
+            margin: 50px;
+            width: 800px;
+            border: 1px black solid;
+            border-collapse: collapse;
+        }
+        .env-status-table th {
+            padding: 2px;
+            border: 1px black solid;
+            border-collapse: collapse;
+            vertical-align: top;
+            width: 25%;
+            font-weight: bold;
+        }
+        .env-status-table td {
+            padding: 2px;
+            border: 1px black solid;
+            border-collapse: collapse;
+            vertical-align: middle;
+            width: 25%;
+            background-color: #FFFFCC;
+        }
+    </style>
   </head>
   <body>
     <br>
-    <table style="border-collapse: collapse; text-align: center; font-family: Calibri,sans-serif,serif; margin: 50px; font-size: 0.9em" cellspacing="2" border="1" cellpadding="2" width="800">
+    <table class="env-status-table">
       <tbody>
         <tr>
-          <td valign="top"><b>$messages.environment</b></td>
-          <td valign="top" width="25%"><b>$messages.task</b></td>
-          <td valign="top" width="25%"><b>$messages.status</b></td>
-          <td valign="top" width="25%"><b>$messages.lastRunTime</b></td>
+          <th><b>$messages.environment</th>
+          <th><b>$messages.task</th>
+          <th><b>$messages.status</th>
+          <th><b>$messages.lastRunTime</th>
         </tr>
         #foreach($envName in $envStatusTable.keySet())
         #set($refUrl = $envStatusTable.get($envName).get("refUrl"))
@@ -20,20 +47,20 @@
         #if( $tasks.isEmpty() )
         <tr>
           #if($refUrl.isEmpty())
-          <td valign="middle" bgcolor="#ffffcc">$envName</td>
+          <td>$envName</td>
           #else
-          <td valign="middle" bgcolor="#ffffcc"><a href="$refUrl">$envName</a></td>
+          <td><a href="$refUrl">$envName</a></td>
           #end
-          <td valign="middle" width="25%" bgcolor="#ffffcc"></td>
-          <td valign="middle" width="25%" bgcolor="#ffffcc"></td>
-          <td valign="middle" width="25%" bgcolor="#ffffcc"></td>
+          <td></td>
+          <td></td>
+          <td></td>
         </tr>
         #else
         <tr>
           #if($refUrl.isEmpty())
-          <td rowspan="$tasks.size()" valign="middle" bgcolor="#ffffcc">$envName<br></td>
+          <td rowspan="$tasks.size()">$envName<br></td>
           #else
-          <td rowspan="$tasks.size()" valign="middle" bgcolor="#ffffcc"><a href="$refUrl">$envName</a></td>
+          <td rowspan="$tasks.size()"><a href="$refUrl">$envName</a></td>
           #end
         #set($first = true)
         #foreach($taskName in $tasks.keySet())
@@ -44,15 +71,15 @@
           #set($task = $tasks.get($taskName))
           #set($taskStatus = $task.get("taskStatus"))
           #set($lastRunTime = $task.get("lastRunTime"))
-          <td valign="middle" bgcolor="#ffffcc">$taskName</td>
+          <td>$taskName</td>
           #if(!$taskStatus.isEmpty())
-          <td valign="middle" bgcolor="#ffffcc">
+          <td>
             <img alt="$taskStatus" src="${baseUrl}/images/${taskStatus}" height="20" width="20">
           </td>
           #else
-          <td valign="middle" bgcolor="#ffffcc"></td>
+          <td></td>
           #end
-          <td valign="middle" bgcolor="#ffffcc">$lastRunTime</td>
+          <td>$lastRunTime</td>
         </tr>
         #end
         #end

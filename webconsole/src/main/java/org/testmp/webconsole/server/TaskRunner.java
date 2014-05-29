@@ -70,46 +70,40 @@ public class TaskRunner extends Thread {
         }
     }
 
-    public Future<Integer> addExecution(final Map<String, Object> info) {
+    public synchronized Future<Integer> addExecution(Map<String, Object> info) {
+        final Execution e = new Execution(info);
+        executions.add(e);
         return executor.submit(new Callable<Integer>() {
 
             @Override
             public Integer call() throws Exception {
-                Execution e = new Execution(info);
-                synchronized (TaskRunner.this) {
-                    executions.add(e);
-                }
                 return e.execute();
             }
 
         });
     }
 
-    public void cancelExecution(Map<String, Object> info) {
-        synchronized (this) {
-            for (Execution e : executions) {
-                if (e.host.equals(info.get("host")) && e.command.equals(info.get("command"))) {
-                    e.cancel();
-                    break;
-                }
+    public synchronized void cancelExecution(Map<String, Object> info) {
+        for (Execution e : executions) {
+            if (e.host.equals(info.get("host")) && e.command.equals(info.get("command"))) {
+                e.cancel();
+                break;
             }
         }
     }
 
-    private void cleanExecutions() {
+    private synchronized void cleanExecutions() {
         List<Execution> completeExecutions = new ArrayList<Execution>();
-        synchronized (this) {
-            for (Execution e : executions) {
-                long elapsedTime = e.getElapsedTime();
-                if (!e.isComplete() && timeout > 0 && elapsedTime > timeout) {
-                    e.cancel();
-                }
-                if (e.isComplete()) {
-                    completeExecutions.add(e);
-                }
+        for (Execution e : executions) {
+            long elapsedTime = e.getElapsedTime();
+            if (!e.isComplete() && timeout > 0 && elapsedTime > timeout) {
+                e.cancel();
             }
-            executions.removeAll(completeExecutions);
+            if (e.isComplete()) {
+                completeExecutions.add(e);
+            }
         }
+        executions.removeAll(completeExecutions);
     }
 
     private class Execution {

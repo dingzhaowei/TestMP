@@ -28,7 +28,6 @@ import org.testmp.webconsole.client.ReportWindow.ReportType;
 import org.testmp.webconsole.shared.ClientConfig;
 import org.testmp.webconsole.shared.ClientUtils;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsonUtils;
 import com.google.gwt.json.client.JSONArray;
@@ -39,32 +38,37 @@ import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.data.AdvancedCriteria;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
-import com.smartgwt.client.data.OperationBinding;
+import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.RestDataSource;
+import com.smartgwt.client.data.fields.DataSourceBooleanField;
 import com.smartgwt.client.data.fields.DataSourceFloatField;
 import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.DSDataFormat;
-import com.smartgwt.client.types.DSOperationType;
-import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.types.FetchMode;
 import com.smartgwt.client.types.GroupStartOpen;
 import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.types.VerticalAlignment;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLPane;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.ImgButton;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
+import com.smartgwt.client.widgets.form.fields.TextAreaItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
@@ -73,17 +77,24 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.SummaryFunction;
 import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
 public class TestCaseView extends VLayout {
 
-    private DataSource testCaseSource;
-
-    private DataSource testCaseFilterSource;
+    private Map<String, DataSource> dataSources;
 
     private ListGrid testCaseGrid;
+
+    private IButton runAutomationButton;
+
+    private AutomationScheduler automationScheduler;
+
+    private HoverCustomizer hoverCustomizer = ClientUtils.createHoverCustomizer();
+
+    private int heartBeat = Integer.parseInt(ClientConfig.constants.heartBeatPerSecond());
 
     @Override
     protected void onDraw() {
@@ -91,7 +102,7 @@ public class TestCaseView extends VLayout {
             testCaseGrid.fetchData();
         } else {
             Criteria criteria = new Criteria("isDefault", "true");
-            testCaseFilterSource.fetchData(criteria, new DSCallback() {
+            dataSources.get("testCaseFilterDS").fetchData(criteria, new DSCallback() {
 
                 @Override
                 public void execute(DSResponse response, Object rawData, DSRequest request) {
@@ -114,9 +125,10 @@ public class TestCaseView extends VLayout {
     protected void onInit() {
         super.onInit();
 
-        testCaseSource = new TestCaseSource();
+        prepareDataSources();
 
-        testCaseFilterSource = ClientUtils.createFilterSource("testCaseFilterDS");
+        automationScheduler = new AutomationScheduler();
+        automationScheduler.schedule(heartBeat);
 
         testCaseGrid = new ListGrid() {
             @Override
@@ -124,18 +136,26 @@ public class TestCaseView extends VLayout {
 
                 String fieldName = this.getFieldName(colNum);
 
-                if (fieldName.equals("runHistory") && record.getAttribute("runHistory") != null) {
-                    HLayout recordCanvas = new HLayout();
-                    recordCanvas.setHeight(22);
-                    recordCanvas.setAlign(Alignment.CENTER);
+                if (!fieldName.equals("runHistory") && !fieldName.equals("robustnessTrend")) {
+                    return super.createRecordComponent(record, colNum);
+                }
+
+                HLayout recordCanvas = new HLayout();
+                recordCanvas.setWidth100();
+                recordCanvas.setHeight(22);
+                recordCanvas.setAlign(Alignment.CENTER);
+
+                if (fieldName.equals("runHistory")) {
+                    if (record.getAttribute("runHistory") == null) {
+                        return super.createRecordComponent(record, colNum);
+                    }
                     ImgButton runHistoryImg = new ImgButton();
                     runHistoryImg.setShowDown(false);
                     runHistoryImg.setShowRollOver(false);
+                    runHistoryImg.setSize("16", "16");
+                    runHistoryImg.setLayoutAlign(VerticalAlignment.CENTER);
                     runHistoryImg.setSrc("history.png");
                     runHistoryImg.setPrompt(ClientConfig.messages.viewRunHistory());
-                    runHistoryImg.setHeight(16);
-                    runHistoryImg.setWidth(16);
-                    runHistoryImg.setLayoutAlign(Alignment.CENTER);
                     runHistoryImg.addClickHandler(new ClickHandler() {
                         public void onClick(ClickEvent event) {
                             RunHistoryWindow window = new RunHistoryWindow(record);
@@ -143,11 +163,37 @@ public class TestCaseView extends VLayout {
                         }
                     });
                     recordCanvas.addMember(runHistoryImg);
-                    return recordCanvas;
-                } else {
-                    return super.createRecordComponent(record, colNum);
+                } else if (fieldName.equals("robustnessTrend")) {
+                    if (record.getAttribute("robustnessTrend") == null) {
+                        return super.createRecordComponent(record, colNum);
+                    }
+                    ImgButton robustnessTrendImg = new ImgButton();
+                    robustnessTrendImg.setShowDown(false);
+                    robustnessTrendImg.setShowRollOver(false);
+                    robustnessTrendImg.setSize("16", "16");
+                    robustnessTrendImg.setLayoutAlign(VerticalAlignment.CENTER);
+                    robustnessTrendImg.setSrc(record.getAttribute("robustnessTrend"));
+                    robustnessTrendImg.addClickHandler(new ClickHandler() {
+                        @Override
+                        public void onClick(ClickEvent event) {
+                            String robustnessTrend = record.getAttribute("robustnessTrend");
+                            if (robustnessTrend.startsWith("null")) {
+                                AutomationCodeWindow window = new AutomationCodeWindow(record);
+                                window.show();
+                            } else {
+                                String automation = record.getAttribute("automation");
+                                if (automationScheduler.contains(automation)) {
+                                    automationScheduler.cancel(record);
+                                } else {
+                                    automationScheduler.launch(record);
+                                }
+                            }
+                        }
+                    });
+                    recordCanvas.addMember(robustnessTrendImg);
                 }
 
+                return recordCanvas;
             }
 
         };
@@ -159,7 +205,7 @@ public class TestCaseView extends VLayout {
         testCaseGrid.setWidth("99%");
         testCaseGrid.setLayoutAlign(Alignment.CENTER);
 
-        testCaseGrid.setDataSource(testCaseSource);
+        testCaseGrid.setDataSource(dataSources.get("testCaseDS"));
         testCaseGrid.setDataFetchMode(FetchMode.BASIC);
 
         testCaseGrid.setCanRemoveRecords(true);
@@ -183,24 +229,6 @@ public class TestCaseView extends VLayout {
         ListGridField runHistoryField = new ListGridField("runHistory", ClientConfig.messages.runHistory());
         ListGridField createTimeField = new ListGridField("createTime", ClientConfig.messages.createTime());
         ListGridField lastModifyTimeField = new ListGridField("lastModifyTime", ClientConfig.messages.lastModifyTime());
-
-        HoverCustomizer hoverCustomizer = new HoverCustomizer() {
-
-            @Override
-            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-                Boolean isFolder = record.getAttributeAsBoolean("isFolder");
-                Boolean isGridSummary = record.getIsGridSummary();
-                Boolean isGroupSummary = record.getIsGroupSummary();
-                if (value == null || (isFolder != null && isFolder.booleanValue())
-                        || (isGridSummary != null && isGridSummary.booleanValue())
-                        || (isGroupSummary != null && isGroupSummary.booleanValue())) {
-                    return null;
-                }
-                String v = value.toString().replace("&nbsp;", "");
-                return v.isEmpty() ? null : v;
-            }
-
-        };
 
         projectField.setHidden(true);
         projectField.setWidth(100);
@@ -231,7 +259,7 @@ public class TestCaseView extends VLayout {
         automationField.setShowHover(true);
         automationField.setHoverCustomizer(hoverCustomizer);
 
-        runHistoryField.setWidth(70);
+        runHistoryField.setWidth(80);
         runHistoryField.setShowGridSummary(false);
         runHistoryField.setShowGroupSummary(false);
         runHistoryField.setCellFormatter(new CellFormatter() {
@@ -277,6 +305,14 @@ public class TestCaseView extends VLayout {
 
         robustnessTrendField.setWidth(40);
         robustnessTrendField.setAlign(Alignment.CENTER);
+        robustnessTrendField.setCellFormatter(new CellFormatter() {
+
+            @Override
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                return "";
+            }
+
+        });
 
         avgTestTimeField.setWidth(100);
         avgTestTimeField.setType(ListGridFieldType.FLOAT);
@@ -319,20 +355,16 @@ public class TestCaseView extends VLayout {
         controls.setMargin(10);
         controls.setMembersMargin(5);
         controls.setLayoutAlign(Alignment.CENTER);
-        controls.setAlign(Alignment.RIGHT);
+        addMember(controls);
 
-        IButton filterButton = new IButton(ClientConfig.messages.filter());
-        filterButton.setIcon("filter.png");
-        filterButton.addClickHandler(new ClickHandler() {
+        HLayout additionalControls = new HLayout();
+        additionalControls.setMembersMargin(5);
+        controls.addMember(additionalControls);
 
-            @Override
-            public void onClick(ClickEvent event) {
-                FilterWindow window = new FilterWindow(FilterType.TEST_CASE, testCaseGrid, testCaseFilterSource);
-                window.show();
-            }
-
-        });
-        controls.addMember(filterButton);
+        HLayout primaryControls = new HLayout();
+        primaryControls.setAlign(Alignment.RIGHT);
+        primaryControls.setMembersMargin(5);
+        controls.addMember(primaryControls);
 
         IButton foldOrUnfoldButton = new IButton(ClientConfig.messages.foldOrUnfold());
         foldOrUnfoldButton.setIcon("fold.png");
@@ -358,7 +390,72 @@ public class TestCaseView extends VLayout {
             }
 
         });
-        controls.addMember(foldOrUnfoldButton);
+        additionalControls.addMember(foldOrUnfoldButton);
+
+        runAutomationButton = new IButton(ClientConfig.messages.run());
+        runAutomationButton.addClickHandler(new ClickHandler() {
+
+            @Override
+            public void onClick(ClickEvent event) {
+                synchronized (automationScheduler) {
+                    runOrCancelAutomations();
+                }
+            }
+
+            private void runOrCancelAutomations() {
+                String title = runAutomationButton.getTitle();
+                if (title.equals(ClientConfig.messages.run())) {
+                    for (Record testCase : testCaseGrid.getRecords()) {
+                        String automation = testCase.getAttribute("automation");
+                        String robustnessTrend = testCase.getAttribute("robustnessTrend");
+                        if (!robustnessTrend.startsWith("null") && !automationScheduler.contains(automation)) {
+                            automationScheduler.launch(testCase);
+                        }
+                    }
+                } else {
+                    for (Record testCase : testCaseGrid.getRecords()) {
+                        String automation = testCase.getAttribute("automation");
+                        String robustnessTrend = testCase.getAttribute("robustnessTrend");
+                        if (!robustnessTrend.startsWith("null") && automationScheduler.contains(automation)) {
+                            automationScheduler.cancel(testCase);
+                        }
+                    }
+                }
+            }
+
+        });
+        additionalControls.addMember(runAutomationButton);
+
+        IButton newCaseButton = new IButton(ClientConfig.messages.new_());
+        newCaseButton.setIcon("newcase.png");
+        newCaseButton.addClickHandler(new ClickHandler() {
+
+            @Override
+            public void onClick(ClickEvent event) {
+                NewCaseWindow window = new NewCaseWindow();
+                window.show();
+            }
+
+        });
+        primaryControls.addMember(newCaseButton);
+
+        IButton filterButton = new IButton(ClientConfig.messages.filter());
+        filterButton.setIcon("filter.png");
+        filterButton.addClickHandler(new ClickHandler() {
+
+            @Override
+            public void onClick(ClickEvent event) {
+                if (!automationScheduler.isIdle()) {
+                    SC.say(ClientConfig.messages.automationIsRunning());
+                    return;
+                }
+                DataSource ds = dataSources.get("testCaseFilterDS");
+                FilterWindow window = new FilterWindow(FilterType.TEST_CASE, testCaseGrid, ds);
+                window.show();
+            }
+
+        });
+        primaryControls.addMember(filterButton);
 
         IButton reloadButton = new IButton(ClientConfig.messages.reload());
         reloadButton.setIcon("reload.png");
@@ -366,11 +463,15 @@ public class TestCaseView extends VLayout {
 
             @Override
             public void onClick(ClickEvent event) {
+                if (!automationScheduler.isIdle()) {
+                    SC.say(ClientConfig.messages.automationIsRunning());
+                    return;
+                }
                 testCaseGrid.invalidateCache();
             }
 
         });
-        controls.addMember(reloadButton);
+        primaryControls.addMember(reloadButton);
 
         IButton reportButton = new IButton(ClientConfig.messages.report());
         reportButton.setIcon("report.png");
@@ -378,6 +479,11 @@ public class TestCaseView extends VLayout {
 
             @Override
             public void onClick(ClickEvent event) {
+                if (!automationScheduler.isIdle()) {
+                    SC.say(ClientConfig.messages.automationIsRunning());
+                    return;
+                }
+
                 Map<String, List<ListGridRecord>> recordsByProject = new LinkedHashMap<String, List<ListGridRecord>>();
 
                 for (ListGridRecord record : testCaseGrid.getRecords()) {
@@ -402,9 +508,317 @@ public class TestCaseView extends VLayout {
             }
 
         });
-        controls.addMember(reportButton);
+        primaryControls.addMember(reportButton);
+    }
 
-        addMember(controls);
+    private void prepareDataSources() {
+        dataSources = new HashMap<String, DataSource>();
+
+        DataSource testCaseSource = ClientUtils
+                .createDataSource("testCaseDS", ClientConfig.constants.testCaseService());
+        testCaseSource.setFields(getTestCaseFields());
+        dataSources.put("testCaseDS", testCaseSource);
+
+        DataSource testCaseFilterSource = ClientUtils.createDataSource("testCaseFilterDS",
+                ClientConfig.constants.userService());
+        DataSourceTextField userNameField = new DataSourceTextField("userName");
+        userNameField.setPrimaryKey(true);
+        DataSourceTextField filterNameField = new DataSourceTextField("filterName");
+        filterNameField.setPrimaryKey(true);
+        DataSourceTextField criteriaField = new DataSourceTextField("criteria");
+        DataSourceBooleanField isDefaultField = new DataSourceBooleanField("isDefault");
+        testCaseFilterSource.setFields(userNameField, filterNameField, criteriaField, isDefaultField);
+        dataSources.put("testCaseFilterDS", testCaseFilterSource);
+
+        DataSource testProjectSource = ClientUtils.createDataSource("testProjectDS",
+                ClientConfig.constants.testCaseService());
+        DataSourceTextField projectNameField = new DataSourceTextField("project");
+        testProjectSource.setFields(projectNameField);
+        dataSources.put("testProjectDS", testProjectSource);
+
+        DataSource testResultSource = ClientUtils.createDataSource("testResultDS",
+                ClientConfig.constants.testCaseService());
+        testResultSource.setFields(getTestCaseFields());
+        dataSources.put("testResultDS", testResultSource);
+
+        DataSource testRunSource = ClientUtils.createDataSource("testRunDS", ClientConfig.constants.testCaseService());
+        DataSourceTextField userNameField1 = new DataSourceTextField("userName");
+        userNameField1.setPrimaryKey(true);
+        DataSourceTextField automationField = new DataSourceTextField("automation");
+        automationField.setPrimaryKey(true);
+        DataSourceBooleanField isRunningField = new DataSourceBooleanField("isRunning");
+        testRunSource.setFields(userNameField1, automationField, isRunningField);
+        dataSources.put("testRunDS", testRunSource);
+    }
+
+    private DataSourceField[] getTestCaseFields() {
+        DataSourceIntegerField idField = new DataSourceIntegerField("id");
+        idField.setHidden(true);
+        idField.setPrimaryKey(true);
+        DataSourceTextField projectField = new DataSourceTextField("project", ClientConfig.messages.project());
+        projectField.setRequired(true);
+        DataSourceTextField nameField = new DataSourceTextField("name", ClientConfig.messages.name());
+        nameField.setRequired(true);
+        DataSourceTextField tagsField = new DataSourceTextField("tags", ClientConfig.messages.groups());
+        DataSourceTextField descriptionField = new DataSourceTextField("description",
+                ClientConfig.messages.description(), 500);
+        DataSourceTextField automationField = new DataSourceTextField("automation", ClientConfig.messages.automation());
+        DataSourceFloatField robustnessField = new DataSourceFloatField("robustness",
+                ClientConfig.messages.robustness());
+        DataSourceImageField robustnessTrendField = new DataSourceImageField("robustnessTrend",
+                ClientConfig.messages.robustnessTrend());
+        DataSourceFloatField avgTestTimeField = new DataSourceFloatField("avgTestTime",
+                ClientConfig.messages.avgTestTime());
+        DataSourceFloatField timeVolatilityField = new DataSourceFloatField("timeVolatility",
+                ClientConfig.messages.timeVolatility());
+        DataSourceTextField runHistoryField = new DataSourceTextField("runHistory", ClientConfig.messages.runHistory());
+        DataSourceTextField createTimeField = new DataSourceTextField("createTime", ClientConfig.messages.createTime());
+        DataSourceTextField lastModifyTimeField = new DataSourceTextField("lastModifyTime",
+                ClientConfig.messages.lastModifyTime());
+        return new DataSourceField[] { idField, projectField, nameField, tagsField, descriptionField, automationField,
+                runHistoryField, robustnessField, robustnessTrendField, avgTestTimeField, timeVolatilityField,
+                createTimeField, lastModifyTimeField };
+    }
+
+    private class AutomationScheduler extends Timer {
+
+        private Map<String, Record> testCases = new HashMap<String, Record>();
+
+        @Override
+        public void run() {
+            StringBuilder sb = new StringBuilder();
+            for (String automation : automations()) {
+                sb.append(automation).append(",");
+            }
+
+            if (sb.length() > 0) {
+                sb.deleteCharAt(sb.length() - 1);
+                schedule(sb.toString());
+            } else {
+                AutomationScheduler.this.schedule(heartBeat);
+                return;
+            }
+        }
+
+        public synchronized boolean contains(String automation) {
+            return testCases.containsKey(automation);
+        }
+
+        public synchronized boolean isIdle() {
+            return testCases.isEmpty();
+        }
+
+        public synchronized void launch(final Record testCase) {
+            final String automation = testCase.getAttribute("automation");
+            if (!testCases.containsKey(automation)) {
+                Record data = new Record();
+                data.setAttribute("userName", ClientConfig.currentUser);
+                data.setAttribute("automation", automation);
+                dataSources.get("testRunDS").addData(data, new DSCallback() {
+
+                    @Override
+                    public void execute(DSResponse dsResponse, Object data, DSRequest dsRequest) {
+                        if (dsResponse.getStatus() != 0) {
+                            return;
+                        }
+
+                        Record result = dsResponse.getData()[0];
+                        if (!result.getAttributeAsBoolean("isRunning")) {
+                            return;
+                        }
+
+                        synchronized (AutomationScheduler.this) {
+                            testCases.put(automation, testCase);
+                            int rowNum = testCaseGrid.getRecordIndex(testCase);
+                            int colNum = testCaseGrid.getFieldNum("robustnessTrend");
+                            Layout recordComp = (Layout) testCaseGrid.getRecordComponent(rowNum, colNum);
+                            ImgButton robustnessTrendImg = (ImgButton) recordComp.getMember(0);
+                            robustnessTrendImg.setSrc("running.gif");
+                            testCaseGrid.refreshRow(rowNum);
+
+                            if (runAutomationButton.getTitle().equals(ClientConfig.messages.run())) {
+                                runAutomationButton.setTitle(ClientConfig.messages.cancel());
+                            }
+                        }
+                    }
+
+                });
+            }
+        }
+
+        public synchronized void cancel(final Record testCase) {
+            final String automation = testCase.getAttribute("automation");
+            if (testCases.containsKey(automation)) {
+                Record data = new Record();
+                data.setAttribute("userName", ClientConfig.currentUser);
+                data.setAttribute("automation", automation);
+                dataSources.get("testRunDS").removeData(data, new DSCallback() {
+
+                    @Override
+                    public void execute(DSResponse dsResponse, Object data, DSRequest dsRequest) {
+                        if (dsResponse.getStatus() != 0) {
+                            return;
+                        }
+
+                        Record result = dsResponse.getData()[0];
+                        if (result.getAttributeAsBoolean("isRunning")) {
+                            return;
+                        }
+
+                        finish(testCase);
+                    }
+
+                });
+            }
+        }
+
+        private synchronized String[] automations() {
+            return testCases.keySet().toArray(new String[0]);
+        }
+
+        private void finish(final Record testCase) {
+            Criteria criteria = new Criteria();
+            criteria.setAttribute("automation", testCase.getAttribute("automation"));
+            dataSources.get("testResultDS").fetchData(criteria, new DSCallback() {
+
+                @Override
+                public void execute(DSResponse dsResponse, Object data, DSRequest dsRequest) {
+                    if (dsResponse.getStatus() != 0) {
+                        return;
+                    }
+
+                    synchronized (AutomationScheduler.this) {
+                        testCases.remove(testCase.getAttribute("automation"));
+                        Record result = dsResponse.getData()[0];
+                        int rowNum = testCaseGrid.getRecordIndex(testCase);
+                        int colNum = testCaseGrid.getFieldNum("robustnessTrend");
+                        Layout recordComp = (Layout) testCaseGrid.getRecordComponent(rowNum, colNum);
+                        ImgButton robustnessTrendImg = (ImgButton) recordComp.getMember(0);
+                        testCase.setJsObj(result.getJsObj());
+                        robustnessTrendImg.setSrc(testCase.getAttribute("robustnessTrend"));
+                        testCaseGrid.refreshRow(rowNum);
+
+                        String title = runAutomationButton.getTitle();
+                        if (testCases.isEmpty() && title.equals(ClientConfig.messages.cancel())) {
+                            runAutomationButton.setTitle(ClientConfig.messages.run());
+                        }
+                    }
+                }
+
+            });
+        }
+
+        private void schedule(String automations) {
+            Criteria criteria = new Criteria();
+            criteria.setAttribute("automation", automations);
+            dataSources.get("testRunDS").fetchData(criteria, new DSCallback() {
+
+                @Override
+                public void execute(DSResponse dsResponse, Object data, DSRequest dsRequest) {
+                    if (dsResponse.getStatus() != 0) {
+                        return;
+                    }
+
+                    Record[] results = dsResponse.getData();
+                    for (Record result : results) {
+                        String automation = result.getAttribute("automation");
+                        Boolean isRunning = result.getAttributeAsBoolean("isRunning");
+                        if (!isRunning) {
+                            Record testCase = null;
+                            synchronized (AutomationScheduler.this) {
+                                testCase = testCases.get(automation);
+                            }
+                            if (testCase != null) {
+                                finish(testCase);
+                            }
+                        }
+                    }
+
+                    AutomationScheduler.this.schedule(heartBeat);
+                }
+
+            });
+        }
+    }
+
+    private class NewCaseWindow extends Window {
+
+        NewCaseWindow() {
+            setWidth(400);
+            setHeight(300);
+            setTitle(ClientConfig.messages.newTestCase());
+            ClientUtils.unifySimpleWindowStyle(this);
+
+            VLayout layout = new VLayout();
+            ClientUtils.unifyWindowLayoutStyle(layout);
+            addItem(layout);
+
+            final DynamicForm form = new DynamicForm();
+
+            final ComboBoxItem projectItem = new ComboBoxItem("project", ClientConfig.messages.project());
+            final TextItem nameItem = new TextItem("name", ClientConfig.messages.name());
+            final TextItem tagsItem = new TextItem("tags", ClientConfig.messages.groups());
+            final TextAreaItem descriptionItem = new TextAreaItem("description", ClientConfig.messages.description());
+            final TextItem automationItem = new TextItem("automation", ClientConfig.messages.automation());
+
+            automationItem.setRequired(true);
+            automationItem.setWidth(300);
+
+            projectItem.setWidth(300);
+            projectItem.setOptionDataSource(dataSources.get("testProjectDS"));
+
+            nameItem.setWidth(300);
+            tagsItem.setWidth(300);
+            descriptionItem.setWidth(300);
+
+            form.setItems(projectItem, nameItem, tagsItem, descriptionItem, automationItem);
+            form.setWidth("99%");
+            layout.addMember(form);
+
+            HLayout controls = new HLayout();
+            ClientUtils.unifyControlsLayoutStyle(controls);
+            layout.addMember(controls);
+
+            IButton okButton = new IButton(ClientConfig.messages.ok());
+            okButton.addClickHandler(new ClickHandler() {
+
+                @Override
+                public void onClick(ClickEvent event) {
+                    if (form.validate()) {
+                        ListGridRecord record = new ListGridRecord();
+                        record.setAttribute("automation", automationItem.getValueAsString());
+                        record.setAttribute("project", projectItem.getValueAsString());
+                        record.setAttribute("name", nameItem.getValueAsString());
+                        record.setAttribute("description", descriptionItem.getValueAsString());
+                        record.setAttribute("tags", tagsItem.getValueAsString());
+                        testCaseGrid.addData(record, new DSCallback() {
+
+                            @Override
+                            public void execute(DSResponse response, Object rawData, DSRequest request) {
+                                if (response.getStatus() == DSResponse.STATUS_SUCCESS) {
+                                    NewCaseWindow.this.destroy();
+                                }
+                            }
+
+                        });
+                    }
+                }
+
+            });
+            controls.addMember(okButton);
+
+            IButton cancelButton = new IButton(ClientConfig.messages.cancel());
+            cancelButton.addClickHandler(new ClickHandler() {
+
+                @Override
+                public void onClick(ClickEvent event) {
+                    NewCaseWindow.this.destroy();
+                }
+
+            });
+            controls.addMember(cancelButton);
+        }
+
     }
 
     private class TestMetrics {
@@ -500,7 +914,7 @@ public class TestCaseView extends VLayout {
         RunHistoryWindow(final ListGridRecord record) {
             setWidth(900);
             setHeight(300);
-            setTitle("Run History");
+            setTitle(ClientConfig.messages.runHistory());
             ClientUtils.unifySimpleWindowStyle(this);
 
             final ListGrid runHistoryGrid = new ListGrid();
@@ -557,6 +971,7 @@ public class TestCaseView extends VLayout {
                 }
 
             });
+            failureTraceField.setHoverCustomizer(hoverCustomizer);
 
             ListGridField falseFailureField = new ListGridField("falseFailure", ClientConfig.messages.falseFailure(),
                     100);
@@ -646,66 +1061,122 @@ public class TestCaseView extends VLayout {
         }
     }
 
-    private class TestCaseSource extends RestDataSource {
+    private class AutomationCodeWindow extends Window {
 
-        TestCaseSource() {
-            setID("testCaseDS");
-            setDataFormat(DSDataFormat.JSON);
-            setClientOnly(false);
+        AutomationCodeWindow(ListGridRecord record) {
+            setWidth(750);
+            setHeight(300);
+            setTitle(ClientConfig.messages.automation());
+            ClientUtils.unifySimpleWindowStyle(this);
 
-            String baseUrl = GWT.getModuleBaseURL();
-            String servicePath = ClientConfig.constants.testCaseService();
-            String requestUrl = baseUrl + servicePath.substring(servicePath.lastIndexOf('/') + 1);
-            setDataURL(requestUrl);
+            HTMLPane codePaneForJUnit = new HTMLPane();
+            codePaneForJUnit.setBorder("1px solid black");
+            codePaneForJUnit.setWidth("50%");
+            codePaneForJUnit.setContents(generateCode(record, "JUnit"));
 
-            OperationBinding fetch = new OperationBinding();
-            fetch.setOperationType(DSOperationType.FETCH);
-            fetch.setDataProtocol(DSProtocol.POSTMESSAGE);
-            fetch.setDataFormat(DSDataFormat.JSON);
-            OperationBinding add = new OperationBinding();
-            add.setOperationType(DSOperationType.ADD);
-            add.setDataProtocol(DSProtocol.POSTMESSAGE);
-            OperationBinding update = new OperationBinding();
-            update.setOperationType(DSOperationType.UPDATE);
-            update.setDataProtocol(DSProtocol.POSTMESSAGE);
-            OperationBinding remove = new OperationBinding();
-            remove.setOperationType(DSOperationType.REMOVE);
-            remove.setDataProtocol(DSProtocol.POSTMESSAGE);
-            setOperationBindings(fetch, add, update, remove);
+            HTMLPane codePaneForTestNG = new HTMLPane();
+            codePaneForTestNG.setBorder("1px solid black");
+            codePaneForTestNG.setWidth("50%");
+            codePaneForTestNG.setContents(generateCode(record, "TestNG"));
 
-            DataSourceIntegerField idField = new DataSourceIntegerField("id");
-            idField.setHidden(true);
-            idField.setPrimaryKey(true);
+            HLayout layout = new HLayout();
+            ClientUtils.unifyWindowLayoutStyle(layout);
+            layout.addMember(codePaneForJUnit);
+            layout.addMember(codePaneForTestNG);
+            addItem(layout);
+        }
 
-            DataSourceTextField projectField = new DataSourceTextField("project", ClientConfig.messages.project());
-            projectField.setRequired(true);
+        private String getTemplateForJUnit() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("<p><b>JUnit:</b></p>");
+            sb.append("<pre>\n");
+            sb.append("    package ${packageName}\n");
+            sb.append("\n");
+            sb.append("    public class ${className} {\n");
+            sb.append("\n");
+            sb.append("        @Test\n");
+            sb.append("        @TestDoc(\n");
+            sb.append("            project = \"${project}\",\n");
+            sb.append("            name = \"${name}\",\n");
+            sb.append("            description = \"${description}\",\n");
+            sb.append("            groups = { ${tags} })\n");
+            sb.append("        public void ${methodName}() throws Exception {\n");
+            sb.append("            // TODO: add the test logic\n");
+            sb.append("        }\n");
+            sb.append("\n");
+            sb.append("    }\n");
+            sb.append("</pre>\n");
+            return sb.toString();
+        }
 
-            DataSourceTextField nameField = new DataSourceTextField("name", ClientConfig.messages.name());
-            nameField.setRequired(true);
+        private String getTemplateForTestNG() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("<p><b>TestNG:</b></p>");
+            sb.append("<pre>\n");
+            sb.append("    package ${packageName}\n");
+            sb.append("\n");
+            sb.append("    public class ${className} {\n");
+            sb.append("\n");
+            sb.append("        @Test(groups = { ${tags} })\n");
+            sb.append("        @TestDoc(\n");
+            sb.append("            project = \"${project}\",\n");
+            sb.append("            name = \"${name}\",\n");
+            sb.append("            description = \"${description}\",\n");
+            sb.append("        )\n");
+            sb.append("        public void ${methodName}() throws Exception {\n");
+            sb.append("            // TODO: add the test logic\n");
+            sb.append("        }\n");
+            sb.append("\n");
+            sb.append("    }\n");
+            sb.append("</pre>\n");
+            return sb.toString();
+        }
 
-            DataSourceTextField tagsField = new DataSourceTextField("tags", ClientConfig.messages.groups());
-            DataSourceTextField descriptionField = new DataSourceTextField("description",
-                    ClientConfig.messages.description(), 500);
-            DataSourceTextField automationField = new DataSourceTextField("automation",
-                    ClientConfig.messages.automation());
-            DataSourceFloatField robustnessField = new DataSourceFloatField("robustness",
-                    ClientConfig.messages.robustness());
-            DataSourceImageField robustnessTrendField = new DataSourceImageField("robustnessTrend",
-                    ClientConfig.messages.robustnessTrend());
-            DataSourceFloatField avgTestTimeField = new DataSourceFloatField("avgTestTime",
-                    ClientConfig.messages.avgTestTime());
-            DataSourceFloatField timeVolatilityField = new DataSourceFloatField("timeVolatility",
-                    ClientConfig.messages.timeVolatility());
-            DataSourceTextField runHistoryField = new DataSourceTextField("runHistory",
-                    ClientConfig.messages.runHistory());
-            DataSourceTextField createTimeField = new DataSourceTextField("createTime",
-                    ClientConfig.messages.createTime());
-            DataSourceTextField lastModifyTimeField = new DataSourceTextField("lastModifyTime",
-                    ClientConfig.messages.lastModifyTime());
+        private String generateCode(ListGridRecord record, String type) {
+            String project = record.getAttribute("project");
+            String name = record.getAttribute("name");
+            String description = record.getAttribute("description");
+            description = description == null ? "" : description;
 
-            setFields(idField, projectField, nameField, tagsField, descriptionField, automationField, runHistoryField,
-                    robustnessField, robustnessTrendField, avgTestTimeField, timeVolatilityField, createTimeField,
-                    lastModifyTimeField);
+            String tags = "";
+            for (String tag : record.getAttribute("tags").split("\\s*,\\s*")) {
+                if (tag.isEmpty()) {
+                    continue;
+                }
+                tags += "\"" + tag + "\",";
+            }
+            if (!tags.isEmpty()) {
+                tags = tags.substring(0, tags.length() - 1);
+            }
+
+            String packageName = null, className = null, methodName = null;
+            String automation = record.getAttribute("automation");
+            int sec = automation.lastIndexOf('.');
+            if (sec != -1) {
+                className = automation.substring(0, sec);
+                methodName = automation.substring(sec + 1);
+                sec = className.lastIndexOf('.');
+                if (sec != -1) {
+                    packageName = className.substring(0, sec);
+                    className = className.substring(sec + 1);
+                }
+            }
+
+            String code = null;
+            if (type.equals("JUnit")) {
+                code = getTemplateForJUnit();
+            } else {
+                code = getTemplateForTestNG();
+            }
+            code = code.replace("${project}", project);
+            code = code.replace("${name}", name);
+            code = code.replace("${description}", description);
+            code = code.replace("${tags}", tags);
+            code = code.replace("${packageName}", packageName);
+            code = code.replace("${className}", className);
+            code = code.replace("${methodName}", methodName);
+
+            return code;
         }
     }
 }

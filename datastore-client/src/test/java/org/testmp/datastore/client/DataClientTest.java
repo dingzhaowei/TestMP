@@ -114,7 +114,7 @@ public class DataClientTest {
         Assert.assertEquals(2, dataInfoList.size());
 
         DataInfo<MergedData> mergedDataInfo = client.mergeData(MergedData.class, 1, 2, 3);
-        System.out.println("Meged data from 1, 2 and 3: " + mergedDataInfo);
+        System.out.println("Merged data from 1, 2 and 3: " + mergedDataInfo);
         Assert.assertEquals(5, mergedDataInfo.getTags().size());
         MergedData mergedData = mergedDataInfo.getData();
         Assert.assertEquals(dataInfo1.getData().getP1(), mergedData.getP1());

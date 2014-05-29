@@ -13,6 +13,9 @@
 
 package org.testmp.datastore.server;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -20,6 +23,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -155,7 +160,7 @@ public class Utils {
     }
 
     @SuppressWarnings("rawtypes")
-    public static Integer calculateDataId(Map<String, Object> data) throws Exception {
+    public static Integer calculateDataId(Map<String, Object> data) {
         DataStoreView view = DataStoreManager.getInstance().getDataStoreView();
         StoredSortedMap dataMap = (StoredSortedMap) view.getDataMap();
         if (dataMap.isEmpty()) {
@@ -181,7 +186,7 @@ public class Utils {
     }
 
     @SuppressWarnings("rawtypes")
-    public static Integer calculatePropertyId(String key, Object value) throws Exception {
+    public static Integer calculatePropertyId(String key, Object value) {
         DataStoreView view = DataStoreManager.getInstance().getDataStoreView();
         StoredSortedMap propertyMap = (StoredSortedMap) view.getPropertyMap();
         if (propertyMap.isEmpty()) {
@@ -189,12 +194,36 @@ public class Utils {
         }
         StoredMap propMapIndexedByKeyValue = view.getPropMapIndexedByKeyValue();
         ObjectMapper mapper = new ObjectMapper();
-        String index = key + mapper.writeValueAsString(value);
-        Collection c = propMapIndexedByKeyValue.duplicates(index);
-        if (c.isEmpty()) {
-            return (Integer) propertyMap.lastKey() + 1;
-        } else {
-            return ((Property) c.iterator().next()).getId();
+        try {
+            String index = key + mapper.writeValueAsString(value);
+            Collection c = propMapIndexedByKeyValue.duplicates(index);
+            if (c.isEmpty()) {
+                return (Integer) propertyMap.lastKey() + 1;
+            } else {
+                return ((Property) c.iterator().next()).getId();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
+    }
+
+    public static String compress(String s) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        GZIPOutputStream gzip = new GZIPOutputStream(out);
+        gzip.write(s.getBytes("UTF-8"));
+        gzip.close();
+        return Base64.encode(out.toByteArray());
+    }
+
+    public static String decompress(String s) throws IOException {
+        ByteArrayInputStream in = new ByteArrayInputStream(Base64.decode(s));
+        GZIPInputStream gzip = new GZIPInputStream(in);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buf = new byte[1024];
+        int i = 0;
+        while ((i = gzip.read(buf)) >= 0) {
+            out.write(buf, 0, i);
+        }
+        return out.toString("UTF-8");
     }
 }

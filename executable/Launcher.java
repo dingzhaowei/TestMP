@@ -22,24 +22,24 @@ public class Launcher {
 
     private static List<Process> dsProcs = new ArrayList<Process>();
 
-    private static Process launchDataStore(String storeName, Properties props, Set<String> launched) throws Exception {
-        String u = props.getProperty(storeName + "Url");
-        if (u == null) {
-            throw new RuntimeException("No url is set for " + storeName);
+    private static Process launchDataStore(String storeName, String addr, Set<String> launched) throws Exception {
+        System.out.println("Launching " + storeName + ": " + addr);
+
+        if (addr == null) {
+            throw new RuntimeException("DataStore address is null");
         }
-        u = u.replace("127.0.0.1", "localhost");
-        if (launched.contains(u)) {
-            System.out.println(storeName + " has been launched.");
+
+        addr = addr.replace("127.0.0.1", "localhost");
+        if (launched.contains(addr)) {
             return null;
         }
-        URL url = new URL(u);
+
+        URL url = new URL(addr);
         if (!url.getHost().equals("localhost")) {
-            System.out.println(storeName + " should have been launched by yourself on " + u);
             return null;
         }
 
         int port = url.getPort();
-        System.out.println("launching " + storeName + " on " + port);
         if (!isPortFree(port)) {
             throw new RuntimeException("Port is not free: " + port);
         }
@@ -55,7 +55,7 @@ public class Launcher {
     }
 
     private static Process launchWebConsole(int port) throws Exception {
-        System.out.println("launching TestMP web console on " + port);
+        System.out.println("Launching TestMP web console: http://localhost:" + port);
         if (!isPortFree(port)) {
             throw new RuntimeException("Port is not free: " + port);
         }
@@ -115,14 +115,23 @@ public class Launcher {
 
         HashSet<String> launched = new HashSet<String>();
         Process dsProc = null;
-        if ((dsProc = launchDataStore("testCaseStore", props, launched)) != null) {
+
+        String tcAddr = props.getProperty("testCaseStoreUrl");
+        if ((dsProc = launchDataStore("testCaseStore", tcAddr, launched)) != null) {
             dsProcs.add(dsProc);
+            launched.add(tcAddr);
         }
-        if ((dsProc = launchDataStore("testDataStore", props, launched)) != null) {
+
+        String tdAddr = props.getProperty("testDataStoreUrl");
+        if ((dsProc = launchDataStore("testDataStore", tdAddr, launched)) != null) {
             dsProcs.add(dsProc);
+            launched.add(tdAddr);
         }
-        if ((dsProc = launchDataStore("testEnvStore", props, launched)) != null) {
+
+        String teAddr = props.getProperty("testEnvStoreUrl");
+        if ((dsProc = launchDataStore("testEnvStore", teAddr, launched)) != null) {
             dsProcs.add(dsProc);
+            launched.add(teAddr);
         }
 
         webProc = launchWebConsole(args.length > 0 ? Integer.parseInt(args[0]) : 10080);

@@ -33,13 +33,12 @@ import org.junit.runners.model.InitializationError;
 import org.testmp.datastore.client.DataInfo;
 import org.testmp.datastore.client.DataStoreClient;
 import org.testmp.datastore.client.DataStoreClientException;
-import org.testmp.sync.TestSync;
 import org.testmp.sync.TestCase;
 import org.testmp.sync.TestConfig;
+import org.testmp.sync.TestSync;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-
 
 public class SpecificTests extends Runner {
 
@@ -70,9 +69,11 @@ public class SpecificTests extends Runner {
         Description description = Description.createSuiteDescription(launcher.getSimpleName());
         try {
             for (String automation : includedAutomations) {
-                String[] classAndMethod = automation.split("#");
-                Class<?> clazz = Class.forName(classAndMethod[0]);
-                String name = classAndMethod[1];
+                int sec = automation.lastIndexOf('.');
+                String className = automation.substring(0, sec);
+                String methodName = automation.substring(sec + 1);
+                Class<?> clazz = Class.forName(className);
+                String name = methodName;
                 description.addChild(Description.createTestDescription(clazz, name));
             }
         } catch (Exception e) {
@@ -86,9 +87,9 @@ public class SpecificTests extends Runner {
         try {
             Collections.sort(includedAutomations);
             for (String automation : includedAutomations) {
-                String[] classAndMethod = automation.split("#");
-                String className = classAndMethod[0];
-                String methodName = classAndMethod[1];
+                int sec = automation.lastIndexOf('.');
+                String className = automation.substring(0, sec);
+                String methodName = automation.substring(sec + 1);
                 Class<?> clazz = Class.forName(className);
                 Request request = Request.method(clazz, methodName);
                 request.getRunner().run(notifier);

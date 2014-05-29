@@ -14,28 +14,30 @@
 package org.testmp.webconsole.model;
 
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
+import org.testmp.webconsole.model.Settings.AutomationSettings;
+import org.testmp.webconsole.model.Settings.FilterSettings;
+import org.testmp.webconsole.model.Settings.MailboxSettings;
+import org.testmp.webconsole.model.Settings.ReportSettings;
+import org.testmp.webconsole.model.Settings.UserSettings;
 
 public class User {
 
-    public static final String FILTER_TYPE_TESTCASE = "TestCase";
-
-    public static final String FILTER_TYPE_TESTDATA = "TestData";
-
-    public static final String FILTER_TYPE_TESTENV = "TestEnv";
-
     private String name;
 
-    private String defaultTestCaseFilter;
+    private UserSettings userSettings = new UserSettings();
 
-    private Map<String, String> savedTestCaseFilters = new TreeMap<String, String>();
+    private FilterSettings filterSettings = new FilterSettings();
 
-    private String defaultTestDataFilter;
+    private ReportSettings tmrReportSettings = new ReportSettings();
 
-    private Map<String, String> savedTestDataFilters = new TreeMap<String, String>();
+    private ReportSettings esrReportSettings = new ReportSettings();
+
+    private MailboxSettings mailboxSettings = new MailboxSettings();
+
+    private AutomationSettings automationSettings = new AutomationSettings();
 
     public User() {
 
@@ -53,56 +55,52 @@ public class User {
         this.name = name;
     }
 
-    public String getDefaultTestCaseFilter() {
-        return defaultTestCaseFilter;
+    public UserSettings getUserSettings() {
+        return userSettings;
     }
 
-    public void setDefaultTestCaseFilter(String defaultTestCaseFilter) {
-        this.defaultTestCaseFilter = defaultTestCaseFilter;
+    public void setUserSettings(UserSettings userSettings) {
+        this.userSettings = userSettings;
     }
 
-    public Map<String, String> getSavedTestCaseFilters() {
-        return savedTestCaseFilters;
+    public FilterSettings getFilterSettings() {
+        return filterSettings;
     }
 
-    public void setSavedTestCaseFilters(Map<String, String> savedTestCaseFilters) {
-        this.savedTestCaseFilters = savedTestCaseFilters;
+    public void setFilterSettings(FilterSettings filterSettings) {
+        this.filterSettings = filterSettings;
     }
 
-    public String getDefaultTestDataFilter() {
-        return defaultTestDataFilter;
+    public ReportSettings getTmrReportSettings() {
+        return tmrReportSettings;
     }
 
-    public void setDefaultTestDataFilter(String defaultTestDataFilter) {
-        this.defaultTestDataFilter = defaultTestDataFilter;
+    public void setTmrReportSettings(ReportSettings reportSettings) {
+        this.tmrReportSettings = reportSettings;
     }
 
-    public Map<String, String> getSavedTestDataFilters() {
-        return savedTestDataFilters;
+    public ReportSettings getEsrReportSettings() {
+        return esrReportSettings;
     }
 
-    public void setSavedTestDataFilters(Map<String, String> savedTestDataFilters) {
-        this.savedTestDataFilters = savedTestDataFilters;
+    public void setEsrReportSettings(ReportSettings reportSettings) {
+        this.esrReportSettings = reportSettings;
     }
 
-    public String getDefaultFilter(String type) {
-        if (type.equalsIgnoreCase(FILTER_TYPE_TESTCASE)) {
-            return getDefaultTestCaseFilter();
-        }
-        if (type.equalsIgnoreCase(FILTER_TYPE_TESTDATA)) {
-            return getDefaultTestDataFilter();
-        }
-        return null;
+    public MailboxSettings getMailboxSettings() {
+        return mailboxSettings;
     }
 
-    public Map<String, String> getSavedFilters(String type) {
-        if (type.equalsIgnoreCase(FILTER_TYPE_TESTCASE)) {
-            return getSavedTestCaseFilters();
-        }
-        if (type.equalsIgnoreCase(FILTER_TYPE_TESTDATA)) {
-            return getSavedTestDataFilters();
-        }
-        return null;
+    public void setMailboxSettings(MailboxSettings mailboxSettings) {
+        this.mailboxSettings = mailboxSettings;
+    }
+
+    public AutomationSettings getAutomationSettings() {
+        return automationSettings;
+    }
+
+    public void setAutomationSettings(AutomationSettings automationSettings) {
+        this.automationSettings = automationSettings;
     }
 
     public Map<String, Object> toMap() {

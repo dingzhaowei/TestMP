@@ -42,7 +42,6 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -54,9 +53,14 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.testmp.datastore.client.DataInfo;
 import org.testmp.datastore.client.DataStoreClient;
+import org.testmp.webconsole.model.User;
 
 @SuppressWarnings("serial")
-public class ReportService extends HttpServlet {
+public class ReportService extends ServiceBase {
+
+    private static final String TEST_METRICS_REPORT = "Test Metrics";
+
+    private static final String ENVIRONMENT_STATUS_REPORT = "Environment Status";
 
     private static Logger log = Logger.getLogger(ReportService.class);
 
@@ -70,17 +74,7 @@ public class ReportService extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         initServiceInfo(req);
 
-        BufferedReader input = new BufferedReader(new InputStreamReader(req.getInputStream(), "ISO-8859-1"));
-        StringBuilder sb = new StringBuilder();
-        while (true) {
-            String line = input.readLine();
-            if (line == null) {
-                break;
-            }
-            sb.append(line).append('\n');
-        }
-        String requestBody = new String(sb.toString().getBytes("ISO-8859-1"), "UTF-8");
-
+        String requestBody = getRequestBody(req);
         HashMap<String, String> params = new HashMap<String, String>();
         for (String param : requestBody.split("&")) {
             String[] keyValue = param.split("=");
@@ -95,13 +89,14 @@ public class ReportService extends HttpServlet {
         PrintWriter output = resp.getWriter();
         String reportType = params.get("reportType");
         String action = params.get("action");
+        String userName = params.get("userName");
 
         try {
             if (action.equals("create")) {
                 String reportFileName = null;
-                if (reportType.equals("Test Metrics")) {
+                if (reportType.equals(TEST_METRICS_REPORT)) {
                     reportFileName = generateTestMetricsReport(params);
-                } else if (reportType.equals("Environment Status")) {
+                } else if (reportType.equals(ENVIRONMENT_STATUS_REPORT)) {
                     reportFileName = generateEnvStatusReport(params);
                 }
                 output.print(reportFileName);
@@ -113,7 +108,7 @@ public class ReportService extends HttpServlet {
             } else if (action.equals("send")) {
                 sendReport(params);
             } else if (action.equals("getCustomSetting")) {
-                Map<String, String> settings = getCustomSetting(reportType);
+                Map<String, String> settings = getCustomSetting(reportType, userName);
                 ObjectMapper mapper = new ObjectMapper();
                 output.print(mapper.writeValueAsString(settings));
                 output.flush();
@@ -164,21 +159,63 @@ public class ReportService extends HttpServlet {
         return content;
     }
 
-    private Map<String, String> getCustomSetting(String reportType) {
-        Map<String, String> settings = new HashMap<String, String>();
-        Object recipients = null, subject = null;
-        if (reportType.equals("Test Metrics")) {
-            recipients = getServletContext().getAttribute("testMetricsReportRecipients");
-            subject = getServletContext().getAttribute("testMetricsReportSubject");
-        } else if (reportType.equals("Environment Status")) {
-            recipients = getServletContext().getAttribute("envStatusReportRecipients");
-            subject = getServletContext().getAttribute("envStatusReportSubject");
+    private Map<String, String> getCustomSetting(String reportType, String userName) throws Exception {
+        User user = null;
+
+        if (userName != null) {
+            DataStoreClient client = new DataStoreClient((String) getServletContext().getAttribute("testEnvStoreUrl"));
+            Map<String, Object> properties = new HashMap<String, Object>();
+            properties.put("name", userName);
+            DataInfo<User> userInfo = client.getData(User.class, new String[] { "User" }, properties).get(0);
+            user = userInfo.getData();
+        } else {
+            user = new User();
         }
-        Object smtphost = getServletContext().getAttribute("smtpSettingHost");
-        Object smtpport = getServletContext().getAttribute("smtpSettingPort");
-        Object username = getServletContext().getAttribute("smtpSettingUser");
-        Object password = getServletContext().getAttribute("smtpSettingPass");
-        Object starttls = getServletContext().getAttribute("smtpSettingSTARTTLS");
+
+        Map<String, String> settings = new HashMap<String, String>();
+
+        Object recipients = null, subject = null;
+        if (reportType.equals(TEST_METRICS_REPORT)) {
+            recipients = user.getTmrReportSettings().getRecipients();
+            if (recipients == null) {
+                recipients = getServletContext().getAttribute("testMetricsReportRecipients");
+            }
+            subject = user.getTmrReportSettings().getSubject();
+            if (subject == null) {
+                subject = getServletContext().getAttribute("testMetricsReportSubject");
+            }
+        } else if (reportType.equals(ENVIRONMENT_STATUS_REPORT)) {
+            recipients = user.getEsrReportSettings().getRecipients();
+            if (recipients == null) {
+                recipients = getServletContext().getAttribute("envStatusReportRecipients");
+            }
+            subject = user.getEsrReportSettings().getSubject();
+            if (subject == null) {
+                subject = getServletContext().getAttribute("envStatusReportSubject");
+            }
+        }
+
+        Object smtphost = user.getMailboxSettings().getSmtpSettingHost();
+        if (smtphost == null) {
+            smtphost = getServletContext().getAttribute("smtpSettingHost");
+        }
+        Object smtpport = user.getMailboxSettings().getSmtpSettingPort();
+        if (smtpport == null) {
+            smtpport = getServletContext().getAttribute("smtpSettingPort");
+        }
+        Object username = user.getMailboxSettings().getSmtpSettingUser();
+        if (username == null) {
+            username = getServletContext().getAttribute("smtpSettingUser");
+        }
+        Object password = user.getMailboxSettings().getSmtpSettingPass();
+        if (password == null) {
+            password = getServletContext().getAttribute("smtpSettingPass");
+        }
+        Object starttls = user.getMailboxSettings().getSmtpSettingSTARTTLS();
+        if (starttls == null) {
+            starttls = getServletContext().getAttribute("smtpSettingSTARTTLS");
+        }
+
         settings.put("recipients", recipients == null ? "" : recipients.toString().trim());
         settings.put("subject", subject == null ? "" : subject.toString().trim());
         settings.put("smtphost", smtphost == null ? "" : smtphost.toString().trim());
@@ -191,19 +228,7 @@ public class ReportService extends HttpServlet {
 
     private String generateTestMetricsReport(HashMap<String, String> params) throws Exception {
         VelocityEngine ve = new VelocityEngine();
-        String reportTemplatesDir = getRealPath(baseDir + "/templates");
-        ve.setProperty(VelocityEngine.FILE_RESOURCE_LOADER_PATH, reportTemplatesDir);
-
-        String home = System.getenv("TESTMP_HOME");
-        if (home != null) {
-            String sep = File.separator;
-            String velocityLog = home + sep + "log" + sep + "velocity.log";
-            ve.setProperty(VelocityEngine.RUNTIME_LOG, velocityLog);
-        }
-
-        ve.setProperty(VelocityEngine.INPUT_ENCODING, "UTF-8");
-        ve.setProperty(VelocityEngine.OUTPUT_ENCODING, "UTF-8");
-        ve.init();
+        initVelocityEngine(ve);
 
         ObjectMapper mapper = new ObjectMapper();
         Map<String, Map<String, Object>> testMetricsTable = mapper.readValue(params.get("testMetricsTable"),
@@ -252,19 +277,7 @@ public class ReportService extends HttpServlet {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private String generateEnvStatusReport(HashMap<String, String> params) throws Exception {
         VelocityEngine ve = new VelocityEngine();
-        String reportTemplatesDir = getRealPath(baseDir + "/templates");
-        ve.setProperty(VelocityEngine.FILE_RESOURCE_LOADER_PATH, reportTemplatesDir);
-
-        String home = System.getenv("TESTMP_HOME");
-        if (home != null) {
-            String sep = File.separator;
-            String velocityLog = home + sep + "log" + sep + "velocity.log";
-            ve.setProperty(VelocityEngine.RUNTIME_LOG, velocityLog);
-        }
-
-        ve.setProperty(VelocityEngine.INPUT_ENCODING, "UTF-8");
-        ve.setProperty(VelocityEngine.OUTPUT_ENCODING, "UTF-8");
-        ve.init();
+        initVelocityEngine(ve);
 
         ObjectMapper mapper = new ObjectMapper();
         List<String> envNames = mapper.readValue(params.get("environments"), new TypeReference<List<String>>() {
@@ -309,8 +322,6 @@ public class ReportService extends HttpServlet {
             VelocityContext context = new VelocityContext();
             context.put("envStatusTable", envStatusTable);
             context.put("baseUrl", baseUrl);
-            // context.put("serviceName", serviceName);
-            // context.put("filename", reportFile.getName());
             context.put("messages", getLocalizedMessages());
             Template template = ve.getTemplate("envStatusReport.vm", "UTF-8");
             template.merge(context, writer);
@@ -320,6 +331,22 @@ public class ReportService extends HttpServlet {
                 writer.close();
             }
         }
+    }
+
+    private void initVelocityEngine(VelocityEngine ve) {
+        String reportTemplatesDir = getRealPath(baseDir + "/templates");
+        ve.setProperty(VelocityEngine.FILE_RESOURCE_LOADER_PATH, reportTemplatesDir);
+
+        String home = System.getenv("TESTMP_HOME");
+        if (home != null) {
+            String sep = File.separator;
+            String velocityLog = home + sep + "log" + sep + "velocity.log";
+            ve.setProperty(VelocityEngine.RUNTIME_LOG, velocityLog);
+        }
+
+        ve.setProperty(VelocityEngine.INPUT_ENCODING, "UTF-8");
+        ve.setProperty(VelocityEngine.OUTPUT_ENCODING, "UTF-8");
+        ve.init();
     }
 
     private String formatTime(Long time) {

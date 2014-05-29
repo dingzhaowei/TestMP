@@ -6,7 +6,7 @@
   <parent>
     <artifactId>testmp</artifactId>
     <groupId>org.testmp</groupId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
   </parent>
   <artifactId>datastore</artifactId>
   <version>${datastore.version}</version>
@@ -45,7 +45,8 @@
     <plugins>
       <plugin>
         <groupId>org.mortbay.jetty</groupId>
-        <artifactId>maven-jetty-plugin</artifactId>
+        <artifactId>jetty-maven-plugin</artifactId>
+        <version>7.6.11.v20130520</version>
       </plugin>
 
       <plugin>
