@@ -444,8 +444,8 @@ public class UserService extends ServiceBase {
     private DataInfo<User> getUserInfo(String userName) throws DataStoreClientException {
         Map<String, Object> properties = new HashMap<String, Object>();
         properties.put("name", userName);
-        DataInfo<User> userInfo = client.getData(User.class, new String[] { "User" }, properties).get(0);
-        return userInfo;
+        List<DataInfo<User>> userInfoList = client.getData(User.class, new String[] { "User" }, properties);
+        return userInfoList.isEmpty() ? null : userInfoList.get(0);
     }
 
     private void populateResponseBody(ObjectNode responseBody, List<Object> dataList) {
