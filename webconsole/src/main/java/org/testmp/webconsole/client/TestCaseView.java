@@ -1092,7 +1092,7 @@ public class TestCaseView extends VLayout {
             sb.append("<pre>\n");
             sb.append("    package ${packageName}\n");
             sb.append("\n");
-            sb.append("    public class ${className} {\n");
+            sb.append("    public class ${className} extends TestSyncForJUnit {\n");
             sb.append("\n");
             sb.append("        @Test\n");
             sb.append("        @TestDoc(\n");
