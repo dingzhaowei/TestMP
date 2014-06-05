@@ -178,6 +178,12 @@ public class WebConsole implements EntryPoint {
         testEnvTab.setPane(new TestEnvView());
         appTabSet.addTab(testEnvTab);
 
+        Tab teamTab = new Tab(ClientConfig.messages.team());
+        teamTab.setName("teamTab");
+        teamTab.setWidth(120);
+        teamTab.setPane(new TeamView());
+        appTabSet.addTab(teamTab);
+
         vLayout.draw();
     }
 

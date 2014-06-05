@@ -19,7 +19,7 @@ public class Team extends User {
 
     private Set<String> members;
 
-    private String leader;
+    private Set<String> administers;
 
     public Set<String> getMembers() {
         return members;
@@ -29,12 +29,20 @@ public class Team extends User {
         this.members = members;
     }
 
-    public String getLeader() {
-        return leader;
+    public Set<String> getAdministers() {
+        return administers;
     }
 
-    public void setLeader(String leader) {
-        this.leader = leader;
+    public void setAdministers(Set<String> administers) {
+        this.administers = administers;
+    }
+
+    public boolean isMember(String name) {
+        return members.contains(name);
+    }
+
+    public boolean isAdminister(String name) {
+        return administers.contains(name);
     }
 
 }

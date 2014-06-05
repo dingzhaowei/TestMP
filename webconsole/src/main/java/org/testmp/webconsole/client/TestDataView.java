@@ -196,11 +196,7 @@ public class TestDataView extends VLayout {
         addMember(testDataGrid);
 
         HLayout controls = new HLayout();
-        controls.setSize("99%", "20");
-        controls.setMargin(10);
-        controls.setMembersMargin(5);
-        controls.setLayoutAlign(Alignment.CENTER);
-        controls.setAlign(Alignment.RIGHT);
+        ClientUtils.unifyControlsLayoutStyle(controls);
         addMember(controls);
 
         HLayout additionalControls = new HLayout();

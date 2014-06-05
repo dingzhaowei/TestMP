@@ -136,11 +136,16 @@ public class TestEnvView extends VLayout {
         addMember(testEnvGrid);
 
         HLayout controls = new HLayout();
-        controls.setSize("99%", "20");
-        controls.setMargin(10);
-        controls.setMembersMargin(5);
-        controls.setLayoutAlign(Alignment.CENTER);
-        controls.setAlign(Alignment.RIGHT);
+        ClientUtils.unifyControlsLayoutStyle(controls);
+
+        HLayout additionalControls = new HLayout();
+        additionalControls.setMembersMargin(5);
+        controls.addMember(additionalControls);
+
+        HLayout primaryControls = new HLayout();
+        primaryControls.setAlign(Alignment.RIGHT);
+        primaryControls.setMembersMargin(5);
+        controls.addMember(primaryControls);
 
         IButton newEnvButton = new IButton(ClientConfig.messages.new_());
         newEnvButton.setIcon("newenv.png");
@@ -152,7 +157,7 @@ public class TestEnvView extends VLayout {
             }
 
         });
-        controls.addMember(newEnvButton);
+        primaryControls.addMember(newEnvButton);
 
         IButton hostsButton = new IButton(ClientConfig.messages.hosts());
         hostsButton.setIcon("hosts.png");
@@ -165,7 +170,7 @@ public class TestEnvView extends VLayout {
             }
 
         });
-        controls.addMember(hostsButton);
+        primaryControls.addMember(hostsButton);
 
         IButton reloadButton = new IButton(ClientConfig.messages.reload());
         reloadButton.setIcon("reload.png");
@@ -177,7 +182,7 @@ public class TestEnvView extends VLayout {
             }
 
         });
-        controls.addMember(reloadButton);
+        primaryControls.addMember(reloadButton);
 
         IButton reportButton = new IButton(ClientConfig.messages.report());
         reportButton.setIcon("report.png");
@@ -199,7 +204,7 @@ public class TestEnvView extends VLayout {
             }
 
         });
-        controls.addMember(reportButton);
+        primaryControls.addMember(reportButton);
 
         addMember(controls);
     }

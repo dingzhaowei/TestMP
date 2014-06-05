@@ -72,9 +72,6 @@ public class TestEnvService extends ServiceBase {
                 data.remove("userName");
                 List<Map<String, Object>> dataList = get(data, dsId);
                 responseBody.put("status", 0);
-                responseBody.put("startRow", 0);
-                responseBody.put("endRow", dataList.size());
-                responseBody.put("totalRows", dataList.size());
                 JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(dataList));
                 responseBody.put("data", dataNode);
             } else if (operationType.equals("add")) {

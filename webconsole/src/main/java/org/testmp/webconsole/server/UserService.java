@@ -40,6 +40,7 @@ import org.testmp.webconsole.model.Settings.FilterSettings;
 import org.testmp.webconsole.model.Settings.MailboxSettings;
 import org.testmp.webconsole.model.Settings.ReportSettings;
 import org.testmp.webconsole.model.Settings.UserSettings;
+import org.testmp.webconsole.model.Team;
 import org.testmp.webconsole.model.User;
 
 @SuppressWarnings("serial")
@@ -67,7 +68,11 @@ public class UserService extends ServiceBase {
         ObjectNode responseBody = dsResponse.putObject("response");
         String dataSource = dsRequest.get("dataSource").toString();
         try {
-            if (dataSource.equals("userNameDS")) {
+            if (dataSource.equals("teamInfoDS")) {
+                processRequestForTeamInfo(dsRequest, responseBody);
+            } else if (dataSource.equals("teamMemberDS")) {
+                procesRequestForTeamMember(dsRequest, responseBody);
+            } else if (dataSource.equals("userNameDS")) {
                 processRequestForUserName(dsRequest, responseBody);
             } else if (dataSource.endsWith("FilterDS")) {
                 String filterType = capitailize(dataSource.substring(0, dataSource.length() - 8));
@@ -88,8 +93,125 @@ public class UserService extends ServiceBase {
         output.flush();
     }
 
+    private Map<String, Object> convertTeamInfoToMap(DataInfo<Team> teamInfo) {
+        Map<String, Object> m = new HashMap<String, Object>();
+        Team team = (Team) teamInfo.getData();
+        m.put("id", teamInfo.getId());
+        m.put("name", team.getName());
+        m.put("email", team.getUserSettings().getEmail());
+        return m;
+    }
+
+    private Map<String, Object> convertTeamMemberInfoToMap(DataInfo<User> teamMemberInfo, Team team) {
+        Map<String, Object> m = new HashMap<String, Object>();
+        User user = (User) teamMemberInfo.getData();
+        m.put("id", teamMemberInfo.getId());
+        m.put("name", user.getName());
+        m.put("fullName", user.getUserSettings().getFullName());
+        m.put("email", user.getUserSettings().getEmail());
+        m.put("isAdmin", team.isAdminister(user.getName()));
+        return m;
+    }
+
     @SuppressWarnings("unchecked")
-    public void processRequestForUserName(Map<String, Object> dsRequest, ObjectNode responseBody) throws Exception {
+    private void processRequestForTeamInfo(Map<String, Object> dsRequest, ObjectNode responseBody) throws Exception {
+        String operationType = dsRequest.get("operationType").toString();
+        Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
+        JsonNode dataNode = null;
+        if (operationType.equals("fetch")) {
+            List<Map<String, Object>> dataList = getTeams();
+            dataNode = mapper.readTree(mapper.writeValueAsString(dataList));
+        } else if (operationType.equals("add")) {
+            Map<String, Object> addedData = addTeam(data);
+            dataNode = mapper.readTree(mapper.writeValueAsString(addedData));
+        } else if (operationType.equals("update")) {
+
+        } else if (operationType.equals("remove")) {
+
+        }
+
+        responseBody.put("status", 0);
+        responseBody.put("data", dataNode);
+    }
+
+    private List<Map<String, Object>> getTeams() throws Exception {
+        List<DataInfo<Team>> dataInfoList = client.getDataByTag(Team.class, "Team");
+        List<Map<String, Object>> dataList = new ArrayList<Map<String, Object>>();
+        for (DataInfo<Team> dataInfo : dataInfoList) {
+            dataList.add(convertTeamInfoToMap(dataInfo));
+        }
+        return dataList;
+    }
+
+    private Map<String, Object> addTeam(Map<String, Object> data) throws Exception {
+        Team team = new Team();
+        team.setName((String) data.get("name"));
+        UserSettings teamSettings = team.getUserSettings();
+        teamSettings.setEmail((String) data.get("email"));
+        team.setUserSettings(teamSettings);
+        DataInfo<Team> dataInfo = new DataInfo<Team>();
+        dataInfo.setTags(Arrays.asList(new String[] { "Team" }));
+        dataInfo.setData(team);
+        int id = client.addData(dataInfo).get(0);
+        dataInfo = client.getDataById(Team.class, id);
+        return convertTeamInfoToMap(dataInfo);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void procesRequestForTeamMember(Map<String, Object> dsRequest, ObjectNode responseBody) throws Exception {
+        String operationType = dsRequest.get("operationType").toString();
+        Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
+        JsonNode dataNode = null;
+
+        if (operationType.equals("fetch")) {
+            String team = (String) data.get("team");
+            List<Map<String, Object>> dataList = getTeamMembers(team);
+            dataNode = mapper.readTree(mapper.writeValueAsString(dataList));
+        } else if (operationType.equals("add")) {
+            Map<String, Object> addedData = addTeamMember(data);
+            dataNode = mapper.readTree(mapper.writeValueAsString(addedData));
+        } else if (operationType.equals("update")) {
+
+        } else if (operationType.equals("remove")) {
+
+        }
+
+        responseBody.put("status", 0);
+        responseBody.put("data", dataNode);
+    }
+
+    private List<Map<String, Object>> getTeamMembers(String teamName) throws Exception {
+        List<Map<String, Object>> dataList = new ArrayList<Map<String, Object>>();
+        Map<String, Object> queryParams = new HashMap<String, Object>();
+        queryParams.put("name", teamName);
+        List<DataInfo<Team>> teamInfoList = client.getData(Team.class, new String[] { "Team" }, queryParams);
+
+        if (teamInfoList.isEmpty()) {
+            return dataList;
+        }
+
+        Team team = teamInfoList.get(0).getData();
+        for (String memberName : team.getMembers()) {
+            queryParams = new HashMap<String, Object>();
+            queryParams.put("name", memberName);
+            List<DataInfo<User>> userInfoList = client.getData(User.class, new String[] { "User" }, queryParams);
+            if (userInfoList.isEmpty()) {
+                continue;
+            }
+            for (DataInfo<User> teamMemberInfo : userInfoList) {
+                dataList.add(convertTeamMemberInfoToMap(teamMemberInfo, team));
+            }
+        }
+        return dataList;
+    }
+
+    private Map<String, Object> addTeamMember(Map<String, Object> data) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void processRequestForUserName(Map<String, Object> dsRequest, ObjectNode responseBody) throws Exception {
         String operationType = dsRequest.get("operationType").toString();
         if (operationType.equals("fetch")) {
             List<String> nameList = client.getPropertyValues("name", "User");
@@ -116,7 +238,7 @@ public class UserService extends ServiceBase {
     }
 
     @SuppressWarnings("unchecked")
-    public void processRequestForFilter(Map<String, Object> dsRequest, ObjectNode responseBody, String filterType)
+    private void processRequestForFilter(Map<String, Object> dsRequest, ObjectNode responseBody, String filterType)
             throws Exception {
         Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
         String operationType = dsRequest.get("operationType").toString();

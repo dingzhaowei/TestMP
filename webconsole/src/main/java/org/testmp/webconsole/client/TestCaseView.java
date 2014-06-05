@@ -351,10 +351,7 @@ public class TestCaseView extends VLayout {
         addMember(testCaseGrid);
 
         HLayout controls = new HLayout();
-        controls.setSize("99%", "20");
-        controls.setMargin(10);
-        controls.setMembersMargin(5);
-        controls.setLayoutAlign(Alignment.CENTER);
+        ClientUtils.unifyControlsLayoutStyle(controls);
         addMember(controls);
 
         HLayout additionalControls = new HLayout();
