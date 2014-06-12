@@ -36,7 +36,11 @@ public class TestData {
     static {
         String testDataStoreAddr = TestConfig.getProperty("testDataStoreAddr");
         if (testDataStoreAddr == null) {
-            testDataStoreAddr = TestConfig.getProperty("testmp");
+            testDataStoreAddr = TestConfig.getProperty("testmpAddr");
+            int i = testDataStoreAddr.lastIndexOf(':');
+            if (i != -1) {
+                testDataStoreAddr = testDataStoreAddr.substring(0, i);
+            }
         }
         if (testDataStoreAddr == null) {
             testDataStoreAddr = "localhost";
@@ -45,7 +49,7 @@ public class TestData {
             testDataStoreAddr = testDataStoreAddr.trim() + ":10082";
         }
         String testDataStoreUrl = TestConfig.getProperty("testDataStoreUrl");
-        testDataStoreUrl.replace("${testDataStoreAddr}", testDataStoreAddr);
+        testDataStoreUrl = testDataStoreUrl.replace("${testDataStoreAddr}", testDataStoreAddr);
         client = new DataStoreClient(testDataStoreUrl);
     }
 

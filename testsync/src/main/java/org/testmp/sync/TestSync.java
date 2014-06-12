@@ -34,7 +34,11 @@ public abstract class TestSync {
     static {
         String testCaseStoreAddr = TestConfig.getProperty("testCaseStoreAddr");
         if (testCaseStoreAddr == null) {
-            testCaseStoreAddr = TestConfig.getProperty("testmp");
+            testCaseStoreAddr = TestConfig.getProperty("testmpAddr");
+            int i = testCaseStoreAddr.lastIndexOf(':');
+            if (i != -1) {
+                testCaseStoreAddr = testCaseStoreAddr.substring(0, i);
+            }
         }
         if (testCaseStoreAddr == null) {
             testCaseStoreAddr = "localhost";
@@ -44,7 +48,7 @@ public abstract class TestSync {
         }
 
         String testCaseStoreUrl = TestConfig.getProperty("testCaseStoreUrl");
-        testCaseStoreUrl.replace("${testCaseStoreAddr}", testCaseStoreAddr);
+        testCaseStoreUrl = testCaseStoreUrl.replace("${testCaseStoreAddr}", testCaseStoreAddr);
         client = new DataStoreClient(testCaseStoreUrl);
     }
 
