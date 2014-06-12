@@ -32,10 +32,19 @@ public abstract class TestSync {
     private static DataStoreClient client;
 
     static {
-        String testCaseStoreUrl = TestConfig.getProperty("testCaseStoreUrl");
-        if (testCaseStoreUrl == null) {
-            throw new RuntimeException("testCaseStoreUrl is not configured");
+        String testCaseStoreAddr = TestConfig.getProperty("testCaseStoreAddr");
+        if (testCaseStoreAddr == null) {
+            testCaseStoreAddr = TestConfig.getProperty("testmp");
         }
+        if (testCaseStoreAddr == null) {
+            testCaseStoreAddr = "localhost";
+        }
+        if (!testCaseStoreAddr.contains(":")) {
+            testCaseStoreAddr = testCaseStoreAddr.trim() + ":10081";
+        }
+
+        String testCaseStoreUrl = TestConfig.getProperty("testCaseStoreUrl");
+        testCaseStoreUrl.replace("${testCaseStoreAddr}", testCaseStoreAddr);
         client = new DataStoreClient(testCaseStoreUrl);
     }
 
