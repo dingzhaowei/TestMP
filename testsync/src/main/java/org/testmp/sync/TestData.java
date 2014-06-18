@@ -37,13 +37,14 @@ public class TestData {
         String testDataStoreAddr = TestConfig.getProperty("testDataStoreAddr");
         if (testDataStoreAddr == null) {
             testDataStoreAddr = TestConfig.getProperty("testmpAddr");
-            int i = testDataStoreAddr.lastIndexOf(':');
-            if (i != -1) {
-                testDataStoreAddr = testDataStoreAddr.substring(0, i);
+            if (testDataStoreAddr == null) {
+                testDataStoreAddr = "localhost";
+            } else {
+                int i = testDataStoreAddr.lastIndexOf(':');
+                if (i != -1) {
+                    testDataStoreAddr = testDataStoreAddr.substring(0, i);
+                }
             }
-        }
-        if (testDataStoreAddr == null) {
-            testDataStoreAddr = "localhost";
         }
         if (!testDataStoreAddr.contains(":")) {
             testDataStoreAddr = testDataStoreAddr.trim() + ":10082";

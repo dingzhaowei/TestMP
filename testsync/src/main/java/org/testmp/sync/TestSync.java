@@ -35,13 +35,14 @@ public abstract class TestSync {
         String testCaseStoreAddr = TestConfig.getProperty("testCaseStoreAddr");
         if (testCaseStoreAddr == null) {
             testCaseStoreAddr = TestConfig.getProperty("testmpAddr");
-            int i = testCaseStoreAddr.lastIndexOf(':');
-            if (i != -1) {
-                testCaseStoreAddr = testCaseStoreAddr.substring(0, i);
+            if (testCaseStoreAddr == null) {
+                testCaseStoreAddr = "localhost";
+            } else {
+                int i = testCaseStoreAddr.lastIndexOf(':');
+                if (i != -1) {
+                    testCaseStoreAddr = testCaseStoreAddr.substring(0, i);
+                }
             }
-        }
-        if (testCaseStoreAddr == null) {
-            testCaseStoreAddr = "localhost";
         }
         if (!testCaseStoreAddr.contains(":")) {
             testCaseStoreAddr = testCaseStoreAddr.trim() + ":10081";
