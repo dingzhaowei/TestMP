@@ -279,8 +279,9 @@ public class TestCaseView extends VLayout {
                     return null;
                 }
 
-                String v = value.toString();
+                String v = value.toString().replace(',', '.');
                 int p = v.indexOf(".");
+
                 if (p == -1) {
                     return v + ".000";
                 }
@@ -324,7 +325,7 @@ public class TestCaseView extends VLayout {
                 if (value == null) {
                     return null;
                 }
-                return value.toString() + " ms";
+                return value.toString().replace(',', '.') + " ms";
             }
 
         });
@@ -866,8 +867,8 @@ public class TestCaseView extends VLayout {
                     }
                 }
 
-                avgTime += Double.parseDouble(record.getAttribute("avgTestTime"));
-                double volatility = Double.parseDouble(record.getAttribute("timeVolatility"));
+                avgTime += Double.parseDouble(record.getAttribute("avgTestTime").replace(',', '.'));
+                double volatility = Double.parseDouble(record.getAttribute("timeVolatility").replace(',', '.'));
                 if (volatility < minVolatility) {
                     minVolatility = volatility;
                 }
