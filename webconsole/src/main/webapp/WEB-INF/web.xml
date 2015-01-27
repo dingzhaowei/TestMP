@@ -6,7 +6,7 @@
   <display-name>webconsole</display-name>
 
   <context-param>
-    <param-name>org.eclipse.jetty.servlet.Default。useFileMappedBuffer</param-name>
+    <param-name>org.eclipse.jetty.servlet.Default.useFileMappedBuffer</param-name>
     <param-value>false</param-value>
   </context-param>
 
