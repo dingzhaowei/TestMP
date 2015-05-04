@@ -160,11 +160,6 @@ public class FilterWindow extends Window {
 
         });
         controls.addMember(resetButton);
-
-        if (ClientConfig.currentUser == null) {
-            saveButton.setDisabled(true);
-            loadButton.setDisabled(true);
-        }
     }
 
     private class SaveFilterWindow extends Window {
@@ -208,7 +203,6 @@ public class FilterWindow extends Window {
                         String isDefault = form.getValueAsString("isDefault");
                         SaveFilterWindow.this.destroy();
                         Record record = new Record();
-                        record.setAttribute("userName", ClientConfig.currentUser);
                         record.setAttribute("filterName", filterName);
                         record.setAttribute("criteria", criteriaJson);
                         record.setAttribute("isDefault", isDefault == null ? false : isDefault);
@@ -275,7 +269,6 @@ public class FilterWindow extends Window {
                                     filterBuilder.setCriteria(new AdvancedCriteria(jsonObj));
                                     if (toRemove != null && toRemove.equalsIgnoreCase("true")) {
                                         Record record = new Record();
-                                        record.setAttribute("userName", ClientConfig.currentUser);
                                         record.setAttribute("filterName", filterName);
                                         filterSource.removeData(record);
                                     }

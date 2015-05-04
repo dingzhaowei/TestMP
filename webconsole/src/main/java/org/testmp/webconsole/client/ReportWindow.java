@@ -261,9 +261,7 @@ public class ReportWindow extends Window {
             StringBuilder dataBuilder = new StringBuilder();
             dataBuilder.append("reportType=").append(URL.encode(type.getTypeName()));
             dataBuilder.append("&&action=getCustomSetting");
-            if (ClientConfig.currentUser != null) {
-                dataBuilder.append("&&userName=").append(URL.encode(ClientConfig.currentUser));
-            }
+            dataBuilder.append("&&sid=").append(URL.encode(ClientConfig.currentUser));
 
             RequestBuilder builder = new RequestBuilder(RequestBuilder.POST, requestUrl);
             try {

@@ -18,30 +18,6 @@ import java.util.TreeMap;
 
 public class Settings {
 
-    public static class UserSettings {
-
-        private String fullName;
-
-        private String email;
-
-        public String getFullName() {
-            return fullName;
-        }
-
-        public void setFullName(String fullName) {
-            this.fullName = fullName;
-        }
-
-        public String getEmail() {
-            return email;
-        }
-
-        public void setEmail(String email) {
-            this.email = email;
-        }
-
-    }
-
     public static class FilterSettings {
 
         private String defaultTestCaseFilter;

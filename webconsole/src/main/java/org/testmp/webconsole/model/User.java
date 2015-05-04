@@ -21,13 +21,12 @@ import org.testmp.webconsole.model.Settings.AutomationSettings;
 import org.testmp.webconsole.model.Settings.FilterSettings;
 import org.testmp.webconsole.model.Settings.MailboxSettings;
 import org.testmp.webconsole.model.Settings.ReportSettings;
-import org.testmp.webconsole.model.Settings.UserSettings;
 
 public class User {
 
-    private String name;
+    private String userName;
 
-    private UserSettings userSettings = new UserSettings();
+    private String password;
 
     private FilterSettings filterSettings = new FilterSettings();
 
@@ -43,24 +42,25 @@ public class User {
 
     }
 
-    public User(String name) {
-        this.name = name;
+    public User(String userName, String password) {
+        this.userName = userName;
+        this.password = password;
     }
 
-    public String getName() {
-        return name;
+    public String getUserName() {
+        return userName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 
-    public UserSettings getUserSettings() {
-        return userSettings;
+    public String getPassword() {
+        return password;
     }
 
-    public void setUserSettings(UserSettings userSettings) {
-        this.userSettings = userSettings;
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public FilterSettings getFilterSettings() {

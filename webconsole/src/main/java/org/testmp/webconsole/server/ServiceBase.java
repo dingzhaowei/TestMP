@@ -26,6 +26,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang.StringUtils;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.type.TypeReference;
 import org.testmp.datastore.client.DataInfo;
 import org.testmp.datastore.client.DataStoreClient;
 import org.testmp.webconsole.model.User;
@@ -50,13 +52,21 @@ public class ServiceBase extends HttpServlet {
         return requestBody;
     }
 
+    protected Map<String, Object> getDataSourceRequest(HttpServletRequest req) throws UnsupportedEncodingException,
+            IOException {
+        String requestBody = getRequestBody(req);
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.readValue(requestBody, new TypeReference<Map<String, Object>>() {
+        });
+    }
+
     protected Object getSetting(String settingGroup, String settingName, String userName) throws Exception {
         Object value = null;
         if (userName != null) {
             String testEnvStoreUrl = (String) getServletContext().getAttribute("testEnvStoreUrl");
             DataStoreClient testEnvClient = new DataStoreClient(testEnvStoreUrl);
             Map<String, Object> properties = new HashMap<String, Object>();
-            properties.put("name", userName);
+            properties.put("userName", userName);
             List<DataInfo<User>> dataInfoList = testEnvClient.getData(User.class, new String[] { "User" }, properties);
             if (!dataInfoList.isEmpty()) {
                 User user = dataInfoList.get(0).getData();
