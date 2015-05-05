@@ -107,8 +107,7 @@ public class WebConsole implements EntryPoint {
         HLayout header = new HLayout();
         header.setWidth100();
         header.setHeight(50);
-        header.setMargin(10);
-        header.setMembersMargin(10);
+        header.setMargin(5);
         header.setBackgroundColor("lightBlue");
         header.setLayoutAlign(Alignment.CENTER);
 
@@ -125,6 +124,7 @@ public class WebConsole implements EntryPoint {
         String title = logined ? logout + " " + ClientConfig.currentUser : logout;
         logoutBtn = new IconButton(title);
         logoutBtn.setIcon("person.png");
+        logoutBtn.setMargin(10);
         logoutBtn.addClickHandler(new ClickHandler() {
 
             @Override
@@ -140,6 +140,7 @@ public class WebConsole implements EntryPoint {
 
         settingBtn = new IconButton(ClientConfig.messages.settings());
         settingBtn.setIcon("setting.png");
+        settingBtn.setMargin(10);
         settingBtn.addClickHandler(new ClickHandler() {
 
             public void onClick(ClickEvent event) {
@@ -161,14 +162,14 @@ public class WebConsole implements EntryPoint {
         HTMLFlow footer = new HTMLFlow(copyright + ", " + license);
         footer.setWidth100();
         footer.setHeight(10);
-        footer.setStyleName("footing");
         footer.setMargin(5);
+        footer.setLayoutAlign(Alignment.CENTER);
+        footer.setStyleName("footing");
         return footer;
     }
 
     private void initRootLayout() {
         rootLayout = new VLayout();
-        rootLayout.setAlign(Alignment.CENTER);
         rootLayout.setSize("100%", "100%");
         rootLayout.addMember(createHeader());
         rootLayout.addMember(loginView);

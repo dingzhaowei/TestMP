@@ -21,7 +21,7 @@ import org.testmp.datastore.client.DataStoreClient;
 
 public class UserAdmin {
 
-    @SuppressWarnings("unchecked", "rawtypes")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public static void main(String[] args) throws Exception {
         Logger.getRootLogger().addAppender(new NullAppender());
         String testmpHome = System.getenv("TESTMP_HOME");
@@ -39,24 +39,42 @@ public class UserAdmin {
         String userName = args.length > 1 ? args[1] : null;
         String password = args.length > 2 ? args[2] : null;
 
-        if (op.equals("list")) {
+        if (op.equals("ls")) {
             List<DataInfo<Map>> dataInfoList = client.getDataByTag(Map.class, "User");
             for (DataInfo<Map> dataInfo : dataInfoList) {
                 Map user = dataInfo.getData();
                 int id = dataInfo.getId();
-                String userName = (String) user.get("userName");
-                String password = (String) user.get("password");
+                userName = (String) user.get("userName");
+                password = (String) user.get("password");
                 System.out.println(String.format("%5d %30s %15s", id, userName, password));
             }
         } else if (op.equals("add")) {
-            DataInfo<Map> dataInfo = new DataInfo<Map>();
-            Map user = new HashMap();
-            user.put("userName", userName);
-            user.put("password", password);
-            dataInfo.setData(user);
-            dataInfo.setTags(Arrays.asList("User"));
-            int id = client.addData(dataInfo).get(0);
-            System.out.println(id);
+            Map<String, Object> userProp = new HashMap<String, Object>();
+            userProp.put("userName", userName);
+            List<Integer> result = client.findData(new String[] { "User" }, userProp);
+            if (result.isEmpty()) {
+                DataInfo<Map> dataInfo = new DataInfo<Map>();
+                Map user = new HashMap();
+                user.put("userName", userName);
+                user.put("password", password);
+                dataInfo.setData(user);
+                dataInfo.setTags(Arrays.asList("User"));
+                int id = client.addData(dataInfo).get(0);
+                System.out.println("Added user (id=" + id + ")");
+            } else {
+                int id = result.get(0);
+                if (client.addPropertyToData(id, "password", password)) {
+                    System.out.println("Password updated for user (id=" + id + ")");
+                }
+            }
+        } else if (op.equals("del")) {
+            Map<String, Object> userProp = new HashMap<String, Object>();
+            userProp.put("userName", userName);
+            List<Integer> result = client.findData(new String[] { "User" }, userProp);
+            if (!result.isEmpty()) {
+                client.deleteData(result.toArray(new Integer[0]));
+            }
+            System.out.println("Removed user of id=" + result);
         }
     }
 }
