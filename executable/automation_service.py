@@ -1,6 +1,7 @@
 import argparse
 import cgi
 import logging
+import os
 import shlex
 import subprocess
 import sys
@@ -91,6 +92,33 @@ def cancel(automation):
     finally:
         condition.release()
 
+def testng_default():
+    java = java_executable()
+    classpath = []
+    for cp in args.classpath.split(os.path.pathsep):
+        classpath.append(cp)
+        if os.path.isdir(cp):
+            classpath.extend(find_jars(cp))
+    classpath = os.path.pathsep.join(classpath)
+    return ' '.join([java, '-cp', classpath, 'org.testng.TestNG', '-methods', '{a}'])
+
+def junit_default():
+    return None
+
+def java_executable():
+    executable = 'java'
+    if 'JAVA_HOME' in os.environ:
+        executable = os.path.join(os.environ['JAVA_HOME'], 'bin', 'java')
+    return executable
+
+def find_jars(basedir):
+    jars = []
+    for root, dirs, files in os.walk(basedir):
+        for name in files:
+            if name.endswith('.jar'):
+                jars.append(os.path.join(root, name))
+    return jars
+
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     """Handle requests in a separate thread."""
     pass
@@ -139,8 +167,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Handle requests of running test automation')
     parser.add_argument('-p', '--port', type=int, default=8888, help='listening port of the service')
     parser.add_argument('-n', '--numproc', type=int, default=1, help='max number of automation runs at the same time')
+    parser.add_argument('-x', '--classpath', default='.', help='classpath for running (testng/junit)_default command')
     parser.add_argument('-c', '--command', required=True, help='command to run a test parameterized as {a}')
     args = parser.parse_args()
+
+    if args.command == 'testng_default':
+        args.command = testng_default()
+    elif args.command == 'junit_default':
+        args.command = junit_default()
 
     runner = AutomationRunner()
     runner.setDaemon(True)
