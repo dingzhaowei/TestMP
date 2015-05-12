@@ -94,16 +94,24 @@ def cancel(automation):
 
 def testng_default():
     java = java_executable()
+    if args.jvmargs:
+        java = java + ' ' + args.jvmargs
+    if not args.classpath:
+        return java + ' org.testng.TestNG -methods {c}.{m}'
     classpath = []
     for cp in args.classpath.split(os.path.pathsep):
         classpath.append(cp)
         if os.path.isdir(cp):
             classpath.extend(find_jars(cp))
     classpath = os.path.pathsep.join(classpath)
-    return ' '.join([java, '-cp', classpath, 'org.testng.TestNG', '-methods', '{a}'])
+    return ' '.join([java, '-cp', classpath, 'org.testng.TestNG -methods {c}.{m}'])
 
 def junit_default():
     return None
+
+def maven_default():
+    os.chdir(args.basedir)
+    return 'mvn -Dtest={c}#{m} -DargLine="%s" test' % args.jvmargs
 
 def java_executable():
     executable = 'java'
@@ -134,7 +142,8 @@ class AutomationRunner(threading.Thread):
                     condition.wait()
                     continue
                 automation = waitings.pop(0)
-                command = args.command.format(a=automation)
+                classname, methodname = automation.rsplit('.', 1)
+                command = args.command.format(c=classname, m=methodname)
                 logger.debug('run: ' + command)
                 p = subprocess.Popen(shlex.split(command))
                 runnings[automation] = p
@@ -165,16 +174,23 @@ class AutomationChecker(threading.Thread):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Handle requests of running test automation')
+
+    parser.add_argument('-c', '--command', required=True, help='command to run a test parameterized as {a}')
     parser.add_argument('-p', '--port', type=int, default=8888, help='listening port of the service')
     parser.add_argument('-n', '--numproc', type=int, default=1, help='max number of automation runs at the same time')
+
     parser.add_argument('-x', '--classpath', default='.', help='classpath for running (testng/junit)_default command')
-    parser.add_argument('-c', '--command', required=True, help='command to run a test parameterized as {a}')
+    parser.add_argument('-d', '--basedir', default='.', help='basedir for running maven_default command')
+    parser.add_argument('-a', '--jvmargs', default=None, help='jvm arguments passed to the test run')
+
     args = parser.parse_args()
 
     if args.command == 'testng_default':
         args.command = testng_default()
     elif args.command == 'junit_default':
         args.command = junit_default()
+    elif args.command == 'maven_default':
+        args.command = maven_default()
 
     runner = AutomationRunner()
     runner.setDaemon(True)
