@@ -142,7 +142,10 @@ class AutomationRunner(threading.Thread):
                     condition.wait()
                     continue
                 automation = waitings.pop(0)
-                classname, methodname = automation.rsplit('.', 1)
+                try:
+                    classname, methodname = automation.rsplit('.', 1)
+                except ValueError:
+                    classname, methodname = automation, ''
                 command = args.command.format(c=classname, m=methodname)
                 logger.debug('run: ' + command)
                 p = subprocess.Popen(shlex.split(command))
@@ -200,7 +203,7 @@ if __name__ == '__main__':
     checker.setDaemon(True)
     checker.start()
 
-    server = ThreadedHTTPServer(('localhost', args.port), Handler)
+    server = ThreadedHTTPServer(('127.0.0.1', args.port), Handler)
     print('Starting server, use <Ctrl-C> to stop')
     try:
         server.serve_forever()
