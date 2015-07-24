@@ -31,16 +31,40 @@ public class TestData {
 
     private Map<String, Object> properties;
 
-    public static TestData get(String name) {
-        DataStoreClient client = new DataStoreClient(TestConfig.getProperty("testDataStoreUrl"));
+    private static DataStoreClient client;
 
+    static {
+        String testDataStoreAddr = TestConfig.getProperty("testDataStoreAddr");
+        if (testDataStoreAddr == null) {
+            testDataStoreAddr = TestConfig.getProperty("testmpAddr");
+            if (testDataStoreAddr == null) {
+                testDataStoreAddr = "localhost";
+            } else {
+                int i = testDataStoreAddr.lastIndexOf(':');
+                if (i != -1) {
+                    testDataStoreAddr = testDataStoreAddr.substring(0, i);
+                }
+            }
+        }
+        if (!testDataStoreAddr.contains(":")) {
+            testDataStoreAddr = testDataStoreAddr.trim() + ":10082";
+        }
+        String testDataStoreUrl = TestConfig.getProperty("testDataStoreUrl");
+        testDataStoreUrl = testDataStoreUrl.replace("${testDataStoreAddr}", testDataStoreAddr);
+        client = new DataStoreClient(testDataStoreUrl);
+    }
+
+    public static TestData get(String name) {
         HashMap<String, Object> queryParams = new HashMap<String, Object>();
         queryParams.put("name", name);
         String[] tags = new String[] { "TestData" };
 
         try {
             List<DataInfo<TestData>> dataInfoList = client.getData(TestData.class, tags, queryParams);
-            TestData data = dataInfoList.size() == 0 ? null : dataInfoList.get(0).getData();
+            if (dataInfoList.size() == 0) {
+                return null;
+            }
+            TestData data = dataInfoList.get(0).getData();
             return data.pullPropsFromParent();
         } catch (DataStoreClientException e) {
             return null;
@@ -48,8 +72,6 @@ public class TestData {
     }
 
     public static List<TestData> get(String[] includedTags) {
-        DataStoreClient client = new DataStoreClient(TestConfig.getProperty("testDataStoreUrl"));
-
         List<String> tagList = new ArrayList<String>();
         tagList.add("TestData");
         for (String includedTag : includedTags) {
@@ -71,8 +93,6 @@ public class TestData {
     }
 
     public static List<TestData> get(String[] includedTags, String[] excludedTags) {
-        DataStoreClient client = new DataStoreClient(TestConfig.getProperty("testDataStoreUrl"));
-
         List<String> tagList = new ArrayList<String>();
         tagList.add("TestData");
         for (String includedTag : includedTags) {

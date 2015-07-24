@@ -69,11 +69,8 @@ public class TestCaseService extends ServiceBase {
     @SuppressWarnings("unchecked")
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String requestBody = getRequestBody(req);
+        Map<String, Object> dsRequest = getDataSourceRequest(req);
         ObjectMapper mapper = new ObjectMapper();
-        Map<String, Object> dsRequest = mapper.readValue(requestBody, new TypeReference<Map<String, Object>>() {
-        });
-
         ObjectNode dsResponse = mapper.createObjectNode();
         ObjectNode responseBody = dsResponse.putObject("response");
         String dataSource = dsRequest.get("dataSource").toString();
@@ -84,7 +81,7 @@ public class TestCaseService extends ServiceBase {
             JsonNode dataNode = null;
             if (operationType.equals("fetch")) {
                 if (dataSource.equals("testCaseDS")) {
-                    data.remove("userName"); // TODO: filter by userName
+                    data.remove("sid"); // TODO: filter by userName
                     Criteria criteria = Criteria.valueOf(mapper.writeValueAsString(data));
                     List<Map<String, Object>> dataList = getTestCases(criteria);
                     dataNode = mapper.readTree(mapper.writeValueAsString(dataList));
@@ -96,7 +93,7 @@ public class TestCaseService extends ServiceBase {
                     Map<String, Object> testResult = getTestResult(automation);
                     dataNode = mapper.readTree(mapper.writeValueAsString(testResult));
                 } else if (dataSource.equals("testRunDS")) {
-                    String userName = (String) data.get("userName");
+                    String userName = (String) data.get("sid");
                     String automations = (String) data.get("automation");
                     List<Map<String, Object>> dataList = getTestRuns(automations, userName);
                     dataNode = mapper.readTree(mapper.writeValueAsString(dataList));
@@ -108,7 +105,7 @@ public class TestCaseService extends ServiceBase {
                     Map<String, Object> addedCase = addTestCase(data);
                     dataNode = mapper.readTree(mapper.writeValueAsString(addedCase));
                 } else if (dataSource.endsWith("testRunDS")) {
-                    String userName = (String) data.get("userName");
+                    String userName = (String) data.get("sid");
                     String automation = (String) data.get("automation");
                     Map<String, Object> addedRun = addTestRun(automation, userName);
                     dataNode = mapper.readTree(mapper.writeValueAsString(addedRun));
@@ -127,7 +124,7 @@ public class TestCaseService extends ServiceBase {
                     Map<String, Object> removedCase = removeTestCase(data);
                     dataNode = mapper.readTree(mapper.writeValueAsString(removedCase));
                 } else if (dataSource.endsWith("testRunDS")) {
-                    String userName = (String) data.get("userName");
+                    String userName = (String) data.get("sid");
                     String automation = (String) data.get("automation");
                     Map<String, Object> removedRun = removeTestRun(automation, userName);
                     dataNode = mapper.readTree(mapper.writeValueAsString(removedRun));

@@ -64,11 +64,8 @@ public class TestDataService extends ServiceBase {
     @SuppressWarnings("unchecked")
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String requestBody = getRequestBody(req);
+        Map<String, Object> dsRequest = getDataSourceRequest(req);
         ObjectMapper mapper = new ObjectMapper();
-        Map<String, Object> dsRequest = mapper.readValue(requestBody, new TypeReference<Map<String, Object>>() {
-        });
-
         ObjectNode dsResponse = mapper.createObjectNode();
         ObjectNode responseBody = dsResponse.putObject("response");
         String dataSource = dsRequest.get("dataSource").toString();
@@ -82,7 +79,7 @@ public class TestDataService extends ServiceBase {
                     responseBody.put("data", dataNode);
                 } else {
                     // TODO: filter by userName
-                    data.remove("userName");
+                    data.remove("sid");
                     Criteria criteria = Criteria.valueOf(mapper.writeValueAsString(data));
                     List<String> sortBy = (List<String>) dsRequest.get("sortBy");
                     List<Map<String, Object>> dataList = getTestData(criteria, sortBy);

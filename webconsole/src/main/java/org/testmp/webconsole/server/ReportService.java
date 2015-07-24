@@ -89,7 +89,7 @@ public class ReportService extends ServiceBase {
         PrintWriter output = resp.getWriter();
         String reportType = params.get("reportType");
         String action = params.get("action");
-        String userName = params.get("userName");
+        String userName = params.get("sid");
 
         try {
             if (action.equals("create")) {
@@ -165,7 +165,7 @@ public class ReportService extends ServiceBase {
         if (userName != null) {
             DataStoreClient client = new DataStoreClient((String) getServletContext().getAttribute("testEnvStoreUrl"));
             Map<String, Object> properties = new HashMap<String, Object>();
-            properties.put("name", userName);
+            properties.put("userName", userName);
             DataInfo<User> userInfo = client.getData(User.class, new String[] { "User" }, properties).get(0);
             user = userInfo.getData();
         } else {

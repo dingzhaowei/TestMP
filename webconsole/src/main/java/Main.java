@@ -11,6 +11,7 @@
  * Lesser General Public License for more details.
  */
 
+import java.io.File;
 import java.net.URL;
 import java.security.ProtectionDomain;
 
@@ -32,6 +33,13 @@ public class Main {
         WebAppContext context = new WebAppContext();
         context.setServer(server);
         context.setContextPath("/");
+
+        String baseTempDir = System.getProperty("java.io.tmpdir");
+        String home = System.getenv("TESTMP_HOME");
+        if (home != null) {
+            baseTempDir = System.getenv("TESTMP_HOME") + File.separator + "temp";
+        }
+        context.setAttribute("org.eclipse.jetty.webapp.basetempdir", baseTempDir);
 
         ProtectionDomain protectionDomain = Main.class.getProtectionDomain();
         URL location = protectionDomain.getCodeSource().getLocation();

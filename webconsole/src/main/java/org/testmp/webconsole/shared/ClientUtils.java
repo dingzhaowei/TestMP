@@ -22,6 +22,7 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.OperationBinding;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.RestDataSource;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.AnimationEffect;
@@ -133,16 +134,18 @@ public class ClientUtils {
 
             @Override
             protected Object transformRequest(DSRequest dsRequest) {
-                if (ClientConfig.currentUser != null) {
-                    String operationType = dsRequest.getAttributeAsString("operationType");
-                    if (operationType.equals("fetch")) {
-                        Criteria criteria = dsRequest.getCriteria();
-                        if (criteria == null) {
-                            criteria = new Criteria();
-                        }
-                        criteria.setAttribute("userName", ClientConfig.currentUser);
-                        dsRequest.setCriteria(criteria);
+                String operationType = dsRequest.getAttributeAsString("operationType");
+                if (operationType.equals("fetch")) {
+                    Criteria criteria = dsRequest.getCriteria();
+                    if (criteria == null) {
+                        criteria = new Criteria();
                     }
+                    criteria.setAttribute("sid", ClientConfig.currentUser);
+                    dsRequest.setCriteria(criteria);
+                } else {
+                    Record record = new Record(dsRequest.getData());
+                    record.setAttribute("sid", ClientConfig.currentUser);
+                    dsRequest.setData(record);
                 }
                 return super.transformRequest(dsRequest);
             }

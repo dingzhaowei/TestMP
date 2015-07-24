@@ -29,7 +29,6 @@ import org.apache.log4j.Logger;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
-import org.codehaus.jackson.type.TypeReference;
 import org.testmp.datastore.client.DataInfo;
 import org.testmp.datastore.client.DataStoreClient;
 import org.testmp.datastore.client.DataStoreClientException;
@@ -52,47 +51,36 @@ public class TestEnvService extends ServiceBase {
         super.init();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String requestBody = getRequestBody(req);
+        Map<String, Object> dsRequest = getDataSourceRequest(req);
         ObjectMapper mapper = new ObjectMapper();
-        Map<String, Object> dsRequest = mapper.readValue(requestBody, new TypeReference<Map<String, Object>>() {
-        });
-
         ObjectNode dsResponse = mapper.createObjectNode();
         ObjectNode responseBody = dsResponse.putObject("response");
         String operationType = dsRequest.get("operationType").toString();
         String dsId = dsRequest.get("dataSource").toString();
+        Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
 
         try {
             if (operationType.equals("fetch")) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> criteria = (Map<String, Object>) dsRequest.get("data");
-                List<Map<String, Object>> dataList = get(criteria, dsId);
+                // TODO: filter by userName
+                data.remove("userName");
+                List<Map<String, Object>> dataList = get(data, dsId);
                 responseBody.put("status", 0);
-                responseBody.put("startRow", 0);
-                responseBody.put("endRow", dataList.size());
-                responseBody.put("totalRows", dataList.size());
                 JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(dataList));
                 responseBody.put("data", dataNode);
             } else if (operationType.equals("add")) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
                 Map<String, Object> addedData = add(data, dsId);
                 responseBody.put("status", 0);
                 JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(addedData));
                 responseBody.put("data", dataNode);
             } else if (operationType.equals("remove")) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
                 Map<String, Object> removedData = remove(data, dsId);
                 responseBody.put("status", 0);
                 JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(removedData));
                 responseBody.put("data", dataNode);
             } else if (operationType.equals("update")) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
-                @SuppressWarnings({ "unchecked" })
                 Map<String, Object> oldValues = (Map<String, Object>) dsRequest.get("oldValues");
                 Map<String, Object> updatedData = update(data, oldValues, dsId);
                 responseBody.put("status", 0);

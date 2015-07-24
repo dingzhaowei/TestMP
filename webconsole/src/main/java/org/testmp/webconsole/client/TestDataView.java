@@ -71,26 +71,22 @@ public class TestDataView extends VLayout {
 
     @Override
     protected void onDraw() {
-        if (ClientConfig.currentUser == null) {
-            testDataGrid.fetchData();
-        } else {
-            Criteria criteria = new Criteria("isDefault", "true");
-            dataSources.get("testDataFilterDS").fetchData(criteria, new DSCallback() {
+        Criteria criteria = new Criteria("isDefault", "true");
+        dataSources.get("testDataFilterDS").fetchData(criteria, new DSCallback() {
 
-                @Override
-                public void execute(DSResponse response, Object rawData, DSRequest request) {
-                    if (rawData.toString().isEmpty()) {
-                        testDataGrid.fetchData();
-                    } else {
-                        JavaScriptObject jsonObj = JsonUtils.safeEval(rawData.toString());
-                        AdvancedCriteria initialCriteria = new AdvancedCriteria(jsonObj);
-                        ClientConfig.setCurrentFilterCriteria(initialCriteria, FilterType.TEST_DATA);
-                        testDataGrid.fetchData(initialCriteria);
-                    }
+            @Override
+            public void execute(DSResponse response, Object rawData, DSRequest request) {
+                if (rawData.toString().isEmpty()) {
+                    testDataGrid.fetchData();
+                } else {
+                    JavaScriptObject jsonObj = JsonUtils.safeEval(rawData.toString());
+                    AdvancedCriteria initialCriteria = new AdvancedCriteria(jsonObj);
+                    ClientConfig.setCurrentFilterCriteria(initialCriteria, FilterType.TEST_DATA);
+                    testDataGrid.fetchData(initialCriteria);
                 }
+            }
 
-            });
-        }
+        });
         super.onDraw();
     }
 
@@ -196,11 +192,7 @@ public class TestDataView extends VLayout {
         addMember(testDataGrid);
 
         HLayout controls = new HLayout();
-        controls.setSize("99%", "20");
-        controls.setMargin(10);
-        controls.setMembersMargin(5);
-        controls.setLayoutAlign(Alignment.CENTER);
-        controls.setAlign(Alignment.RIGHT);
+        ClientUtils.unifyControlsLayoutStyle(controls);
         addMember(controls);
 
         HLayout additionalControls = new HLayout();
@@ -294,13 +286,11 @@ public class TestDataView extends VLayout {
 
         DataSource testDataFilterSource = ClientUtils.createDataSource("testDataFilterDS",
                 ClientConfig.constants.userService());
-        DataSourceTextField userNameField = new DataSourceTextField("userName");
-        userNameField.setPrimaryKey(true);
         DataSourceTextField filterNameField = new DataSourceTextField("filterName");
         filterNameField.setPrimaryKey(true);
         DataSourceTextField criteriaField = new DataSourceTextField("criteria");
         DataSourceBooleanField isDefaultField = new DataSourceBooleanField("isDefault");
-        testDataFilterSource.setFields(userNameField, filterNameField, criteriaField, isDefaultField);
+        testDataFilterSource.setFields(filterNameField, criteriaField, isDefaultField);
         dataSources.put("testDataFilterDS", testDataFilterSource);
 
         DataSource testDataNameSource = ClientUtils.createDataSource("testDataNameDS",

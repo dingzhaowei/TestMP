@@ -22,6 +22,7 @@ import org.testmp.webconsole.shared.ClientUtils;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Cookies;
+import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -35,7 +36,6 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.types.VerticalAlignment;
-import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.IButton;
@@ -45,7 +45,11 @@ import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
+import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
 import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
+import com.smartgwt.client.widgets.form.fields.PasswordItem;
+import com.smartgwt.client.widgets.form.fields.SubmitItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -59,9 +63,17 @@ public class WebConsole implements EntryPoint {
 
     private Map<String, DataSource> dataSources;
 
-    private IconButton loginBtn;
+    private IconButton logoutBtn;
 
     private IconButton settingBtn;
+
+    private TabSet appTabSet;
+
+    private VLayout loginView;
+
+    private VLayout rootLayout;
+
+    private boolean logined;
 
     /**
      * This is called when the browser loads Application.html.
@@ -75,83 +87,104 @@ public class WebConsole implements EntryPoint {
         });
 
         prepareDataSources();
+        ClientConfig.currentUser = Cookies.getCookie("sid");
+        Criteria criteria = new Criteria();
+        criteria.setAttribute("sid", ClientConfig.currentUser);
+        dataSources.get("userDS").fetchData(criteria, new DSCallback() {
 
-        VLayout vLayout = new VLayout();
-        vLayout.setMargin(5);
-        vLayout.setLayoutMargin(5);
-        vLayout.setAlign(Alignment.CENTER);
-        vLayout.setSize("100%", "100%");
+            @Override
+            public void execute(DSResponse dsResponse, Object data, DSRequest dsRequest) {
+                logined = Boolean.parseBoolean(data.toString());
+                initAppTabSet();
+                initLoginView();
+                initRootLayout();
+            }
 
+        });
+    }
+
+    private Canvas createHeader() {
         HLayout header = new HLayout();
-        header.setWidth("95%");
-        header.setHeight(72);
-        header.setMembersMargin(5);
+        header.setWidth100();
+        header.setHeight(50);
+        header.setMargin(5);
+        header.setBackgroundColor("lightBlue");
         header.setLayoutAlign(Alignment.CENTER);
 
         Label logo = new Label();
         logo.setIcon("testmp-logo.png");
-        logo.setIconWidth(265);
-        logo.setIconHeight(82);
+        logo.setIconWidth(145);
+        logo.setIconHeight(45);
         logo.setWidth("95%");
         logo.setValign(VerticalAlignment.TOP);
         logo.setLayoutAlign(Alignment.CENTER);
         header.addMember(logo);
 
-        ClientConfig.currentUser = Cookies.getCookie(ClientConfig.constants.currentUserCookie());
-        if (ClientConfig.currentUser == null) {
-            loginBtn = new IconButton(ClientConfig.messages.login());
-        } else {
-            loginBtn = new IconButton(ClientConfig.messages.hi() + ", " + ClientConfig.currentUser);
-        }
-        loginBtn.setIcon("person.png");
-        loginBtn.setLayoutAlign(VerticalAlignment.TOP);
-        loginBtn.addClickHandler(new ClickHandler() {
+        String logout = ClientConfig.messages.logout();
+        String title = logined ? logout + " " + ClientConfig.currentUser : logout;
+        logoutBtn = new IconButton(title);
+        logoutBtn.setIcon("person.png");
+        logoutBtn.setMargin(10);
+        logoutBtn.addClickHandler(new ClickHandler() {
 
             @Override
             public void onClick(ClickEvent event) {
-                LoginWindow window = new LoginWindow();
+                ClientConfig.currentUser = null;
+                Cookies.removeCookie("sid");
+                afterLogout();
+            }
+
+        });
+        logoutBtn.setVisible(logined);
+        header.addMember(logoutBtn);
+
+        settingBtn = new IconButton(ClientConfig.messages.settings());
+        settingBtn.setIcon("setting.png");
+        settingBtn.setMargin(10);
+        settingBtn.addClickHandler(new ClickHandler() {
+
+            public void onClick(ClickEvent event) {
+                SettingWindow window = new SettingWindow();
                 window.show();
             }
 
         });
-        header.addMember(loginBtn);
-
-        settingBtn = new IconButton(ClientConfig.messages.settings());
-        settingBtn.setIcon("setting.png");
-        settingBtn.setLayoutAlign(VerticalAlignment.TOP);
-        settingBtn.addClickHandler(new ClickHandler() {
-
-            public void onClick(ClickEvent event) {
-                if (ClientConfig.currentUser != null) {
-                    SettingWindow window = new SettingWindow();
-                    window.show();
-                } else {
-                    SC.say(ClientConfig.messages.nullUser());
-                }
-            }
-
-        });
+        settingBtn.setVisible(logined);
         header.addMember(settingBtn);
+        return header;
+    }
 
-        vLayout.addMember(header);
-
-        TabSet appTabSet = new TabSet();
-        appTabSet.setTabBarPosition(Side.TOP);
-        appTabSet.setTabBarAlign(Side.RIGHT);
-        appTabSet.setWidth("95%");
-        appTabSet.setLayoutAlign(Alignment.CENTER);
-        vLayout.addMember(appTabSet);
-
-        String copyright = "<span style=\"font-family:Arial;\">&copy;</span>2013 Zhaowei Ding";
+    private Canvas createFooter() {
+        String copyright = "<span style=\"font-family:Arial;\">&copy;</span>2013-2015 Zhaowei Ding";
         String licenseLink = "http://opensource.org/licenses/MIT";
         String license = "Licensed under the <a href='" + licenseLink + "'>the MIT License</a>.";
 
         HTMLFlow footer = new HTMLFlow(copyright + ", " + license);
         footer.setWidth100();
         footer.setHeight(10);
-        footer.setStyleName("footing");
         footer.setMargin(5);
-        vLayout.addMember(footer);
+        footer.setLayoutAlign(Alignment.CENTER);
+        footer.setStyleName("footing");
+        return footer;
+    }
+
+    private void initRootLayout() {
+        rootLayout = new VLayout();
+        rootLayout.setSize("100%", "100%");
+        rootLayout.addMember(createHeader());
+        rootLayout.addMember(loginView);
+        rootLayout.addMember(appTabSet);
+        rootLayout.addMember(createFooter());
+        RootLayoutPanel.get().add(rootLayout);
+    }
+
+    private void initAppTabSet() {
+        appTabSet = new TabSet();
+        appTabSet.setTabBarPosition(Side.TOP);
+        appTabSet.setTabBarAlign(Side.RIGHT);
+        appTabSet.setWidth("95%");
+        appTabSet.setLayoutAlign(Alignment.CENTER);
+        appTabSet.setVisible(logined);
 
         Tab welcomeTab = new Tab(ClientConfig.messages.welcome());
         welcomeTab.setName("welcomeTab");
@@ -177,28 +210,85 @@ public class WebConsole implements EntryPoint {
         testEnvTab.setWidth(120);
         testEnvTab.setPane(new TestEnvView());
         appTabSet.addTab(testEnvTab);
+    }
 
-        vLayout.draw();
+    private void initLoginView() {
+        final ComboBoxItem userNameItem = new ComboBoxItem("userName", ClientConfig.messages.user());
+        final PasswordItem passwordItem = new PasswordItem("password", ClientConfig.messages.password());
+        SubmitItem submitItem = new SubmitItem("login", ClientConfig.messages.login());
+
+        userNameItem.setDisplayField("userName");
+        submitItem.setAlign(Alignment.CENTER);
+        submitItem.setColSpan(2);
+
+        final DynamicForm loginForm = new DynamicForm();
+        loginForm.addSubmitValuesHandler(new SubmitValuesHandler() {
+
+            @Override
+            public void onSubmitValues(SubmitValuesEvent event) {
+                String userName = userNameItem.getValueAsString();
+                String password = passwordItem.getValueAsString();
+                Criteria criteria = new Criteria();
+                criteria.setAttribute("userName", userName);
+                criteria.setAttribute("password", password);
+                loginForm.fetchData(criteria, new DSCallback() {
+
+                    @Override
+                    public void execute(DSResponse dsResponse, Object data, DSRequest dsRequest) {
+                        if (dsResponse.getStatus() == DSResponse.STATUS_SUCCESS) {
+                            afterLogin(data.toString());
+                        }
+                    }
+
+                });
+            }
+
+        });
+        loginForm.setCellPadding(10);
+        loginForm.setSize("300", "150");
+        loginForm.setBorder("1px dotted lightblue");
+        loginForm.setLayoutAlign(Alignment.CENTER);
+        loginForm.setDataSource(dataSources.get("userDS"));
+        loginForm.setFields(userNameItem, passwordItem, submitItem);
+
+        loginView = new VLayout();
+        loginView.setAlign(Alignment.CENTER);
+        loginView.addMember(loginForm);
+        loginView.setVisible(!logined);
+    }
+
+    private void afterLogin(String user) {
+        logined = true;
+        ClientConfig.currentUser = user;
+        Cookies.setCookie("sid", ClientConfig.currentUser);
+
+        String logout = ClientConfig.messages.logout();
+        logoutBtn.setTitle(logout + " " + ClientConfig.currentUser);
+        logoutBtn.setVisible(true);
+        settingBtn.setVisible(true);
+        loginView.setVisible(false);
+        appTabSet.setVisible(true);
+    }
+
+    private void afterLogout() {
+        logined = false;
+        ClientConfig.currentUser = null;
+        Cookies.removeCookie("sid");
+
+        com.google.gwt.user.client.Window.Location.reload();
     }
 
     private void prepareDataSources() {
         dataSources = new HashMap<String, DataSource>();
 
-        DataSource userNameSource = ClientUtils.createDataSource("userNameDS", ClientConfig.constants.userService());
-        DataSourceTextField userNameField = new DataSourceTextField("name");
+        DataSource userSource = ClientUtils.createDataSource("userDS", ClientConfig.constants.userService());
+        DataSourceTextField userNameField = new DataSourceTextField("userName");
+        DataSourceTextField passwordField = new DataSourceTextField("password");
         userNameField.setRequired(true);
         userNameField.setPrimaryKey(true);
-        userNameSource.setFields(userNameField);
-        dataSources.put("userNameDS", userNameSource);
-
-        DataSource personalSettingsSource = ClientUtils.createDataSource("userSettingsDS",
-                ClientConfig.constants.userService());
-        DataSourceTextField fullNameField = new DataSourceTextField("fullName", ClientConfig.messages.fullName());
-        DataSourceTextField emailField = new DataSourceTextField("email", ClientConfig.messages.email());
-        DataSourceTextField personnalHiddenField = new DataSourceTextField("userName");
-        personnalHiddenField.setHidden(true);
-        personalSettingsSource.setFields(personnalHiddenField, fullNameField, emailField);
-        dataSources.put("userSettingsDS", personalSettingsSource);
+        passwordField.setRequired(true);
+        userSource.setFields(userNameField, passwordField);
+        dataSources.put("userDS", userSource);
 
         DataSource tmrReportSettingsSource = ClientUtils.createDataSource("tmrReportSettingsDS",
                 ClientConfig.constants.userService());
@@ -246,77 +336,6 @@ public class WebConsole implements EntryPoint {
         dataSources.put("automationSettingsDS", automationSettingsSource);
     }
 
-    public class LoginWindow extends Window {
-
-        public LoginWindow() {
-            setWidth(320);
-            setHeight(120);
-            setTitle(ClientConfig.messages.login());
-            ClientUtils.unifySimpleWindowStyle(this);
-
-            VLayout layout = new VLayout();
-            ClientUtils.unifyWindowLayoutStyle(layout);
-            addItem(layout);
-
-            final DynamicForm form = new DynamicForm();
-            ComboBoxItem userNameItem = new ComboBoxItem("name");
-            userNameItem.setTitle(ClientConfig.messages.user());
-            userNameItem.setOptionDataSource(dataSources.get("userNameDS"));
-            form.setFields(userNameItem);
-            form.setWidth("99%");
-            layout.addMember(form);
-
-            HLayout controls = new HLayout();
-            ClientUtils.unifyControlsLayoutStyle(controls);
-            layout.addMember(controls);
-
-            IButton okButton = new IButton(ClientConfig.messages.ok());
-            okButton.addClickHandler(new ClickHandler() {
-
-                @Override
-                public void onClick(ClickEvent event) {
-                    if (form.validate()) {
-                        final String name = form.getValueAsString("name").trim();
-                        LoginWindow.this.destroy();
-                        Criteria criteria = new Criteria();
-                        dataSources.get("userNameDS").fetchData(criteria, new DSCallback() {
-
-                            @Override
-                            public void execute(DSResponse response, Object rawData, DSRequest request) {
-                                Record[] records = response.getData();
-                                for (Record record : records) {
-                                    if (record.getAttribute("name").equals(name)) {
-                                        return;
-                                    }
-                                }
-                                Record record = new Record();
-                                record.setAttribute("name", name);
-                                dataSources.get("userNameDS").addData(record);
-                            }
-
-                        });
-                        ClientConfig.currentUser = name;
-                        loginBtn.setTitle(ClientConfig.messages.hi() + ", " + ClientConfig.currentUser);
-                        Cookies.setCookie(ClientConfig.constants.currentUserCookie(), ClientConfig.currentUser);
-                    }
-                }
-
-            });
-            controls.addMember(okButton);
-
-            IButton cancelButton = new IButton(ClientConfig.messages.cancel());
-            cancelButton.addClickHandler(new ClickHandler() {
-
-                @Override
-                public void onClick(ClickEvent event) {
-                    LoginWindow.this.destroy();
-                }
-
-            });
-            controls.addMember(cancelButton);
-        }
-    }
-
     public class SettingWindow extends Window {
 
         private Map<String, DynamicForm> forms = new HashMap<String, DynamicForm>();
@@ -334,11 +353,6 @@ public class WebConsole implements EntryPoint {
             TabSet settingsTabSet = new TabSet();
             settingsTabSet.setWidth("99%");
             layout.addMember(settingsTabSet);
-
-            Tab personalInfoTab = new Tab();
-            personalInfoTab.setTitle(ClientConfig.messages.user());
-            personalInfoTab.setPane(createUserSettingsForm());
-            settingsTabSet.addTab(personalInfoTab);
 
             Tab reportSettingsTab = new Tab();
             reportSettingsTab.setTitle(ClientConfig.messages.report());
@@ -388,22 +402,6 @@ public class WebConsole implements EntryPoint {
 
             });
             controls.addMember(cancelButton);
-        }
-
-        private Canvas createUserSettingsForm() {
-            VLayout layout = new VLayout();
-            layout.setWidth100();
-            layout.setMargin(5);
-            layout.setMembersMargin(5);
-
-            DynamicForm userForm = new DynamicForm();
-            forms.put("userSettingsForm", userForm);
-            userForm.setWidth("90%");
-            userForm.setDataSource(dataSources.get("userSettingsDS"));
-            userForm.setAutoFetchData(true);
-            layout.addMember(userForm);
-
-            return layout;
         }
 
         private Canvas createReportSettingsForm() {

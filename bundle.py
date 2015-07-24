@@ -2,7 +2,7 @@ import os
 import shutil
 import sys
 
-def pack(name, version):
+def pack(name, version, user):
     curdir = os.path.abspath('.')
     bundle = os.path.join(curdir, 'bundle')
     javadoc = os.path.join(curdir, name, 'target', name + '-' + version + '-sources.jar')
@@ -11,7 +11,7 @@ def pack(name, version):
     pom = os.path.join(curdir, name, 'pom.xml')
     
     os.chdir(name)
-    if os.path.exists('bundle'): os.system('rm -rf ' + bundle)
+    if os.path.exists(bundle): os.system('rm -rf ' + bundle)
     if os.path.exists(javadoc): os.system('rm -f ' + javadoc)
     if os.path.exists(sources): os.system('rm -f ' + sources)
     os.mkdir(bundle)
@@ -30,13 +30,23 @@ def pack(name, version):
     shutil.copyfile(pom, target_pom)
     
     os.chdir(bundle)
-    os.system('gpg -ab ' + target_javadoc)
-    os.system('gpg -ab ' + target_sources)
-    os.system('gpg -ab ' + target_build)
-    os.system('gpg -ab ' + target_pom)
+    
+    f = open(target_pom)
+    content = f.read()
+    f.close()
+    
+    content = content.replace('${%s.version}' % name, version)
+    f = open(target_pom, 'w')
+    f.write(content)
+    f.close()
+    
+    os.system('gpg' + ' -u ' + user + ' -ab ' + target_javadoc)
+    os.system('gpg' + ' -u ' + user + ' -ab ' + target_sources)
+    os.system('gpg' + ' -u ' + user + ' -ab ' + target_build)
+    os.system('gpg' + ' -u ' + user + ' -ab ' + target_pom)
     
     os.system('jar -cvf bundle.jar ' + ' '.join(os.listdir(bundle)))
     
 if __name__ == '__main__':
-    name, version = sys.argv[1:]
-    pack(name, version)
+    name, version, user = sys.argv[1:]
+    pack(name, version, user)

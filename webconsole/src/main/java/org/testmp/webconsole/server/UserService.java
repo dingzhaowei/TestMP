@@ -16,8 +16,6 @@ package org.testmp.webconsole.server;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +29,6 @@ import org.apache.log4j.Logger;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
-import org.codehaus.jackson.type.TypeReference;
 import org.testmp.datastore.client.DataInfo;
 import org.testmp.datastore.client.DataStoreClient;
 import org.testmp.datastore.client.DataStoreClientException;
@@ -39,7 +36,6 @@ import org.testmp.webconsole.model.Settings.AutomationSettings;
 import org.testmp.webconsole.model.Settings.FilterSettings;
 import org.testmp.webconsole.model.Settings.MailboxSettings;
 import org.testmp.webconsole.model.Settings.ReportSettings;
-import org.testmp.webconsole.model.Settings.UserSettings;
 import org.testmp.webconsole.model.User;
 
 @SuppressWarnings("serial")
@@ -59,16 +55,13 @@ public class UserService extends ServiceBase {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String requestBody = getRequestBody(req);
-        Map<String, Object> dsRequest = mapper.readValue(requestBody, new TypeReference<Map<String, Object>>() {
-        });
-
+        Map<String, Object> dsRequest = getDataSourceRequest(req);
         ObjectNode dsResponse = mapper.createObjectNode();
         ObjectNode responseBody = dsResponse.putObject("response");
         String dataSource = dsRequest.get("dataSource").toString();
         try {
-            if (dataSource.equals("userNameDS")) {
-                processRequestForUserName(dsRequest, responseBody);
+            if (dataSource.equals("userDS")) {
+                processRequestForUser(dsRequest, responseBody);
             } else if (dataSource.endsWith("FilterDS")) {
                 String filterType = capitailize(dataSource.substring(0, dataSource.length() - 8));
                 processRequestForFilter(dsRequest, responseBody, filterType);
@@ -89,39 +82,48 @@ public class UserService extends ServiceBase {
     }
 
     @SuppressWarnings("unchecked")
-    public void processRequestForUserName(Map<String, Object> dsRequest, ObjectNode responseBody) throws Exception {
+    private void processRequestForUser(Map<String, Object> dsRequest, ObjectNode responseBody) throws Exception {
         String operationType = dsRequest.get("operationType").toString();
+        Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
+        String sid = (String) data.get("sid");
+
         if (operationType.equals("fetch")) {
-            List<String> nameList = client.getPropertyValues("name", "User");
-            Collections.sort(nameList);
             List<Object> dataList = new ArrayList<Object>();
-            for (String name : nameList) {
-                Map<String, Object> data = new HashMap<String, Object>();
-                data.put("name", name);
-                dataList.add(data);
+            if (sid != null) {
+                DataInfo<User> userInfo = getUserInfo(sid);
+                dataList.add(userInfo != null);
+            } else {
+                String userName = (String) data.get("userName");
+                String password = (String) data.get("password");
+                if (userName == null || password == null) {
+                    for (DataInfo<User> userInfo : client.getDataByTag(User.class, "User")) {
+                        Map<String, Object> userNameWrap = new HashMap<String, Object>();
+                        userNameWrap.put("userName", userInfo.getData().getUserName());
+                        dataList.add(userNameWrap);
+                    }
+                } else {
+                    DataInfo<User> userInfo = getUserInfo(userName);
+                    if (userInfo == null) {
+                        throw new IOException("User does not exist");
+                    }
+                    if (!password.equals(userInfo.getData().getPassword())) {
+                        throw new IOException("Password is not correct");
+                    }
+                    dataList.add(userInfo.getData().getUserName());
+                }
             }
             populateResponseBody(responseBody, dataList);
-        } else if (operationType.equals("add")) {
-            Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
-            String name = data.get("name").toString();
-            DataInfo<User> userInfo = new DataInfo<User>();
-            userInfo.setData(new User(name));
-            userInfo.setTags(Arrays.asList(new String[] { "User" }));
-            Integer id = client.addData(userInfo).get(0);
-            User addedUser = client.getDataById(User.class, id).getData();
-            responseBody.put("status", 0);
-            JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(addedUser));
-            responseBody.put("data", dataNode);
         }
     }
 
     @SuppressWarnings("unchecked")
-    public void processRequestForFilter(Map<String, Object> dsRequest, ObjectNode responseBody, String filterType)
+    private void processRequestForFilter(Map<String, Object> dsRequest, ObjectNode responseBody, String filterType)
             throws Exception {
         Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
         String operationType = dsRequest.get("operationType").toString();
         if (operationType.equals("fetch")) {
-            User user = getUserInfo(data.get("userName").toString()).getData();
+            String sid = data.get("sid").toString();
+            User user = getUserInfo(sid).getData();
             FilterSettings filterSettigs = user.getFilterSettings();
             if (data.containsKey("isDefault")) {
                 String filterName = filterSettigs.getDefaultFilter(filterType);
@@ -159,7 +161,7 @@ public class UserService extends ServiceBase {
         FilterSettings filterSettings = user.getFilterSettings();
         for (Map.Entry<String, String> f : filterSettings.getSavedFilters(type).entrySet()) {
             Map<String, Object> filterInfo = new HashMap<String, Object>();
-            filterInfo.put("userName", user.getName());
+            filterInfo.put("userName", user.getUserName());
             String filterName = f.getKey();
             String criteria = f.getValue();
             boolean isDefault = filterName.equals(filterSettings.getDefaultFilter(type));
@@ -172,14 +174,12 @@ public class UserService extends ServiceBase {
     }
 
     private void addFilter(Map<String, Object> data, String type) throws DataStoreClientException {
-        String userName = data.get("userName").toString();
+        String sid = data.get("sid").toString();
         String filterName = data.get("filterName").toString();
         String criteria = data.get("criteria").toString();
         String isDefault = data.get("isDefault").toString();
 
-        Map<String, Object> properties = new HashMap<String, Object>();
-        properties.put("name", userName);
-        DataInfo<User> userInfo = client.getDataByProperty(User.class, properties).get(0);
+        DataInfo<User> userInfo = getUserInfo(sid);
         Integer userId = userInfo.getId();
         User user = userInfo.getData();
         FilterSettings filterSettings = user.getFilterSettings();
@@ -195,10 +195,10 @@ public class UserService extends ServiceBase {
     }
 
     private void removeFilter(Map<String, Object> data, String type) throws DataStoreClientException {
-        String userName = data.get("userName").toString();
+        String sid = data.get("sid").toString();
         String filterName = data.get("filterName").toString();
 
-        DataInfo<User> userInfo = getUserInfo(userName);
+        DataInfo<User> userInfo = getUserInfo(sid);
         FilterSettings filterSettings = userInfo.getData().getFilterSettings();
 
         Map<String, String> savedFilters = filterSettings.getSavedFilters(type);
@@ -216,21 +216,10 @@ public class UserService extends ServiceBase {
         Map<String, Object> data = (Map<String, Object>) dsRequest.get("data");
         String operationType = dsRequest.get("operationType").toString();
 
-        if (settingType.equalsIgnoreCase("user")) {
+        if (settingType.equalsIgnoreCase("tmrReport")) {
             if (operationType.equals("fetch")) {
-                String userName = data.get("userName").toString();
-                List<Object> dataList = getUserSettings(userName);
-                populateResponseBody(responseBody, dataList);
-            } else if (operationType.equals("update")) {
-                updateUserSettings(data);
-                responseBody.put("status", 0);
-                JsonNode dataNode = mapper.readTree(mapper.writeValueAsString(data));
-                responseBody.put("data", dataNode);
-            }
-        } else if (settingType.equalsIgnoreCase("tmrReport")) {
-            if (operationType.equals("fetch")) {
-                String userName = data.get("userName").toString();
-                List<Object> dataList = getTmrReportSettings(userName);
+                String sid = data.get("sid").toString();
+                List<Object> dataList = getTmrReportSettings(sid);
                 populateResponseBody(responseBody, dataList);
             } else if (operationType.equals("update")) {
                 updateTmrReportSettings(data);
@@ -240,8 +229,8 @@ public class UserService extends ServiceBase {
             }
         } else if (settingType.equalsIgnoreCase("esrReport")) {
             if (operationType.equals("fetch")) {
-                String userName = data.get("userName").toString();
-                List<Object> dataList = getEsrReportSettings(userName);
+                String sid = data.get("sid").toString();
+                List<Object> dataList = getEsrReportSettings(sid);
                 populateResponseBody(responseBody, dataList);
             } else if (operationType.equals("update")) {
                 updateEsrReportSettings(data);
@@ -251,8 +240,8 @@ public class UserService extends ServiceBase {
             }
         } else if (settingType.equalsIgnoreCase("mailbox")) {
             if (operationType.equals("fetch")) {
-                String userName = data.get("userName").toString();
-                List<Object> dataList = getMailboxSettings(userName);
+                String sid = data.get("sid").toString();
+                List<Object> dataList = getMailboxSettings(sid);
                 populateResponseBody(responseBody, dataList);
             } else if (operationType.equals("update")) {
                 updateMailboxSettings(data);
@@ -262,8 +251,8 @@ public class UserService extends ServiceBase {
             }
         } else if (settingType.equalsIgnoreCase("automation")) {
             if (operationType.equals("fetch")) {
-                String userName = data.get("userName").toString();
-                List<Object> dataList = getAutomationSettings(userName);
+                String sid = data.get("sid").toString();
+                List<Object> dataList = getAutomationSettings(sid);
                 populateResponseBody(responseBody, dataList);
             } else if (operationType.equals("update")) {
                 updateAutomationSettings(data);
@@ -272,29 +261,6 @@ public class UserService extends ServiceBase {
                 responseBody.put("data", dataNode);
             }
         }
-    }
-
-    private List<Object> getUserSettings(String userName) throws DataStoreClientException {
-        User user = getUserInfo(userName).getData();
-        List<Object> dataList = new ArrayList<Object>();
-        UserSettings userSettings = user.getUserSettings();
-        Map<String, Object> settings = new HashMap<String, Object>();
-        settings.put("fullName", userSettings.getFullName());
-        settings.put("email", userSettings.getEmail());
-        settings.put("userName", user.getName());
-        dataList.add(settings);
-        return dataList;
-    }
-
-    private void updateUserSettings(Map<String, Object> data) throws DataStoreClientException {
-        String userName = data.get("userName").toString();
-        String fullName = (String) data.get("fullName");
-        String email = (String) data.get("email");
-        DataInfo<User> userInfo = getUserInfo(userName);
-        UserSettings userSettings = userInfo.getData().getUserSettings();
-        userSettings.setFullName(fullName);
-        userSettings.setEmail(email);
-        client.addPropertyToData(userInfo.getId(), "userSettings", userSettings);
     }
 
     private List<Object> getTmrReportSettings(String userName) throws DataStoreClientException {
@@ -312,7 +278,7 @@ public class UserService extends ServiceBase {
         Map<String, Object> settings = new HashMap<String, Object>();
         settings.put("tmrRecipients", recipients);
         settings.put("tmrSubject", subject);
-        settings.put("userName", user.getName());
+        settings.put("userName", user.getUserName());
         dataList.add(settings);
         return dataList;
     }
@@ -343,7 +309,7 @@ public class UserService extends ServiceBase {
         Map<String, Object> settings = new HashMap<String, Object>();
         settings.put("esrRecipients", recipients);
         settings.put("esrSubject", subject);
-        settings.put("userName", user.getName());
+        settings.put("userName", user.getUserName());
         dataList.add(settings);
         return dataList;
     }
@@ -391,7 +357,7 @@ public class UserService extends ServiceBase {
         settings.put("smtpSettingHost", smtpSettingHost);
         settings.put("smtpSettingPort", smtpSettingPort);
         settings.put("smtpSettingSTARTTLS", smtpSettingSTARTTLS);
-        settings.put("userName", user.getName());
+        settings.put("userName", user.getUserName());
         dataList.add(settings);
         return dataList;
     }
@@ -428,7 +394,7 @@ public class UserService extends ServiceBase {
         }
         Map<String, Object> settings = new HashMap<String, Object>();
         settings.put("automationServiceUrl", automationServiceUrl);
-        settings.put("userName", user.getName());
+        settings.put("userName", user.getUserName());
         dataList.add(settings);
         return dataList;
     }
@@ -443,7 +409,7 @@ public class UserService extends ServiceBase {
 
     private DataInfo<User> getUserInfo(String userName) throws DataStoreClientException {
         Map<String, Object> properties = new HashMap<String, Object>();
-        properties.put("name", userName);
+        properties.put("userName", userName);
         List<DataInfo<User>> userInfoList = client.getData(User.class, new String[] { "User" }, properties);
         return userInfoList.isEmpty() ? null : userInfoList.get(0);
     }

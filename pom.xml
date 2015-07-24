@@ -41,7 +41,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <testsync.version>1.0.2</testsync.version>
+    <testsync.version>1.0.3</testsync.version>
     <datastore-client.version>1.0.0</datastore-client.version>
     <datastore.version>1.0.2</datastore.version>
 

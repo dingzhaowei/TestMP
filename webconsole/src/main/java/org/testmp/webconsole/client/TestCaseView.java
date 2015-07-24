@@ -98,26 +98,22 @@ public class TestCaseView extends VLayout {
 
     @Override
     protected void onDraw() {
-        if (ClientConfig.currentUser == null) {
-            testCaseGrid.fetchData();
-        } else {
-            Criteria criteria = new Criteria("isDefault", "true");
-            dataSources.get("testCaseFilterDS").fetchData(criteria, new DSCallback() {
+        Criteria criteria = new Criteria("isDefault", "true");
+        dataSources.get("testCaseFilterDS").fetchData(criteria, new DSCallback() {
 
-                @Override
-                public void execute(DSResponse response, Object rawData, DSRequest request) {
-                    if (rawData.toString().isEmpty()) {
-                        testCaseGrid.fetchData();
-                    } else {
-                        JavaScriptObject jsonObj = JsonUtils.safeEval(rawData.toString());
-                        AdvancedCriteria initialCriteria = new AdvancedCriteria(jsonObj);
-                        ClientConfig.setCurrentFilterCriteria(initialCriteria, FilterType.TEST_CASE);
-                        testCaseGrid.fetchData(initialCriteria);
-                    }
+            @Override
+            public void execute(DSResponse response, Object rawData, DSRequest request) {
+                if (rawData.toString().isEmpty()) {
+                    testCaseGrid.fetchData();
+                } else {
+                    JavaScriptObject jsonObj = JsonUtils.safeEval(rawData.toString());
+                    AdvancedCriteria initialCriteria = new AdvancedCriteria(jsonObj);
+                    ClientConfig.setCurrentFilterCriteria(initialCriteria, FilterType.TEST_CASE);
+                    testCaseGrid.fetchData(initialCriteria);
                 }
+            }
 
-            });
-        }
+        });
         super.onDraw();
     }
 
@@ -351,10 +347,7 @@ public class TestCaseView extends VLayout {
         addMember(testCaseGrid);
 
         HLayout controls = new HLayout();
-        controls.setSize("99%", "20");
-        controls.setMargin(10);
-        controls.setMembersMargin(5);
-        controls.setLayoutAlign(Alignment.CENTER);
+        ClientUtils.unifyControlsLayoutStyle(controls);
         addMember(controls);
 
         HLayout additionalControls = new HLayout();
@@ -521,13 +514,11 @@ public class TestCaseView extends VLayout {
 
         DataSource testCaseFilterSource = ClientUtils.createDataSource("testCaseFilterDS",
                 ClientConfig.constants.userService());
-        DataSourceTextField userNameField = new DataSourceTextField("userName");
-        userNameField.setPrimaryKey(true);
         DataSourceTextField filterNameField = new DataSourceTextField("filterName");
         filterNameField.setPrimaryKey(true);
         DataSourceTextField criteriaField = new DataSourceTextField("criteria");
         DataSourceBooleanField isDefaultField = new DataSourceBooleanField("isDefault");
-        testCaseFilterSource.setFields(userNameField, filterNameField, criteriaField, isDefaultField);
+        testCaseFilterSource.setFields(filterNameField, criteriaField, isDefaultField);
         dataSources.put("testCaseFilterDS", testCaseFilterSource);
 
         DataSource testProjectSource = ClientUtils.createDataSource("testProjectDS",
@@ -612,7 +603,6 @@ public class TestCaseView extends VLayout {
             final String automation = testCase.getAttribute("automation");
             if (!testCases.containsKey(automation)) {
                 Record data = new Record();
-                data.setAttribute("userName", ClientConfig.currentUser);
                 data.setAttribute("automation", automation);
                 dataSources.get("testRunDS").addData(data, new DSCallback() {
 
@@ -650,7 +640,6 @@ public class TestCaseView extends VLayout {
             final String automation = testCase.getAttribute("automation");
             if (testCases.containsKey(automation)) {
                 Record data = new Record();
-                data.setAttribute("userName", ClientConfig.currentUser);
                 data.setAttribute("automation", automation);
                 dataSources.get("testRunDS").removeData(data, new DSCallback() {
 
@@ -1092,7 +1081,7 @@ public class TestCaseView extends VLayout {
             sb.append("<pre>\n");
             sb.append("    package ${packageName}\n");
             sb.append("\n");
-            sb.append("    public class ${className} {\n");
+            sb.append("    public class ${className} extends TestSyncForJUnit {\n");
             sb.append("\n");
             sb.append("        @Test\n");
             sb.append("        @TestDoc(\n");
