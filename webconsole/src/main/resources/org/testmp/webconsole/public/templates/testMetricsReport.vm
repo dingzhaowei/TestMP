@@ -187,6 +187,7 @@
           <td>
             <select>
               <option value="accept">$messages.accept</option>
+              <option value="pending">$messages.pending</option>
               <option value="refuse">$messages.refuse</option>
             </select>
           </td>

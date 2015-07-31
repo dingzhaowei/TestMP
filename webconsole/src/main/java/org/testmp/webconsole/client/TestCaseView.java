@@ -420,6 +420,30 @@ public class TestCaseView extends VLayout {
         });
         additionalControls.addMember(runAutomationButton);
 
+        IButton exportCasesButton = new IButton(ClientConfig.messages.export());
+        exportCasesButton.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				// TODO Auto-generated method stub
+
+			}
+
+        });
+        additionalControls.addMember(exportCasesButton);
+
+        IButton importCasesButton = new IButton(ClientConfig.messages.import_());
+        importCasesButton.addClickHandler(new ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				// TODO Auto-generated method stub
+
+			}
+
+        });
+        additionalControls.addMember(importCasesButton);
+
         IButton newCaseButton = new IButton(ClientConfig.messages.new_());
         newCaseButton.setIcon("newcase.png");
         newCaseButton.addClickHandler(new ClickHandler() {
