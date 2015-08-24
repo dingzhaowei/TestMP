@@ -69,7 +69,13 @@ public abstract class TestSync {
         try {
             Class<?> testClass = getTestClass();
             String testMethodName = getTestMethodName();
-            Method testMethod = testClass.getMethod(testMethodName);
+            Method testMethod = null;
+            for (Method method : testClass.getMethods()) {
+            	if (method.getName().equals(testMethodName)) {
+            		testMethod = method;
+            		break;
+            	}
+            }
             TestDoc testDoc = testMethod.getAnnotation(TestDoc.class);
             DataInfo<TestCase> caseDocInfo = convertTestDocToDataInfo(testDoc);
             postProcessTestDocument(caseDocInfo, testMethod);
@@ -116,7 +122,7 @@ public abstract class TestSync {
 
     /**
      * Update the test metrics in test case store
-     * 
+     *
      * @param duration
      * @param passed
      * @param failureTrace
@@ -189,21 +195,21 @@ public abstract class TestSync {
 
     /**
      * Get the test method name
-     * 
+     *
      * @return
      */
     protected abstract String getTestMethodName();
 
     /**
      * Get the test class
-     * 
+     *
      * @return
      */
     protected abstract Class<?> getTestClass();
 
     /**
      * Post process the test case document
-     * 
+     *
      * @param caseDocInfo
      * @param testMethod
      */
