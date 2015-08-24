@@ -224,15 +224,15 @@ public abstract class TestSync {
     private DataInfo<TestCase> convertTestDocToDataInfo(TestDoc testDoc) {
         DataInfo<TestCase> dataInfo = new DataInfo<TestCase>();
         TestCase tc = new TestCase();
+        List<String> tags = new LinkedList<String>();
+    	tags.add(TAG_TEST_CASE);
 
         if (testDoc == null) {
-            dataInfo.setTags(Arrays.asList(new String[] { TAG_TEST_CASE }));
+            dataInfo.setTags(tags);
             tc.setProject(getTestClass().getName());
             tc.setName(getTestMethodName());
             tc.setDescription("");
         } else {
-            List<String> tags = new LinkedList<String>();
-            tags.add(TAG_TEST_CASE);
             tags.addAll(Arrays.asList(testDoc.groups()));
             dataInfo.setTags(tags);
 
